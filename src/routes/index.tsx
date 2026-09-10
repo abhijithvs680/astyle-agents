@@ -1,0 +1,887 @@
+import { useState, useRef } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  Menu,
+  Home,
+  Database,
+  Compass,
+  FolderKanban,
+  FileText,
+  TrendingDown,
+  TrendingUp,
+  ArrowRight,
+  Expand,
+  Server,
+  Sparkles,
+  Clock,
+  Activity,
+  HeartPulse,
+  Stethoscope,
+  GraduationCap,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  X,
+  Radio,
+} from "lucide-react";
+
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "CXO — Case Analytics & Insights Dashboard" },
+      {
+        name: "description",
+        content:
+          "CXO dashboard showing newly detected cases, active case analytics, and operational anomalies across departments.",
+      },
+      { property: "og:title", content: "CXO — Case Analytics Dashboard" },
+      {
+        property: "og:description",
+        content:
+          "Explore new detected cases and track active cases across revenue, operations, and patient experience.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Index,
+});
+
+const railIcons = [
+  { icon: Server, label: "Data Center", to: "/data-center" },
+  { icon: Home, label: "Home", to: "/", active: true },
+  { icon: Compass, label: "Explore", to: "/explore" },
+  { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: FileText, label: "Reports", to: "#" },
+];
+
+// Colors matched exactly to the attached reference image
+const newCases = [
+  {
+    up: true,
+    tint: "bg-[#d8f6de]",
+    iconTint: "bg-[#107f47]",
+    title: "Patient volume dropped by 14%",
+    titleWeight: "font-medium",
+    body: "A significant decline in patient visits was detected compared with the previous period.",
+    bodyColor: "text-[#3b5e48]",
+  },
+  {
+    up: false,
+    tint: "bg-[#f4dbf8]",
+    iconTint: "bg-[#dc2626]",
+    title: "OP cancellations increased by 18%",
+    titleWeight: "font-medium",
+    body: "A sudden rise in appointment cancellations was detected in selected departments.",
+    bodyColor: "text-[#694a74]",
+  },
+  {
+    up: false,
+    tint: "bg-[#d8ecfe]",
+    iconTint: "bg-[#dc2626]",
+    title: "Complaint volume increased by 16%",
+    titleWeight: "font-semibold",
+    body: "Patient complaints grew across front-desk and billing touchpoints this quarter.",
+    bodyColor: "text-[#3f617f]",
+  },
+  {
+    up: true,
+    tint: "bg-[#d8f6de]",
+    iconTint: "bg-[#107f47]",
+    title: "7 doctors show low utilization",
+    titleWeight: "font-medium",
+    body: "Consultation capacity is significantly underused for selected doctors.",
+    bodyColor: "text-[#3b5e48]",
+  },
+  {
+    up: false,
+    tint: "bg-[#fedfc3]",
+    iconTint: "bg-[#dc2626]",
+    title: "4 lab revenue anomalies found",
+    titleWeight: "font-medium",
+    body: "Differences were detected between ordered, completed, and billed laboratory services.",
+    bodyColor: "text-[#7a5840]",
+  },
+];
+
+const initialActiveCases = [
+  {
+    age: "2 hrs ago",
+    title: "Specialty Revenue Decline",
+    body: "Cardiology revenue is projected to decline by 13% in 2023 despite relatively stable patient volumes.",
+  },
+  {
+    age: "2 hrs ago",
+    title: "Pharmacy Revenue Anomaly",
+    body: "Pharmacy sales increased by 8%, while medicine consumption increased by 21%.",
+  },
+  {
+    age: "2 hrs ago",
+    title: "Increasing Patient Wait Time",
+    body: "Average patient waiting time increased from 34 to 49 minutes over the last quarter.",
+  },
+  {
+    age: "4 hrs ago",
+    title: "Laboratory Claim Reconciliation",
+    body: "Differences were detected between ordered, completed, and billed laboratory services.",
+  },
+  {
+    age: "1 day ago",
+    title: "Operating Room Capacity Lag",
+    body: "Morning surgical suites experienced 18% idle interval due to scheduling buffers.",
+  },
+  {
+    age: "2 days ago",
+    title: "Inpatient Bed Turnaround Lag",
+    body: "Average inpatient discharge summary turnaround lengthened from 2.1 to 4.8 days.",
+  },
+];
+
+interface SmallInsightCard {
+  id: string;
+  timeframe: "today" | "week" | "month";
+  timeLabel: string;
+  source: string;
+  sourceIcon: React.ElementType;
+  headline: string;
+  previous: string;
+  current: string;
+  delta: string;
+  tag: string;
+  image?: string;
+  chartData?: number[];
+  chartType?: "area" | "bar" | "line";
+  chartColor?: string;
+}
+
+const smallInsights: SmallInsightCard[] = [
+  {
+    id: "card-1",
+    timeframe: "week",
+    timeLabel: "This Week",
+    source: "Outpatient Scheduling",
+    sourceIcon: Stethoscope,
+    headline: "Patient drop down ratio is improved by 3% from last week",
+    previous: "14.2% drop rate",
+    current: "11.2% drop rate",
+    delta: "↓ 3.0% improved",
+    tag: "+64 visits recovered",
+    image: "/medical_surgery.jpg",
+  },
+  {
+    id: "card-2",
+    timeframe: "today",
+    timeLabel: "Today",
+    source: "Cardiology & Vascular",
+    sourceIcon: HeartPulse,
+    headline: "OP cancellation rate decreased by 4.2% compared to last cycle",
+    previous: "18.0% cancellations",
+    current: "13.8% cancellations",
+    delta: "↓ 4.2% reduction",
+    tag: "42 recovered slots",
+    image: "/medical_scan.jpg",
+  },
+  {
+    id: "card-3",
+    timeframe: "week",
+    timeLabel: "This Week",
+    source: "Provider Rota Audit",
+    sourceIcon: Activity,
+    headline: "Doctor consultation utilization gained 6.5% vs previous roster",
+    previous: "68.0% capacity",
+    current: "74.5% capacity",
+    delta: "↑ 6.5% gain",
+    tag: "7 specialist rosters",
+    chartData: [68, 69, 72, 74.5],
+    chartType: "line",
+    chartColor: "#10b981",
+  },
+  {
+    id: "card-4",
+    timeframe: "today",
+    timeLabel: "Today",
+    source: "Triage & Registration Feed",
+    sourceIcon: Sparkles,
+    headline: "Intake wait time shortened by 15 mins since morning intake",
+    previous: "49 mins avg wait",
+    current: "34 mins avg wait",
+    delta: "↓ 15 mins faster",
+    tag: "Triage wave normalized",
+    chartData: [49, 44, 38, 34],
+    chartType: "bar",
+    chartColor: "#3b82f6",
+  },
+  {
+    id: "card-5",
+    timeframe: "month",
+    timeLabel: "This Month",
+    source: "Revenue Cycle Clearinghouse",
+    sourceIcon: Stethoscope,
+    headline: "Pharmacy unbilled revenue gap narrowed by €38,000 vs last month",
+    previous: "€64k unbilled delta",
+    current: "€26k unbilled delta",
+    delta: "↓ €38k recovered",
+    tag: "Diagnostic batch resolved",
+    image: "/medical_lab.jpg",
+  },
+  {
+    id: "card-6",
+    timeframe: "month",
+    timeLabel: "This Month",
+    source: "Inpatient Bed Flow",
+    sourceIcon: Activity,
+    headline: "Discharge turnaround speed accelerated by 1.8 days from baseline",
+    previous: "4.8 days turnaround",
+    current: "3.0 days turnaround",
+    delta: "↓ 1.8 days faster",
+    tag: "3.2 hrs bed freed",
+    chartData: [4.8, 4.2, 3.5, 3.0],
+    chartType: "line",
+    chartColor: "#10b981",
+  },
+  {
+    id: "card-7",
+    timeframe: "today",
+    timeLabel: "Today",
+    source: "Emergency Observation",
+    sourceIcon: Activity,
+    headline: "ER admission bottleneck lowered by 22% compared to yesterday",
+    previous: "58 mins boarding",
+    current: "45 mins boarding",
+    delta: "↓ 13 mins reduction",
+    tag: "Fast-track stream active",
+    chartData: [58, 54, 49, 45],
+    chartType: "area",
+    chartColor: "#3b82f6",
+  },
+  {
+    id: "card-8",
+    timeframe: "today",
+    timeLabel: "Today",
+    source: "Diagnostic Radiology",
+    sourceIcon: Stethoscope,
+    headline: "STAT CT scan turnaround time improved by 19% from prior shift",
+    previous: "42 mins reporting",
+    current: "34 mins reporting",
+    delta: "↓ 8 mins faster",
+    tag: "AI triage priority",
+    image: "/medical_scan.jpg",
+  },
+  {
+    id: "card-9",
+    timeframe: "week",
+    timeLabel: "This Week",
+    source: "Pharmacy Dispensation",
+    sourceIcon: Sparkles,
+    headline: "Prescription fulfillment error rate reduced by 3.8% vs last week",
+    previous: "4.9% variance",
+    current: "1.1% variance",
+    delta: "↓ 3.8% accuracy gain",
+    tag: "Barcode verification",
+    image: "/medical_lab.jpg",
+  },
+  {
+    id: "card-10",
+    timeframe: "week",
+    timeLabel: "This Week",
+    source: "Surgical Suite Operations",
+    sourceIcon: HeartPulse,
+    headline: "OR turnover interval compressed by 12 mins across general surgery",
+    previous: "47 mins between cases",
+    current: "35 mins between cases",
+    delta: "↓ 12 mins faster",
+    tag: "+14 cases scheduled",
+    chartData: [47, 44, 39, 35],
+    chartType: "bar",
+    chartColor: "#10b981",
+  },
+  {
+    id: "card-11",
+    timeframe: "month",
+    timeLabel: "This Month",
+    source: "Ambulatory Care Network",
+    sourceIcon: Stethoscope,
+    headline: "Patient 30-day readmission rate dropped by 2.4% over last month",
+    previous: "11.6% readmissions",
+    current: "9.2% readmissions",
+    delta: "↓ 2.4% reduction",
+    tag: "Care pathway adherence",
+    image: "/medical_surgery.jpg",
+  },
+  {
+    id: "card-12",
+    timeframe: "month",
+    timeLabel: "This Month",
+    source: "Clinical Documentation",
+    sourceIcon: Activity,
+    headline: "Insurance pre-authorization cycle shortened by 2.6 days this month",
+    previous: "6.1 days approval",
+    current: "3.5 days approval",
+    delta: "↓ 2.6 days accelerated",
+    tag: "Automated payer rules",
+    chartData: [6.1, 5.2, 4.3, 3.5],
+    chartType: "line",
+    chartColor: "#3b82f6",
+  },
+];
+
+function MiniSparkline({
+  type,
+  data,
+  color = "#3b82f6",
+}: {
+  type: "area" | "bar" | "line";
+  data: number[];
+  color?: string | undefined;
+}) {
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const width = 110;
+  const height = 32;
+  const padding = 3;
+
+  if (type === "bar") {
+    const barWidth = width / (data.length * 1.8);
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        {data.map((val, i) => {
+          const h = ((val - min) / range) * (height - padding * 2) + 4;
+          const x = i * (width / data.length) + 2;
+          const y = height - h - padding;
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={y}
+              width={barWidth}
+              height={h}
+              rx={2}
+              fill={color}
+              opacity={i === data.length - 1 ? 1 : 0.45 + (i / data.length) * 0.45}
+            />
+          );
+        })}
+      </svg>
+    );
+  }
+
+  const points = data
+    .map((val, i) => {
+      const x = (i / (data.length - 1)) * (width - padding * 2) + padding;
+      const y = height - ((val - min) / range) * (height - padding * 2) - padding;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const lastPoint = points.split(" ").slice(-1)[0] ?? "0,0";
+  const [lastX = "0", lastY = "0"] = lastPoint.split(",");
+
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+      <circle
+        cx={lastX}
+        cy={lastY}
+        r="3"
+        fill={color}
+      />
+    </svg>
+  );
+}
+
+function Index() {
+  const [mainTab, setMainTab] = useState<"investigations" | "insights">("investigations");
+  const [timeFilter, setTimeFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [casesList, setCasesList] = useState(initialActiveCases);
+
+  // Modern Modal state for Add Case
+  const [isAddCaseOpen, setIsAddCaseOpen] = useState(false);
+  const [casePrompt, setCasePrompt] = useState("");
+  const [caseDescription, setCaseDescription] = useState("");
+
+  // Ref and scrolling for top Explore cards carousel
+  const exploreScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollExplore = (direction: "left" | "right") => {
+    if (exploreScrollRef.current) {
+      exploreScrollRef.current.scrollBy({
+        left: direction === "left" ? -320 : 320,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const handleCreateCase = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!casePrompt.trim()) return;
+    const newCase = {
+      age: "Just now",
+      title: casePrompt.trim(),
+      body:
+        caseDescription.trim() ||
+        "AI automated discovery scan initialized across clinical scheduling and billing repositories.",
+    };
+    setCasesList([newCase, ...casesList]);
+    setCasePrompt("");
+    setCaseDescription("");
+    setIsAddCaseOpen(false);
+  };
+
+  const filteredCards = smallInsights.filter(
+    (c) => timeFilter === "all" || c.timeframe === timeFilter
+  );
+
+  return (
+    <div className="min-h-screen bg-surface-tint font-sans text-foreground">
+      {/* Header with profile icon, name, and designation on right */}
+      <header className="flex items-center justify-between px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-3">
+          <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
+            <Menu className="size-6 text-muted-foreground" />
+          </button>
+          <span className="text-xl sm:text-[22px]">CXO</span>
+        </div>
+
+        {/* Profile on right top end */}
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium leading-none text-foreground">Robert</p>
+            <p className="text-xs text-muted-foreground mt-1">Chief Executive Officer</p>
+          </div>
+          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-surface shadow-xs">
+            R
+          </span>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Navigation Rail */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-2 md:flex">
+          {railIcons.map(({ icon: Icon, label, to, active }) => (
+            <Link
+              key={label}
+              to={to}
+              aria-label={label}
+              title={label}
+              className={`grid size-12 place-items-center rounded-full transition-colors ${
+                active
+                  ? "bg-chip-active text-chip-active-foreground"
+                  : "text-muted-foreground hover:bg-tile"
+              }`}
+            >
+              <Icon className="size-5" />
+            </Link>
+          ))}
+        </nav>
+
+        <main className="min-w-0 flex-1 px-3 pb-12 sm:px-6">
+          {/* Main Tabs: Investigations & Insights + Top Actions */}
+          <div className="flex flex-wrap items-center gap-3 pb-4">
+            <Chip
+              icon={FolderKanban}
+              label="Investigations"
+              active={mainTab === "investigations"}
+              onClick={() => setMainTab("investigations")}
+            />
+            <Chip
+              icon={Sparkles}
+              label="Insights"
+              active={mainTab === "insights"}
+              onClick={() => setMainTab("insights")}
+            />
+
+            {/* Top Right: Add Case button with filled type */}
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                onClick={() => setIsAddCaseOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
+              >
+                <Plus className="size-4" />
+                Add Case
+              </button>
+            </div>
+          </div>
+
+          {/* TAB 1: INVESTIGATIONS VIEW */}
+          {mainTab === "investigations" && (
+            <div className="space-y-4">
+              <Panel>
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-[22px]">Explore Insights</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Create case based on this Insights
+                    </p>
+                  </div>
+
+                  {/* Left & Right Arrow Navigation (Replacing scrollbar) */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => scrollExplore("left")}
+                      className="grid size-9 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
+                      aria-label="Previous cases"
+                      title="Scroll Left"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </button>
+                    <button
+                      onClick={() => scrollExplore("right")}
+                      className="grid size-9 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
+                      aria-label="Next cases"
+                      title="Scroll Right"
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
+                    <Link
+                      to="/explore"
+                      className="hidden sm:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-brand-blue transition cursor-pointer ml-2"
+                    >
+                      Explore all
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Carousel with hidden scrollbar and smooth scroll */}
+                <div
+                  ref={exploreScrollRef}
+                  className="flex gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  {newCases.map((c) => (
+                    <div
+                      key={c.title}
+                      className={`flex w-72 sm:w-[305px] shrink-0 flex-col rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm ${c.tint}`}
+                    >
+                      <span
+                        className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
+                      >
+                        {c.up ? (
+                          <TrendingUp className="size-4 text-white" />
+                        ) : (
+                          <TrendingDown className="size-4 text-white" />
+                        )}
+                      </span>
+                      {/* Set title size to XL on all top 5 cards and explicit XL class */}
+                      <h4
+                        className={`mt-4 text-xl XL leading-snug text-[#111827] ${c.titleWeight}`}
+                      >
+                        {c.title}
+                      </h4>
+                      <p className={`mt-3 text-sm leading-relaxed ${c.bodyColor}`}>
+                        {c.body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              <Panel>
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-[22px]">Active Cases</h2>
+                    <button
+                      onClick={() => setIsAddCaseOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm hover:bg-tile cursor-pointer"
+                    >
+                      <GraduationCap className="size-4" />
+                      New Case
+                    </button>
+                  </div>
+                  <button aria-label="Expand" className="rounded-full p-1.5 hover:bg-tile">
+                    <Expand className="size-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {casesList.map((c, i) => {
+                    const isLive = c.title === "Increasing Patient Wait Time";
+                    return (
+                      <div key={`${c.title}-${i}`} className="flex flex-col rounded-2xl bg-tile p-5 relative">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">{c.age || "\u00A0"}</span>
+                          {isLive && (
+                            <span className="relative flex size-2.5" title="Live" aria-label="Live">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex size-2.5 rounded-full bg-red-500"></span>
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="mt-5 text-lg font-medium text-foreground">
+                          {c.title}
+                        </h4>
+                        <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                          {c.body}
+                        </p>
+                        <Link
+                          to="/details"
+                          className="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-blue hover:bg-tile transition cursor-pointer"
+                        >
+                          Case details
+                          <ArrowRight className="size-4" />
+                        </Link>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-8 text-center">
+                  <button className="text-lg text-foreground hover:text-brand-blue">
+                    Load more
+                  </button>
+                </div>
+              </Panel>
+            </div>
+          )}
+
+          {/* TAB 2: MINIMAL AUTOMATED RESULTS INSIGHTS */}
+          {mainTab === "insights" && (
+            <div className="w-full space-y-6">
+              {/* Header & Time Period Filters */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl sm:text-[22px] font-semibold text-foreground">
+                    Automated Results
+                  </h2>
+                  <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
+                    Continuous comparative findings across previous runs and active cases.
+                  </p>
+                </div>
+
+                {/* Timeframe separation: Today, This Week, This Month */}
+                <div className="flex items-center gap-1 rounded-2xl bg-surface p-1 border border-border">
+                  <button
+                    onClick={() => setTimeFilter("all")}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
+                      timeFilter === "all"
+                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All ({smallInsights.length})
+                  </button>
+                  <button
+                    onClick={() => setTimeFilter("today")}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
+                      timeFilter === "today"
+                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Today ({smallInsights.filter((c) => c.timeframe === "today").length})
+                  </button>
+                  <button
+                    onClick={() => setTimeFilter("week")}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
+                      timeFilter === "week"
+                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    This Week ({smallInsights.filter((c) => c.timeframe === "week").length})
+                  </button>
+                  <button
+                    onClick={() => setTimeFilter("month")}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
+                      timeFilter === "month"
+                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    This Month ({smallInsights.filter((c) => c.timeframe === "month").length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Pinterest-like Masonry Columns - Cards without images have reduced height */}
+              <div className="columns-1 sm:columns-2 lg:columns-4 gap-4 sm:gap-5 w-full [column-fill:_balance]">
+                {filteredCards.map((card) => {
+                  const Icon = card.sourceIcon;
+
+                  return (
+                    <div key={card.id} className="break-inside-avoid mb-4 sm:mb-5">
+                      <Link
+                        to="/details"
+                        className="group rounded-3xl bg-surface border border-border/70 p-4.5 sm:p-5 shadow-xs hover:border-foreground/30 hover:shadow-md transition-all duration-200 block cursor-pointer"
+                      >
+                        <div className="space-y-3">
+                          {/* Top Source & Timeframe */}
+                          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+                              <span className="truncate">{card.source}</span>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-tile px-2.5 py-0.5 text-[11px] font-medium text-foreground">
+                              {card.timeLabel}
+                            </span>
+                          </div>
+
+                          {/* Optional subtle medical image */}
+                          {card.image && (
+                            <div className="overflow-hidden rounded-2xl bg-tile aspect-[16/9] w-full border border-border/40">
+                              <img
+                                src={card.image}
+                                alt={card.headline}
+                                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          )}
+
+                          {/* Automated Comparative Statement */}
+                          <h3 className="text-lg sm:text-xl font-normal text-foreground leading-snug group-hover:text-brand-blue transition-colors">
+                            {card.headline}
+                          </h3>
+
+                          {/* Previous vs Current Comparison Strip */}
+                          <div className="rounded-2xl bg-tile/60 p-3 border border-border/40 space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">Previous Run</span>
+                              <span className="font-medium text-foreground">{card.previous}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">Automated Result</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                {card.current}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer: Tag & Direct Click to Details */}
+                        <div className="mt-3.5 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+                          <span className="inline-block rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-0.5 text-[11px] font-medium">
+                            {card.delta}
+                          </span>
+                          <span className="inline-flex items-center gap-1 font-medium text-brand-blue group-hover:underline">
+                            View details
+                            <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          </span>
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredCards.length === 0 && (
+                <div className="py-12 text-center rounded-3xl bg-surface border border-border p-6 text-sm text-muted-foreground">
+                  No automated results match the selected time range ({timeFilter}).
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Modern Add Case Modal */}
+      {isAddCaseOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setIsAddCaseOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-3xl bg-surface p-6 sm:p-7 shadow-2xl border border-border/80 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header without icon and description paragraph */}
+            <div className="flex items-center justify-between border-b border-border/40 pb-4">
+              <h3 className="text-lg font-semibold text-foreground">Create New Case</h3>
+              <button
+                onClick={() => setIsAddCaseOpen(false)}
+                className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-tile transition cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleCreateCase} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5">
+                  What should AI find? <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={casePrompt}
+                  onChange={(e) => setCasePrompt(e.target.value)}
+                  placeholder="e.g. Detect revenue leakage in Cardiology consultations..."
+                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5">
+                  Description <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={caseDescription}
+                  onChange={(e) => setCaseDescription(e.target.value)}
+                  placeholder="Add context on departments, expected metrics, or historical baseline periods..."
+                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCaseOpen(false)}
+                  className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-foreground hover:bg-tile transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
+                >
+                  <Sparkles className="size-4" />
+                  Start AI Discovery
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Chip({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition cursor-pointer ${
+        active
+          ? "border-transparent bg-chip-active text-chip-active-foreground font-medium shadow-xs"
+          : "border-border bg-surface text-foreground hover:bg-tile"
+      }`}
+    >
+      <Icon className="size-4" />
+      {label}
+    </button>
+  );
+}
+
+function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <section className={`rounded-3xl bg-surface p-5 sm:p-6 ${className}`}>{children}</section>
+  );
+}
