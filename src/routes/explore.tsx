@@ -6,16 +6,12 @@ import {
   Server,
   Compass,
   FolderKanban,
-  FileText,
   TrendingDown,
   TrendingUp,
-  ArrowRight,
-  ArrowLeft,
   Plus,
   Search,
   Check,
   X,
-  Sparkles,
 } from "lucide-react";
 
 export const Route = createFileRoute("/explore")({
@@ -32,133 +28,110 @@ export const Route = createFileRoute("/explore")({
 });
 
 const railIcons = [
-  { icon: Server, label: "Data Center", to: "/data-center" },
   { icon: Home, label: "Home", to: "/" },
   { icon: Compass, label: "Explore", to: "/explore", active: true },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
-  { icon: FileText, label: "Reports", to: "/details" },
+  { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
-interface ExploreInsight {
-  id: string;
-  category: "Clinical" | "Operational" | "Financial" | "Utilization";
+interface ExploreCase {
   up: boolean;
   tint: string;
   iconTint: string;
   title: string;
+  titleWeight: string;
   body: string;
-  metric: string;
-  tag: string;
+  bodyColor: string;
 }
 
-const exploreInsightsList: ExploreInsight[] = [
+// Exactly same data structure and colors as Explore Insights section in home page
+const exploreCases: ExploreCase[] = [
   {
-    id: "exp-1",
-    category: "Clinical",
     up: true,
     tint: "bg-[#d8f6de]",
     iconTint: "bg-[#107f47]",
     title: "Patient volume dropped by 14%",
-    body: "A significant decline in outpatient visits was detected compared with the previous period across trauma and general medicine.",
-    metric: "-14% vs last cycle",
-    tag: "High Priority",
+    titleWeight: "font-medium",
+    body: "A significant decline in patient visits was detected compared with the previous period.",
+    bodyColor: "text-[#3b5e48]",
   },
   {
-    id: "exp-2",
-    category: "Operational",
     up: false,
     tint: "bg-[#f4dbf8]",
     iconTint: "bg-[#dc2626]",
     title: "OP cancellations increased by 18%",
-    body: "A sudden rise in appointment cancellations was detected in cardiology and outpatient surgical consults due to notification delays.",
-    metric: "+18% cancellation rate",
-    tag: "Operational Lag",
+    titleWeight: "font-medium",
+    body: "A sudden rise in appointment cancellations was detected in selected departments.",
+    bodyColor: "text-[#694a74]",
   },
   {
-    id: "exp-3",
-    category: "Clinical",
     up: false,
     tint: "bg-[#d8ecfe]",
     iconTint: "bg-[#dc2626]",
     title: "Complaint volume increased by 16%",
-    body: "Patient complaints grew across front-desk registration and insurance billing touchpoints this quarter.",
-    metric: "+16% complaints",
-    tag: "Patient Experience",
+    titleWeight: "font-semibold",
+    body: "Patient complaints grew across front-desk and billing touchpoints this quarter.",
+    bodyColor: "text-[#3f617f]",
   },
   {
-    id: "exp-4",
-    category: "Utilization",
     up: true,
     tint: "bg-[#d8f6de]",
     iconTint: "bg-[#107f47]",
     title: "7 doctors show low utilization",
-    body: "Consultation room capacity is significantly underused for selected senior specialists in elective clinics.",
-    metric: "32% idle clinic slots",
-    tag: "Roster Audit",
+    titleWeight: "font-medium",
+    body: "Consultation capacity is significantly underused for selected doctors.",
+    bodyColor: "text-[#3b5e48]",
   },
   {
-    id: "exp-5",
-    category: "Financial",
     up: false,
     tint: "bg-[#fedfc3]",
     iconTint: "bg-[#dc2626]",
     title: "4 lab revenue anomalies found",
-    body: "Differences were detected between ordered, completed, and billed laboratory services for specialized molecular panels.",
-    metric: "€42,000 unbilled delta",
-    tag: "Revenue Leak",
+    titleWeight: "font-medium",
+    body: "Differences were detected between ordered, completed, and billed laboratory services.",
+    bodyColor: "text-[#7a5840]",
   },
   {
-    id: "exp-6",
-    category: "Financial",
-    up: true,
-    tint: "bg-[#d8f6de]",
-    iconTint: "bg-[#107f47]",
-    title: "Pharmacy low sales share despite moderate stock",
-    body: "High-value surgical dressings and vitamins maintain full inventory buffers but convert to less than 1% of outpatient basket share.",
-    metric: "+€18,400 potential margin",
-    tag: "Inventory Opportunity",
-  },
-  {
-    id: "exp-7",
-    category: "Operational",
     up: false,
     tint: "bg-[#f4dbf8]",
     iconTint: "bg-[#dc2626]",
     title: "Operating Room turnover delay by 18%",
+    titleWeight: "font-medium",
     body: "Morning surgical suites experienced idle intervals between cases due to delayed sterilization and post-op transport.",
-    metric: "+14 mins lag / room",
-    tag: "OR Scheduling",
+    bodyColor: "text-[#694a74]",
   },
   {
-    id: "exp-8",
-    category: "Clinical",
+    up: true,
+    tint: "bg-[#d8f6de]",
+    iconTint: "bg-[#107f47]",
+    title: "Pharmacy low sales share despite moderate stock",
+    titleWeight: "font-medium",
+    body: "High-value surgical dressings and vitamins maintain full inventory buffers but convert to less than 1% of outpatient basket share.",
+    bodyColor: "text-[#3b5e48]",
+  },
+  {
     up: false,
     tint: "bg-[#fedfc3]",
     iconTint: "bg-[#dc2626]",
-    title: "Inpatient discharge summary turnaround lag",
+    title: "Inpatient discharge turnaround lag",
+    titleWeight: "font-medium",
     body: "Average inpatient discharge summary turnaround lengthened from 2.1 to 4.8 days, slowing bed reallocation in trauma wards.",
-    metric: "4.8 days turnaround",
-    tag: "Bed Flow",
+    bodyColor: "text-[#7a5840]",
   },
 ];
 
 function ExplorePage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [casePrompt, setCasePrompt] = useState("");
   const [caseDescription, setCaseDescription] = useState("");
   const [createdNotification, setCreatedNotification] = useState<string | null>(null);
 
-  const categories = ["All", "Clinical", "Operational", "Financial", "Utilization"];
-
-  const filteredInsights = exploreInsightsList.filter((item) => {
-    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
-    const matchesSearch =
+  const filteredInsights = exploreCases.filter((item) => {
+    return (
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.body.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.tag.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+      item.body.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   const handleOpenCreateForInsight = (insightTitle: string, insightBody: string) => {
@@ -179,8 +152,8 @@ function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 sm:px-6">
+      {/* Header (Fixed on scroll) */}
+      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
             <Menu className="size-6 text-muted-foreground" />
@@ -203,26 +176,33 @@ function ExplorePage() {
       </header>
 
       <div className="flex">
-        {/* Navigation Rail */}
-        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-2 md:flex">
+        {/* Navigation Rail (Fixed while scrolling) */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex sticky top-16 h-[calc(100vh-4rem)] border-r border-border/40 overflow-visible">
           {railIcons.map(({ icon: Icon, label, to, active }) => (
-            <Link
-              key={label}
-              to={to}
-              aria-label={label}
-              title={label}
-              className={`grid size-12 place-items-center rounded-full transition-colors ${active
-                  ? "bg-chip-active text-chip-active-foreground"
-                  : "text-muted-foreground hover:bg-tile"
+            <div key={label} className="relative group flex items-center justify-center">
+              <Link
+                to={to}
+                aria-label={label}
+                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
                 }`}
-            >
-              <Icon className="size-5" />
-            </Link>
+              >
+                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+              </Link>
+
+              {/* Floating Tooltip on Hover */}
+              <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+                {label}
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+              </div>
+            </div>
           ))}
         </nav>
 
         {/* Main Content Area */}
-        <main className="flex-1 px-4 py-3 sm:px-6 space-y-6">
+        <main className="flex-1 px-4 pt-4 pb-12 sm:px-6 sm:pt-6 space-y-6">
           {/* Notification banner */}
           {createdNotification && (
             <div className="rounded-2xl bg-emerald-600 text-white text-xs sm:text-sm py-2 px-4 flex items-center justify-between shadow-xs animate-in fade-in">
@@ -230,135 +210,89 @@ function ExplorePage() {
                 <Check className="size-4" />
                 {createdNotification}
               </span>
-              <button onClick={() => setCreatedNotification(null)} className="text-white/80 hover:text-white">
+              <button
+                onClick={() => setCreatedNotification(null)}
+                className="text-white/80 hover:text-white"
+              >
                 <X className="size-4" />
               </button>
             </div>
           )}
 
-          {/* Top Header & Breadcrumb */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Link to="/" className="hover:text-foreground transition flex items-center gap-1">
-                  <ArrowLeft className="size-3.5" />
-                  Home
-                </Link>
-                <span>/</span>
-                <span className="text-foreground font-medium">Explore Insights</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          {/* Top Header matching home page style */}
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 pb-4">
+            <div>
+              <h1 className="text-2xl sm:text-[22px] font-semibold text-foreground">
                 Explore Insights
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Discover detected anomalies, operational drifts, and cross-departmental findings.
+              <p className="mt-1 text-sm text-muted-foreground">
+                Create case based on this Insights
               </p>
             </div>
 
-            {/* Quick Action: New Case */}
-            <button
-              onClick={() => {
-                setCasePrompt("");
-                setCaseDescription("");
-                setIsCreateOpen(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
-            >
-              <Plus className="size-4" />
-              Create Case
-            </button>
-          </div>
+            <div className="flex items-center gap-3">
+              {/* Search bar */}
+              <div className="relative w-48 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search insights..."
+                  className="w-full rounded-xl border border-border/80 bg-surface pl-9 pr-3 py-2 text-xs text-foreground outline-none focus:border-foreground transition placeholder:text-muted-foreground shadow-2xs"
+                />
+              </div>
 
-          {/* Filter Bar: Categories + Search */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-surface p-3 border border-border/80">
-            {/* Category Pills */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {categories.map((cat) => {
-                const count =
-                  cat === "All"
-                    ? exploreInsightsList.length
-                    : exploreInsightsList.filter((i) => i.category === cat).length;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${selectedCategory === cat
-                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground hover:bg-tile"
-                      }`}
-                  >
-                    {cat} ({count})
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Search Input */}
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search insights..."
-                className="w-full rounded-xl border border-border/70 bg-tile/40 pl-9 pr-3 py-1.5 text-xs text-foreground outline-none focus:border-brand-blue transition placeholder:text-muted-foreground"
-              />
+              {/* Quick Action: New Case */}
+              <button
+                onClick={() => {
+                  setCasePrompt("");
+                  setCaseDescription("");
+                  setIsCreateOpen(true);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
+              >
+                <Plus className="size-4" />
+                Add Case
+              </button>
             </div>
           </div>
 
-          {/* Full Grid of Explore Insights Cards */}
+          {/* Grid of Explore Insights Cards (Same structure and data as home page) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filteredInsights.map((c) => (
               <div
-                key={c.id}
-                className={`flex flex-col justify-between rounded-3xl p-6 transition-all duration-200 hover:shadow-md ${c.tint}`}
+                key={c.title}
+                onClick={() => handleOpenCreateForInsight(c.title, c.body)}
+                role="button"
+                tabIndex={0}
+                className={`group flex flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
               >
-                <div className="space-y-4">
-                  {/* Card Top: Trending Icon & Category */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`grid size-9 place-items-center rounded-xl text-white shadow-2xs ${c.iconTint}`}
-                    >
-                      {c.up ? <TrendingDown className="size-4" /> : <TrendingUp className="size-4" />}
-                    </span>
-                    <span className="rounded-full bg-white/70 dark:bg-black/30 border border-black/5 px-2.5 py-0.5 text-[11px] font-medium text-slate-800 dark:text-slate-200">
-                      {c.tag}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl font-medium tracking-tight text-slate-900 leading-snug">
+                <div>
+                  <span
+                    className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
+                  >
+                    {c.up ? (
+                      <TrendingUp className="size-4 text-white" />
+                    ) : (
+                      <TrendingDown className="size-4 text-white" />
+                    )}
+                  </span>
+                  {/* Set title size to XL on all cards with explicit XL class */}
+                  <h4
+                    className={`mt-4 text-xl XL leading-snug text-[#111827] ${c.titleWeight}`}
+                  >
                     {c.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-sm leading-relaxed text-slate-700/90 font-normal">
+                  </h4>
+                  <p className={`mt-3 text-sm leading-relaxed ${c.bodyColor}`}>
                     {c.body}
                   </p>
-
-                  {/* Metric delta */}
-                  <div className="inline-block rounded-xl bg-white/60 dark:bg-black/20 px-3 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    {c.metric}
-                  </div>
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="mt-6 pt-4 border-t border-black/10 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => handleOpenCreateForInsight(c.title, c.body)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white/90 dark:bg-zinc-900/90 px-3.5 py-1.5 text-xs font-medium text-slate-900 dark:text-slate-100 hover:bg-white transition cursor-pointer shadow-xs"
-                  >
-                    <Plus className="size-3.5" />
-                    Create Case
-                  </button>
-
-                  <Link
-                    to="/details"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-brand-blue transition cursor-pointer"
-                  >
-                    Details
-                    <ArrowRight className="size-3.5" />
-                  </Link>
+                {/* Prompt to create case with prefilled details */}
+                <div className="mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black">
+                  <span>Create case</span>
+                  <Plus className="size-3.5 group-hover:scale-125 transition-transform" />
                 </div>
               </div>
             ))}
@@ -369,76 +303,78 @@ function ExplorePage() {
               <Compass className="size-10 text-muted-foreground mx-auto" />
               <h3 className="text-lg font-semibold text-foreground">No insights found</h3>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                No insights match your query "{searchQuery}". Try searching for another department or keyword.
+                No insights match your query "{searchQuery}".
               </p>
             </div>
           )}
         </main>
       </div>
 
-      {/* CREATE CASE MODAL */}
+      {/* Modern Create Case Modal */}
       {isCreateOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setIsCreateOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-3xl bg-surface p-6 sm:p-7 shadow-2xl border border-border/80 animate-in zoom-in-95 duration-200 space-y-5"
+            className="w-full max-w-lg rounded-3xl bg-surface p-6 sm:p-7 shadow-2xl border border-border/80 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <h3 className="text-lg font-semibold text-foreground">
-                Create New Investigation Case
-              </h3>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-border/40 pb-4">
+              <h3 className="text-lg font-semibold text-foreground">Create New Case</h3>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-tile transition cursor-pointer"
+                className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-tile transition cursor-pointer"
+                aria-label="Close"
               >
-                <X className="size-4" />
+                <X className="size-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCase} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
-                  What should AI find?
+            {/* Form Body */}
+            <form onSubmit={handleCreateCase} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5">
+                  What should AI find? <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={casePrompt}
                   onChange={(e) => setCasePrompt(e.target.value)}
-                  placeholder="e.g. Audit pharmacy dispensation discrepancies"
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  placeholder="e.g. Detect revenue leakage in Cardiology consultations..."
+                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
-                  Description (optional)
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5">
+                  Description <span className="text-xs font-normal text-muted-foreground">(optional)</span>
                 </label>
                 <textarea
                   rows={3}
                   value={caseDescription}
                   onChange={(e) => setCaseDescription(e.target.value)}
-                  placeholder="Additional context or departments to inspect..."
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs resize-none"
+                  placeholder="Add context on departments, expected metrics, or historical baseline periods..."
+                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              {/* Modal Actions */}
+              <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-tile transition cursor-pointer"
+                  className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-foreground hover:bg-tile transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-foreground px-5 py-2 text-xs font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
+                  className="rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-surface hover:opacity-90 transition cursor-pointer shadow-xs"
                 >
-                  Initialize Case
+                  Start AI Discovery
                 </button>
               </div>
             </form>

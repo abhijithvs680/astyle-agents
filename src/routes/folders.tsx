@@ -6,29 +6,20 @@ import {
   Server,
   Compass,
   FolderKanban,
-  FileText,
   Folder,
   FolderPlus,
   Plus,
-  ArrowLeft,
   ArrowRight,
-  ChevronDown,
-  ChevronUp,
+  MoreVertical,
   X,
   Check,
   Clock,
-  Briefcase,
-  Layers,
-  Sparkles,
-  Pill,
-  Receipt,
-  FileSpreadsheet,
 } from "lucide-react";
 
 export const Route = createFileRoute("/folders")({
   head: () => ({
     meta: [
-      { title: "Organize Cases in Folders — CXO Platform" },
+      { title: "Folders — CXO Platform" },
       {
         name: "description",
         content: "Organize and manage clinical and operational cases by departmental folders.",
@@ -39,11 +30,10 @@ export const Route = createFileRoute("/folders")({
 });
 
 const railIcons = [
-  { icon: Server, label: "Data Center", to: "/data-center" },
   { icon: Home, label: "Home", to: "/" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders", active: true },
-  { icon: FileText, label: "Reports", to: "/details" },
+  { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
 interface CaseItem {
@@ -58,21 +48,26 @@ interface CaseFolder {
   name: string;
   department: string;
   description: string;
-  color: string;
-  bgColor: string;
-  icon: "pharmacy" | "billing" | "general";
+  tabBg: string;
+  bodyBg: string;
+  borderColor: string;
+  iconBg: string;
+  iconColor: string;
   cases: CaseItem[];
 }
 
+// Initial 3 folders matching the attached image colors and structure
 const initialFolders: CaseFolder[] = [
   {
-    id: "folder-pharmacy",
+    id: "folder-task-automation",
     name: "Pharmacy",
-    department: "Clinical Pharmacy & Supply Chain",
-    description: "Inventory conversion audits, SKU pricing deltas, and outpatient medicine basket analysis.",
-    color: "text-emerald-700 dark:text-emerald-300",
-    bgColor: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60",
-    icon: "pharmacy",
+    department: "Clinical Pharmacy & Dispensation Automation",
+    description: "Automated inventory conversion audits, dispensation tracking, and algorithmic stock buffers.",
+    tabBg: "bg-[#e2daf8] dark:bg-[#342852]",
+    bodyBg: "bg-[#f4f0fd] dark:bg-[#201836]",
+    borderColor: "border-[#d9cef7] dark:border-[#423467]",
+    iconBg: "bg-[#e0d6f8] dark:bg-[#433568]",
+    iconColor: "text-[#523799] dark:text-[#c4b5fd]",
     cases: [
       {
         id: "case-p1",
@@ -95,13 +90,46 @@ const initialFolders: CaseFolder[] = [
     ],
   },
   {
-    id: "folder-billing",
-    name: "Billing",
-    department: "Revenue Cycle & Accounts Reconciliation",
-    description: "Insurance clearinghouse reconciliation, unbilled diagnostics, and pre-authorization cycle times.",
-    color: "text-blue-700 dark:text-blue-300",
-    bgColor: "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/60",
-    icon: "billing",
+    id: "folder-notes-highlights",
+    name: "Insurance",
+    department: "Cross-Departmental Clinical Insights",
+    description: "Clinical outpatient consultation notes, triage trends, and physician capacity highlights.",
+    tabBg: "bg-[#d8ecfb] dark:bg-[#1a3650]",
+    bodyBg: "bg-[#edf6fd] dark:bg-[#122538]",
+    borderColor: "border-[#c8e4fa] dark:border-[#27496a]",
+    iconBg: "bg-[#cbe5fa] dark:bg-[#244b70]",
+    iconColor: "text-[#1e6091] dark:text-[#93c5fd]",
+    cases: [
+      {
+        id: "case-n1",
+        title: "Patient volume dropped by 14%",
+        age: "02 Sept 2026, 11:20 am",
+        severity: "High",
+      },
+      {
+        id: "case-n2",
+        title: "7 doctors show low utilization",
+        age: "Yesterday",
+        severity: "Medium",
+      },
+      {
+        id: "case-n3",
+        title: "Increasing Patient Wait Time",
+        age: "2 hrs ago",
+        severity: "High",
+      },
+    ],
+  },
+  {
+    id: "folder-billing-invoicing",
+    name: "Billing & Invoicing",
+    department: "Revenue Cycle Assurance & Claims Reconciliation",
+    description: "Insurance clearinghouse reconciliation, diagnostic claims discrepancies, and billing recovery.",
+    tabBg: "bg-[#fde5d2] dark:bg-[#482e18]",
+    bodyBg: "bg-[#fef4ec] dark:bg-[#2e1d0f]",
+    borderColor: "border-[#fad9be] dark:border-[#5c3b20]",
+    iconBg: "bg-[#fad7bb] dark:bg-[#5c3b20]",
+    iconColor: "text-[#a75a22] dark:text-[#fdba74]",
     cases: [
       {
         id: "case-b1",
@@ -115,16 +143,100 @@ const initialFolders: CaseFolder[] = [
         age: "3 days ago",
         severity: "Medium",
       },
+      {
+        id: "case-b3",
+        title: "4 lab revenue anomalies found",
+        age: "Yesterday",
+        severity: "High",
+      },
+      {
+        id: "case-b4",
+        title: "Specialty Revenue Decline",
+        age: "2 hrs ago",
+        severity: "Medium",
+      },
+      {
+        id: "case-b5",
+        title: "Unbilled diagnostic panels audit",
+        age: "5 days ago",
+        severity: "Low",
+      },
     ],
+  },
+  {
+    id: "folder-operations",
+    name: "Operations",
+    department: "Capacity & Scheduling Workflow",
+    description: "Bed occupancy optimization, surgical theater turnaround, and discharge triage queue analytics.",
+    tabBg: "bg-[#d5f2e3] dark:bg-[#1b3d2b]",
+    bodyBg: "bg-[#edfbf4] dark:bg-[#132b1e]",
+    borderColor: "border-[#c3ecd5] dark:border-[#26533c]",
+    iconBg: "bg-[#c5eed7] dark:bg-[#26533c]",
+    iconColor: "text-[#1b7a4b] dark:text-[#86efac]",
+    cases: [
+      {
+        id: "case-op1",
+        title: "Increasing Patient Wait Time",
+        age: "2 hrs ago",
+        severity: "High",
+      },
+      {
+        id: "case-op2",
+        title: "Surgical theater turnaround delays",
+        age: "Yesterday",
+        severity: "Medium",
+      },
+      {
+        id: "case-op3",
+        title: "ER triage admission bottleneck",
+        age: "3 days ago",
+        severity: "High",
+      },
+      {
+        id: "case-op4",
+        title: "ICU discharge clearance lag",
+        age: "04 Sept 2026",
+        severity: "Low",
+      },
+    ],
+  },
+];
+
+const pastelThemes = [
+  {
+    tabBg: "bg-[#e2daf8] dark:bg-[#342852]",
+    bodyBg: "bg-[#f4f0fd] dark:bg-[#201836]",
+    borderColor: "border-[#d9cef7] dark:border-[#423467]",
+    iconBg: "bg-[#e0d6f8] dark:bg-[#433568]",
+    iconColor: "text-[#523799] dark:text-[#c4b5fd]",
+  },
+  {
+    tabBg: "bg-[#d8ecfb] dark:bg-[#1a3650]",
+    bodyBg: "bg-[#edf6fd] dark:bg-[#122538]",
+    borderColor: "border-[#c8e4fa] dark:border-[#27496a]",
+    iconBg: "bg-[#cbe5fa] dark:bg-[#244b70]",
+    iconColor: "text-[#1e6091] dark:text-[#93c5fd]",
+  },
+  {
+    tabBg: "bg-[#fde5d2] dark:bg-[#482e18]",
+    bodyBg: "bg-[#fef4ec] dark:bg-[#2e1d0f]",
+    borderColor: "border-[#fad9be] dark:border-[#5c3b20]",
+    iconBg: "bg-[#fad7bb] dark:bg-[#5c3b20]",
+    iconColor: "text-[#a75a22] dark:text-[#fdba74]",
+  },
+  {
+    tabBg: "bg-[#d5f2e3] dark:bg-[#1b3d2b]",
+    bodyBg: "bg-[#edfbf4] dark:bg-[#132b1e]",
+    borderColor: "border-[#c3ecd5] dark:border-[#26533c]",
+    iconBg: "bg-[#c5eed7] dark:bg-[#26533c]",
+    iconColor: "text-[#1b7a4b] dark:text-[#86efac]",
   },
 ];
 
 function FoldersPage() {
   const [folders, setFolders] = useState<CaseFolder[]>(initialFolders);
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
-    "folder-pharmacy": true,
-    "folder-billing": true,
-  });
+  // Folder selected to display cases inside a modern popup
+  const [selectedFolder, setSelectedFolder] = useState<CaseFolder | null>(null);
 
   // Modal state for Create New Folder
   const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
@@ -133,45 +245,35 @@ function FoldersPage() {
   const [folderDescription, setFolderDescription] = useState("");
   const [notification, setNotification] = useState<string | null>(null);
 
-  const toggleFolder = (folderId: string) => {
-    setExpandedFolders((prev) => ({
-      ...prev,
-      [folderId]: !prev[folderId],
-    }));
-  };
-
   const handleCreateFolder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!folderName.trim()) return;
 
+    const theme = pastelThemes[folders.length % pastelThemes.length]!;
     const newFolder: CaseFolder = {
       id: `folder-${Date.now()}`,
       name: folderName.trim(),
-      department: folderDepartment.trim() || "General Operations",
+      department: folderDepartment.trim() || "General Clinical Operations",
       description:
         folderDescription.trim() ||
-        "Custom departmental collection for managing linked clinical investigations.",
-      color: "text-purple-700 dark:text-purple-300",
-      bgColor: "bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/60",
-      icon: "general",
+        "Organized folder collection for active investigations and operational drift cases.",
+      ...theme,
       cases: [],
     };
 
-    setFolders((prev) => [...prev, newFolder]);
-    setExpandedFolders((prev) => ({ ...prev, [newFolder.id]: true }));
+    setFolders([...folders, newFolder]);
+    setNotification(`Folder "${folderName.trim()}" created successfully`);
+    setTimeout(() => setNotification(null), 3000);
     setFolderName("");
     setFolderDepartment("");
     setFolderDescription("");
     setIsNewFolderOpen(false);
-
-    setNotification(`Folder "${newFolder.name}" created successfully.`);
-    setTimeout(() => setNotification(null), 3000);
   };
 
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 sm:px-6">
+      {/* Header (Fixed on scroll) */}
+      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
             <Menu className="size-6 text-muted-foreground" />
@@ -194,27 +296,33 @@ function FoldersPage() {
       </header>
 
       <div className="flex">
-        {/* Navigation Rail */}
-        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-2 md:flex">
+        {/* Navigation Rail (Fixed while scrolling) */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex sticky top-16 h-[calc(100vh-4rem)] border-r border-border/40 overflow-visible">
           {railIcons.map(({ icon: Icon, label, to, active }) => (
-            <Link
-              key={label}
-              to={to}
-              aria-label={label}
-              title={label}
-              className={`grid size-12 place-items-center rounded-full transition-colors ${
-                active
-                  ? "bg-chip-active text-chip-active-foreground"
-                  : "text-muted-foreground hover:bg-tile"
-              }`}
-            >
-              <Icon className="size-5" />
-            </Link>
+            <div key={label} className="relative group flex items-center justify-center">
+              <Link
+                to={to}
+                aria-label={label}
+                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                }`}
+              >
+                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+              </Link>
+
+              {/* Floating Tooltip on Hover */}
+              <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+                {label}
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+              </div>
+            </div>
           ))}
         </nav>
 
         {/* Main Content Area */}
-        <main className="flex-1 px-4 py-3 sm:px-6 space-y-6">
+        <main className="flex-1 px-4 pt-4 pb-12 sm:px-6 sm:pt-6 space-y-6">
           {/* Notification banner */}
           {notification && (
             <div className="rounded-2xl bg-emerald-600 text-white text-xs sm:text-sm py-2 px-4 flex items-center justify-between shadow-xs animate-in fade-in">
@@ -228,23 +336,15 @@ function FoldersPage() {
             </div>
           )}
 
-          {/* Page Title & Create New Folder Action */}
+          {/* Page Title & Count (Matching attached reference: Folders 3) */}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Link to="/" className="hover:text-foreground transition flex items-center gap-1">
-                  <ArrowLeft className="size-3.5" />
-                  Home
-                </Link>
-                <span>/</span>
-                <span className="text-foreground font-medium">Folders</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                Organize Cases in Folders
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-foreground">
+                Folders
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Group active cases and investigations by clinical department or workflow.
-              </p>
+              <span className="rounded-full bg-tile border border-border/60 px-3 py-0.5 text-xs font-semibold text-foreground">
+                {folders.length}
+              </span>
             </div>
 
             {/* Create New Folder Button */}
@@ -257,123 +357,210 @@ function FoldersPage() {
             </button>
           </div>
 
-          {/* Folders List: Pharmacy, Billing, and User-Created Folders */}
-          <div className="space-y-5">
-            {folders.map((folder) => {
-              const isExpanded = !!expandedFolders[folder.id];
-
-              return (
+          {/* Grid of Folder-shaped Cards: 4 folders in a row with reduced width */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 pt-2">
+            {folders.map((folder) => (
+              <div
+                key={folder.id}
+                onClick={() => setSelectedFolder(folder)}
+                role="button"
+                tabIndex={0}
+                className="group relative pt-4 cursor-pointer transition-all duration-200 hover:-translate-y-1 active:scale-[0.98]"
+              >
+                {/* Back Tab of the File Folder */}
                 <div
-                  key={folder.id}
-                  className="rounded-3xl bg-surface border border-border/80 overflow-hidden shadow-xs transition-all duration-200"
+                  className={`absolute top-0 left-0 w-28 sm:w-32 h-7 rounded-t-xl border-t border-l border-r ${folder.tabBg} ${folder.borderColor} transition-colors`}
+                />
+
+                {/* Main Folder Front Body */}
+                <div
+                  className={`relative rounded-2xl rounded-tl-none border ${folder.borderColor} ${folder.bodyBg} p-4.5 sm:p-5 shadow-xs group-hover:shadow-md transition-all min-h-[168px] flex flex-col justify-between`}
                 >
-                  {/* Folder Header Row */}
-                  <div
-                    onClick={() => toggleFolder(folder.id)}
-                    className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6 cursor-pointer hover:bg-tile/50 transition"
-                  >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className={`grid size-12 shrink-0 place-items-center rounded-2xl border ${folder.bgColor}`}>
-                        {folder.icon === "pharmacy" ? (
-                          <Pill className={`size-6 ${folder.color}`} />
-                        ) : folder.icon === "billing" ? (
-                          <Receipt className={`size-6 ${folder.color}`} />
-                        ) : (
-                          <Folder className={`size-6 ${folder.color}`} />
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2.5">
-                          <h2 className="text-xl font-semibold text-foreground truncate">
-                            {folder.name}
-                          </h2>
-                          <span className="rounded-full bg-tile border border-border/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            {folder.cases.length} {folder.cases.length === 1 ? "case" : "cases"}
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
-                          {folder.department}
-                        </p>
-                      </div>
+                  {/* Top Row: Folder Icon Badge & Three-dots Menu */}
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`grid size-8 place-items-center rounded-lg ${folder.iconBg} ${folder.iconColor} shadow-2xs`}
+                    >
+                      <Folder className="size-4" />
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground hidden sm:block">
-                        {isExpanded ? "Click to collapse" : "Click to view cases"}
-                      </span>
-                      <div className="grid size-8 place-items-center rounded-full bg-tile text-muted-foreground">
-                        {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                      </div>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFolder(folder);
+                      }}
+                      className="grid size-7 place-items-center rounded-full bg-white/80 dark:bg-black/30 border border-black/5 text-muted-foreground hover:text-foreground transition cursor-pointer"
+                      aria-label="Folder options"
+                    >
+                      <MoreVertical className="size-3.5" />
+                    </button>
                   </div>
 
-                  {/* Folder Cases Accordion Body */}
-                  {isExpanded && (
-                    <div className="border-t border-border/60 bg-tile/20 p-5 sm:p-6 space-y-4 animate-in fade-in duration-150">
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {folder.description}
-                      </p>
+                  {/* Folder Name & Department */}
+                  <div className="py-2">
+                    <h3 className="text-lg font-semibold tracking-tight text-foreground leading-snug line-clamp-1">
+                      {folder.name}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                      {folder.department}
+                    </p>
+                  </div>
 
-                      {folder.cases.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {folder.cases.map((c) => (
-                            <div
-                              key={c.id}
-                              className="rounded-2xl bg-surface border border-border/80 p-4.5 shadow-2xs flex flex-col justify-between space-y-3 hover:border-foreground/30 transition"
-                            >
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                  <span className="flex items-center gap-1.5">
-                                    <Clock className="size-3" />
-                                    {c.age}
-                                  </span>
-                                  {c.severity && (
-                                    <span
-                                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                        c.severity === "High"
-                                          ? "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400"
-                                          : c.severity === "Medium"
-                                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
-                                          : "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
-                                      }`}
-                                    >
-                                      {c.severity}
-                                    </span>
-                                  )}
-                                </div>
-                                <h3 className="text-sm font-semibold text-foreground leading-snug">
-                                  {c.title}
-                                </h3>
-                              </div>
-
-                              <Link
-                                to="/details"
-                                className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:underline pt-2 border-t border-border/40"
-                              >
-                                View Case Details
-                                <ArrowRight className="size-3.5" />
-                              </Link>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="rounded-2xl bg-surface border border-dashed border-border/80 p-6 text-center space-y-2">
-                          <Folder className="size-8 text-muted-foreground mx-auto" />
-                          <p className="text-sm font-medium text-foreground">No cases in this folder yet</p>
-                          <p className="text-xs text-muted-foreground">
-                            Move active cases or create a new investigation into this folder.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Bottom Row: Item Count (No profile icon as instructed) */}
+                  <div className="pt-2.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between text-xs text-muted-foreground font-medium">
+                    <span className="font-semibold text-foreground/80">
+                      {folder.cases.length} {folder.cases.length === 1 ? "item" : "items"}
+                    </span>
+                    <span className="text-brand-blue group-hover:underline flex items-center gap-1 font-medium text-xs">
+                      View cases
+                      <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                  </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </main>
       </div>
+
+      {/* POPUP MODAL: Cases Inside Folder */}
+      {selectedFolder && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedFolder(null)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-3xl bg-surface p-6 sm:p-8 shadow-2xl border border-border/80 animate-in zoom-in-95 duration-200 space-y-6 max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-border/60 pb-4">
+              <div className="flex items-center gap-3.5">
+                <div
+                  className={`grid size-11 place-items-center rounded-2xl ${selectedFolder.iconBg} ${selectedFolder.iconColor}`}
+                >
+                  <Folder className="size-5.5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                      {selectedFolder.name}
+                    </h2>
+                    <span className="rounded-full bg-tile border border-border/60 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                      {selectedFolder.cases.length} {selectedFolder.cases.length === 1 ? "case" : "cases"}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                    {selectedFolder.department}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedFolder(null)}
+                className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-tile transition cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Description */}
+            {selectedFolder.description && (
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                {selectedFolder.description}
+              </p>
+            )}
+
+            {/* Cases Inside Folder List */}
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {selectedFolder.cases.length > 0 ? (
+                selectedFolder.cases.map((c) => (
+                  <div
+                    key={c.id}
+                    className="rounded-2xl bg-tile/40 hover:bg-tile/70 border border-border/60 p-4 sm:p-5 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs"
+                  >
+                    <div className="space-y-1.5 min-w-0">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 font-medium">
+                          <Clock className="size-3" />
+                          {c.age}
+                        </span>
+                        {c.severity && (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.severity === "High"
+                              ? "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                              : c.severity === "Medium"
+                                ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                                : "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
+                              }`}
+                          >
+                            {c.severity} Priority
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm sm:text-base font-semibold text-foreground leading-snug">
+                        {c.title}
+                      </h4>
+                    </div>
+
+                    <Link
+                      to="/details"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-surface border border-border px-3.5 py-2 text-xs font-medium text-brand-blue hover:bg-tile transition shrink-0 shadow-2xs"
+                    >
+                      <span>View Details</span>
+                      <ArrowRight className="size-3.5" />
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <div className="py-10 text-center rounded-2xl bg-tile/30 border border-dashed border-border/80 p-6 space-y-2">
+                  <Folder className="size-8 text-muted-foreground mx-auto" />
+                  <p className="text-sm font-medium text-foreground">No cases in this folder yet</p>
+                  <p className="text-xs text-muted-foreground">
+                    Add active cases or create a new investigation into this folder.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="pt-4 border-t border-border/40 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  const caseTitle = prompt("Enter new case title for " + selectedFolder.name);
+                  if (caseTitle && caseTitle.trim()) {
+                    const newCase: CaseItem = {
+                      id: `case-${Date.now()}`,
+                      title: caseTitle.trim(),
+                      age: "Just now",
+                      severity: "Medium",
+                    };
+                    setFolders((prev) =>
+                      prev.map((f) =>
+                        f.id === selectedFolder.id ? { ...f, cases: [newCase, ...f.cases] } : f
+                      )
+                    );
+                    setSelectedFolder((prev) =>
+                      prev ? { ...prev, cases: [newCase, ...prev.cases] } : null
+                    );
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-2 text-xs font-medium text-foreground hover:bg-tile transition cursor-pointer"
+              >
+                <Plus className="size-3.5" />
+                Add Case to Folder
+              </button>
+
+              <button
+                onClick={() => setSelectedFolder(null)}
+                className="rounded-xl bg-foreground px-5 py-2 text-xs font-medium text-surface hover:opacity-90 transition cursor-pointer shadow-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CREATE NEW FOLDER MODAL */}
       {isNewFolderOpen && (
@@ -400,41 +587,41 @@ function FoldersPage() {
             <form onSubmit={handleCreateFolder} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  Folder Name
+                  Folder Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={folderName}
                   onChange={(e) => setFolderName(e.target.value)}
-                  placeholder="e.g. Cardiology & Vascular"
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  placeholder="e.g. Surgical Services, Trauma Triage..."
+                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  Department / Unit
+                  Department
                 </label>
                 <input
                   type="text"
                   value={folderDepartment}
                   onChange={(e) => setFolderDepartment(e.target.value)}
-                  placeholder="e.g. Inpatient Operations & Diagnostics"
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  placeholder="e.g. Surgery & Anesthesia"
+                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  Description (optional)
+                  Description
                 </label>
                 <textarea
                   rows={3}
                   value={folderDescription}
                   onChange={(e) => setFolderDescription(e.target.value)}
-                  placeholder="What types of investigations belong in this folder..."
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs resize-none"
+                  placeholder="Brief description of the cases to be grouped here..."
+                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs resize-none"
                 />
               </div>
 

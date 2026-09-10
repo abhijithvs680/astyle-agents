@@ -43,11 +43,10 @@ export const Route = createFileRoute("/data-center")({
 });
 
 const railIcons = [
-  { icon: Server, label: "Data Center", to: "/data-center", active: true },
   { icon: Home, label: "Home", to: "/" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
-  { icon: FileText, label: "Reports", to: "/details" },
+  { icon: Server, label: "Data Center", to: "/data-center", active: true },
 ];
 
 interface UploadedFile {
@@ -99,8 +98,8 @@ function DataCenterPage() {
 
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
-      {/* Header matching home page with profile icon, name, and designation on right */}
-      <header className="flex items-center justify-between px-4 py-3 sm:px-6">
+      {/* Header matching home page with profile icon, name, and designation on right (Fixed on scroll) */}
+      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
             <Menu className="size-6 text-muted-foreground" />
@@ -123,27 +122,33 @@ function DataCenterPage() {
       </header>
 
       <div className="flex">
-        {/* Navigation rail matching home page */}
-        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-2 md:flex">
+        {/* Navigation rail matching home page (Fixed while scrolling) */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex sticky top-16 h-[calc(100vh-4rem)] border-r border-border/40 overflow-visible">
           {railIcons.map(({ icon: Icon, label, to, active }) => (
-            <Link
-              key={label}
-              to={to}
-              aria-label={label}
-              title={label}
-              className={`grid size-12 place-items-center rounded-full transition-colors ${
-                active
-                  ? "bg-chip-active text-chip-active-foreground"
-                  : "text-muted-foreground hover:bg-tile"
-              }`}
-            >
-              <Icon className="size-5" />
-            </Link>
+            <div key={label} className="relative group flex items-center justify-center">
+              <Link
+                to={to}
+                aria-label={label}
+                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                }`}
+              >
+                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+              </Link>
+
+              {/* Floating Tooltip on Hover */}
+              <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+                {label}
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+              </div>
+            </div>
           ))}
         </nav>
 
         {/* Main Content Area */}
-        <main className="min-w-0 flex-1 px-3 pb-12 sm:px-6">
+        <main className="min-w-0 flex-1 px-3 pt-4 pb-12 sm:px-6 sm:pt-6">
           <div className="mx-auto max-w-3xl space-y-6 pt-2">
             {/* Sources Panel: Good Doc, Good Bank, Workflow Agent, Load More */}
             <section className="rounded-3xl bg-surface p-5 sm:p-6">

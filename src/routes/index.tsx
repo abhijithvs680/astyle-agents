@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Menu,
@@ -6,7 +6,6 @@ import {
   Database,
   Compass,
   FolderKanban,
-  FileText,
   TrendingDown,
   TrendingUp,
   ArrowRight,
@@ -17,12 +16,13 @@ import {
   Activity,
   HeartPulse,
   Stethoscope,
-  GraduationCap,
   ChevronLeft,
   ChevronRight,
   Plus,
   X,
   Radio,
+  Archive,
+  MoreVertical,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -48,11 +48,10 @@ export const Route = createFileRoute("/")({
 });
 
 const railIcons = [
-  { icon: Server, label: "Data Center", to: "/data-center" },
   { icon: Home, label: "Home", to: "/", active: true },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
-  { icon: FileText, label: "Reports", to: "#" },
+  { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
 // Colors matched exactly to the attached reference image
@@ -401,6 +400,30 @@ function Index() {
   const [mainTab, setMainTab] = useState<"investigations" | "insights">("investigations");
   const [timeFilter, setTimeFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [casesList, setCasesList] = useState(initialActiveCases);
+  const [archivedCaseTitles, setArchivedCaseTitles] = useState<string[]>([]);
+  const [openCaseMenu, setOpenCaseMenu] = useState<string | null>(null);
+  const [lastArchivedNotice, setLastArchivedNotice] = useState<string | null>(null);
+
+  const archiveCase = (title: string) => {
+    setArchivedCaseTitles((prev) => (prev.includes(title) ? prev : [...prev, title]));
+    setLastArchivedNotice(title);
+    setTimeout(() => {
+      setLastArchivedNotice((curr) => (curr === title ? null : curr));
+    }, 5000);
+  };
+
+  const restoreCase = (title: string) => {
+    setArchivedCaseTitles((prev) => prev.filter((t) => t !== title));
+    setLastArchivedNotice(null);
+  };
+
+  const displayedCases = casesList.filter((c) => !archivedCaseTitles.includes(c.title));
+
+  useEffect(() => {
+    const handleOutsideClick = () => setOpenCaseMenu(null);
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   // Modern Modal state for Add Case
   const [isAddCaseOpen, setIsAddCaseOpen] = useState(false);
@@ -441,8 +464,8 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
-      {/* Header with profile icon, name, and designation on right */}
-      <header className="flex items-center justify-between px-4 py-3 sm:px-6">
+      {/* Header with profile icon, name, and designation on right (Fixed on scroll) */}
+      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
             <Menu className="size-6 text-muted-foreground" />
@@ -463,26 +486,32 @@ function Index() {
       </header>
 
       <div className="flex">
-        {/* Navigation Rail */}
-        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-2 md:flex">
+        {/* Navigation Rail (Fixed while scrolling) */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex sticky top-16 h-[calc(100vh-4rem)] border-r border-border/40 overflow-visible">
           {railIcons.map(({ icon: Icon, label, to, active }) => (
-            <Link
-              key={label}
-              to={to}
-              aria-label={label}
-              title={label}
-              className={`grid size-12 place-items-center rounded-full transition-colors ${
-                active
-                  ? "bg-chip-active text-chip-active-foreground"
-                  : "text-muted-foreground hover:bg-tile"
-              }`}
-            >
-              <Icon className="size-5" />
-            </Link>
+            <div key={label} className="relative group flex items-center justify-center">
+              <Link
+                to={to}
+                aria-label={label}
+                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                }`}
+              >
+                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+              </Link>
+
+              {/* Floating Tooltip on Hover */}
+              <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+                {label}
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+              </div>
+            </div>
           ))}
         </nav>
 
-        <main className="min-w-0 flex-1 px-3 pb-12 sm:px-6">
+        <main className="min-w-0 flex-1 px-3 pt-4 pb-12 sm:px-6 sm:pt-6">
           {/* Main Tabs: Investigations & Insights + Top Actions */}
           <div className="flex flex-wrap items-center gap-3 pb-4">
             <Chip
@@ -501,7 +530,11 @@ function Index() {
             {/* Top Right: Add Case button with filled type */}
             <div className="ml-auto flex items-center gap-3">
               <button
-                onClick={() => setIsAddCaseOpen(true)}
+                onClick={() => {
+                  setCasePrompt("");
+                  setCaseDescription("");
+                  setIsAddCaseOpen(true);
+                }}
                 className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
               >
                 <Plus className="size-4" />
@@ -558,60 +591,131 @@ function Index() {
                   {newCases.map((c) => (
                     <div
                       key={c.title}
-                      className={`flex w-72 sm:w-[305px] shrink-0 flex-col rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm ${c.tint}`}
+                      onClick={() => {
+                        setCasePrompt(c.title);
+                        setCaseDescription(c.body);
+                        setIsAddCaseOpen(true);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      className={`group flex w-72 sm:w-[305px] shrink-0 flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
                     >
-                      <span
-                        className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
-                      >
-                        {c.up ? (
-                          <TrendingUp className="size-4 text-white" />
-                        ) : (
-                          <TrendingDown className="size-4 text-white" />
-                        )}
-                      </span>
-                      {/* Set title size to XL on all top 5 cards and explicit XL class */}
-                      <h4
-                        className={`mt-4 text-xl XL leading-snug text-[#111827] ${c.titleWeight}`}
-                      >
-                        {c.title}
-                      </h4>
-                      <p className={`mt-3 text-sm leading-relaxed ${c.bodyColor}`}>
-                        {c.body}
-                      </p>
+                      <div>
+                        <span
+                          className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
+                        >
+                          {c.up ? (
+                            <TrendingUp className="size-4 text-white" />
+                          ) : (
+                            <TrendingDown className="size-4 text-white" />
+                          )}
+                        </span>
+                        {/* Set title size to XL on all top 5 cards and explicit XL class */}
+                        <h4
+                          className={`mt-4 text-xl XL leading-snug text-[#111827] ${c.titleWeight}`}
+                        >
+                          {c.title}
+                        </h4>
+                        <p className={`mt-3 text-sm leading-relaxed ${c.bodyColor}`}>
+                          {c.body}
+                        </p>
+                      </div>
+
+                      {/* Prompt to create case with prefilled details */}
+                      <div className="mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black">
+                        <span>Create case</span>
+                        <Plus className="size-3.5 group-hover:scale-125 transition-transform" />
+                      </div>
                     </div>
                   ))}
                 </div>
               </Panel>
 
               <Panel>
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-[22px]">Active Cases</h2>
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-[22px] font-medium text-foreground">Cases</h2>
                     <button
-                      onClick={() => setIsAddCaseOpen(true)}
-                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm hover:bg-tile cursor-pointer"
+                      onClick={() => {
+                        setCasePrompt("");
+                        setCaseDescription("");
+                        setIsAddCaseOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-tile cursor-pointer text-foreground transition shadow-2xs active:scale-95"
                     >
-                      <GraduationCap className="size-4" />
-                      New Case
+                      <Plus className="size-4 text-foreground" />
+                      <span>New Case</span>
                     </button>
                   </div>
-                  <button aria-label="Expand" className="rounded-full p-1.5 hover:bg-tile">
-                    <Expand className="size-4 text-muted-foreground" />
+
+                  <button aria-label="Expand" className="rounded-full p-1.5 hover:bg-tile text-muted-foreground hover:text-foreground transition cursor-pointer">
+                    <Expand className="size-4" />
                   </button>
                 </div>
+
+                {lastArchivedNotice && (
+                  <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-foreground shadow-2xs animate-in fade-in">
+                    <div className="flex items-center gap-2">
+                      <Archive className="size-3.5 text-amber-600 dark:text-amber-400" />
+                      <span>Case <strong>"{lastArchivedNotice}"</strong> has been archived.</span>
+                    </div>
+                    <button
+                      onClick={() => restoreCase(lastArchivedNotice)}
+                      className="text-xs font-semibold text-brand-blue hover:underline cursor-pointer ml-3"
+                    >
+                      Undo
+                    </button>
+                  </div>
+                )}
+
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {casesList.map((c, i) => {
+                  {displayedCases.map((c, i) => {
                     const isLive = c.title === "Increasing Patient Wait Time";
                     return (
-                      <div key={`${c.title}-${i}`} className="flex flex-col rounded-2xl bg-tile p-5 relative">
+                      <div key={`${c.title}-${i}`} className="flex flex-col rounded-2xl bg-tile p-5 relative group">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">{c.age || "\u00A0"}</span>
-                          {isLive && (
-                            <span className="relative flex size-2.5" title="Live" aria-label="Live">
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                              <span className="relative inline-flex size-2.5 rounded-full bg-red-500"></span>
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2 relative">
+                            {isLive && (
+                              <span className="relative flex size-2.5" title="Live" aria-label="Live">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex size-2.5 rounded-full bg-red-500"></span>
+                              </span>
+                            )}
+
+                            {/* Three dot action menu containing Archive */}
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenCaseMenu(openCaseMenu === c.title ? null : c.title);
+                                }}
+                                className="p-1 rounded-full hover:bg-surface border border-transparent hover:border-border/60 text-muted-foreground hover:text-foreground transition cursor-pointer"
+                                title="Case actions"
+                                aria-label="Case actions"
+                              >
+                                <MoreVertical className="size-4" />
+                              </button>
+
+                              {openCaseMenu === c.title && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+                                >
+                                  <button
+                                    onClick={() => {
+                                      archiveCase(c.title);
+                                      setOpenCaseMenu(null);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground hover:bg-tile hover:text-amber-700 dark:hover:text-amber-300 transition cursor-pointer"
+                                  >
+                                    <Archive className="size-3.5 text-amber-600 dark:text-amber-400" />
+                                    <span>Archive Case</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                         <h4 className="mt-5 text-lg font-medium text-foreground">
                           {c.title}
@@ -619,22 +723,34 @@ function Index() {
                         <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
                           {c.body}
                         </p>
-                        <Link
-                          to="/details"
-                          className="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-blue hover:bg-tile transition cursor-pointer"
-                        >
-                          Case details
-                          <ArrowRight className="size-4" />
-                        </Link>
+
+                        <div className="mt-5 flex items-center justify-between gap-2">
+                          <Link
+                            to="/details"
+                            className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-blue hover:bg-tile transition cursor-pointer"
+                          >
+                            Case details
+                            <ArrowRight className="size-4" />
+                          </Link>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="mt-8 text-center">
-                  <button className="text-lg text-foreground hover:text-brand-blue">
-                    Load more
-                  </button>
-                </div>
+
+                {displayedCases.length === 0 && (
+                  <div className="py-12 text-center rounded-2xl bg-surface border border-border/60 p-6 text-sm text-muted-foreground">
+                    No active cases found. You can create a case using the "New Case" button.
+                  </div>
+                )}
+
+                {displayedCases.length > 0 && (
+                  <div className="mt-8 text-center">
+                    <button className="text-lg text-foreground hover:text-brand-blue">
+                      Load more
+                    </button>
+                  </div>
+                )}
               </Panel>
             </div>
           )}
@@ -744,7 +860,7 @@ function Index() {
                               <span className="font-medium text-foreground">{card.previous}</span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">Automated Result</span>
+                              <span className="text-muted-foreground">Current status</span>
                               <span className="font-bold text-emerald-600 dark:text-emerald-400">
                                 {card.current}
                               </span>
