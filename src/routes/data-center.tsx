@@ -154,10 +154,21 @@ function DataCenterPage() {
           <div className="mx-auto max-w-3xl space-y-6 pt-2">
             {/* Sources Panel: Good Doc, Good Bank, Workflow Agent, Load More */}
             <section className="rounded-3xl bg-surface p-5 sm:p-6">
-              <h2 className="text-[22px]">Connected Services</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Connect external accounts to feed live documents and financial data into your workspace.
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[22px]">Connected Services</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Connect external accounts to feed live documents and financial data into your workspace.
+                  </p>
+                </div>
+                <Link
+                  to="/welcome"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-blue hover:underline"
+                >
+                  New user setup
+                  <Plus className="size-3.5" />
+                </Link>
+              </div>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 {/* Good Doc Card - Selected */}
