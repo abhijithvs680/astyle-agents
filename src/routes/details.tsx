@@ -29,6 +29,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AIAssistantDefaultView } from "../components/AIAssistantDefaultView";
+import { ScanningRadarIcon } from "../components/ScanningRadarIcon";
 
 export const Route = createFileRoute("/details")({
   head: () => ({
@@ -671,7 +672,7 @@ function CaseDetailsPage() {
           >
             {isFollowing ? (
               <>
-                <Check className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <ScanningRadarIcon size={16} />
                 <span>Continuous Auditing</span>
               </>
             ) : (

@@ -104,13 +104,13 @@ const initialFolders: CaseFolder[] = [
     cases: [
       {
         id: "case-n1",
-        title: "Patient volume dropped by 14%",
+        title: "3 Cross-sell opportunity identified",
         age: "02 Sept 2026, 11:20 am",
         severity: "High",
       },
       {
         id: "case-n2",
-        title: "7 doctors show low utilization",
+        title: "2 Discount leakage identified",
         age: "Yesterday",
         severity: "Medium",
       },
@@ -305,12 +305,12 @@ function FoldersPage() {
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${active
-                  ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${active
+                  ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tile"
                   }`}
               >
-                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+                <Icon className="size-5" />
               </Link>
 
               {/* Floating Tooltip on Hover */}

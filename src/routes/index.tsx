@@ -22,10 +22,12 @@ import {
   Plus,
   X,
   Radio,
+  Radar,
   Archive,
   MoreVertical,
   ChevronDown,
 } from "lucide-react";
+import { ScanningRadarIcon } from "../components/ScanningRadarIcon";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,16 +63,18 @@ const railIcons = [
 const newCases = [
   {
     up: true,
-    tint: "bg-[#d8f6de]",
+    tint: "bg-gradient-to-br from-[#e8fbee] via-[#d8f6de] to-[#c2eed0]",
+    hoverGradient: "bg-gradient-to-br from-[#d4f6dc] via-[#bbf0c8] to-[#9ee5b0]",
     iconTint: "bg-[#107f47]",
-    title: "Patient volume dropped by 14%",
+    title: "3 Cross-sell opportunity identified",
     titleWeight: "font-medium",
-    body: "A significant decline in patient visits was detected compared with the previous period.",
+    body: "Prescription attach rate analysis identified high-conversion ancillary lab and wellness packages.",
     bodyColor: "text-[#264431]",
   },
   {
     up: false,
-    tint: "bg-[#f4dbf8]",
+    tint: "bg-gradient-to-br from-[#faecfd] via-[#f4dbf8] to-[#e8c7f2]",
+    hoverGradient: "bg-gradient-to-br from-[#f6ddfc] via-[#eebeef] to-[#e3a4e4]",
     iconTint: "bg-[#dc2626]",
     title: "OP cancellations increased by 18%",
     titleWeight: "font-medium",
@@ -79,7 +83,8 @@ const newCases = [
   },
   {
     up: false,
-    tint: "bg-[#d8ecfe]",
+    tint: "bg-gradient-to-br from-[#eaf4fe] via-[#d8ecfe] to-[#bfdffa]",
+    hoverGradient: "bg-gradient-to-br from-[#d7ebfd] via-[#bfdefc] to-[#9ecbf9]",
     iconTint: "bg-[#dc2626]",
     title: "Complaint volume increased by 16%",
     titleWeight: "font-semibold",
@@ -88,16 +93,18 @@ const newCases = [
   },
   {
     up: true,
-    tint: "bg-[#d8f6de]",
+    tint: "bg-gradient-to-br from-[#e8fbee] via-[#d8f6de] to-[#c2eed0]",
+    hoverGradient: "bg-gradient-to-br from-[#d4f6dc] via-[#bbf0c8] to-[#9ee5b0]",
     iconTint: "bg-[#107f47]",
-    title: "7 doctors show low utilization",
+    title: "2 Discount leakage identified",
     titleWeight: "font-medium",
-    body: "Consultation capacity is significantly underused for selected doctors.",
+    body: "Unapproved concession overrides and compounding pharmacy discounts exceeded departmental margin thresholds.",
     bodyColor: "text-[#264431]",
   },
   {
     up: false,
-    tint: "bg-[#fedfc3]",
+    tint: "bg-gradient-to-br from-[#fff0e2] via-[#fedfc3] to-[#fbcfa8]",
+    hoverGradient: "bg-gradient-to-br from-[#ffe4cc] via-[#fecda4] to-[#fdb57d]",
     iconTint: "bg-[#dc2626]",
     title: "4 lab revenue anomalies found",
     titleWeight: "font-medium",
@@ -111,6 +118,7 @@ interface ActiveCaseItem {
   title: string;
   body: string;
   expiryDate?: string | undefined;
+  isLive?: boolean | undefined;
 }
 
 const initialActiveCases: ActiveCaseItem[] = [
@@ -118,6 +126,7 @@ const initialActiveCases: ActiveCaseItem[] = [
     age: "Just now",
     title: "Q3 Revenue Drop & Margin Compression Analysis",
     body: "Overall chain revenue declined 11.4% MoM in August, driven by acute chronic stockouts ($142k lost) and a 19% drop in footfall.",
+    isLive: true,
   },
   {
     age: "2 hrs ago",
@@ -128,6 +137,7 @@ const initialActiveCases: ActiveCaseItem[] = [
     age: "2 hrs ago",
     title: "Increasing Patient Wait Time",
     body: "Average patient waiting time increased from 34 to 49 minutes over the last quarter.",
+    isLive: true,
   },
   {
     age: "4 hrs ago",
@@ -427,6 +437,18 @@ function Index() {
     setLastArchivedNotice(null);
   };
 
+  const toggleLiveMonitoring = (title: string) => {
+    setCasesList((prev) =>
+      prev.map((c) => {
+        if (c.title === title) {
+          const currentLive = c.isLive ?? (c.title === "Increasing Patient Wait Time" || c.title === "Q3 Revenue Drop & Margin Compression Analysis");
+          return { ...c, isLive: !currentLive };
+        }
+        return c;
+      })
+    );
+  };
+
   const displayedCases = casesList.filter((c) => !archivedCaseTitles.includes(c.title));
 
   useEffect(() => {
@@ -464,6 +486,7 @@ function Index() {
         caseDescription.trim() ||
         "AI automated discovery scan initialized across clinical scheduling and billing repositories.",
       expiryDate: caseExpiryDate ? caseExpiryDate : undefined,
+      isLive: caseExpiryDate === "Until I stop" || !caseExpiryDate,
     };
     setCasesList([newCase, ...casesList]);
     setCasePrompt("");
@@ -507,12 +530,12 @@ function Index() {
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${active
-                  ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${active
+                  ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tile"
                   }`}
               >
-                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+                <Icon className="size-5" />
               </Link>
 
               {/* Floating Tooltip on Hover */}
@@ -608,11 +631,16 @@ function Index() {
                       }}
                       role="button"
                       tabIndex={0}
-                      className={`group relative overflow-hidden flex w-72 sm:w-[305px] shrink-0 flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
+                      className={`group relative overflow-hidden flex w-72 sm:w-[305px] shrink-0 flex-col justify-between rounded-3xl p-5 sm:p-6 cursor-pointer ${c.tint}`}
                     >
+                      {/* Hover Gradient Overlay (Smoothly shifts gradient color on hover) */}
+                      <div
+                        className={`pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${c.hoverGradient}`}
+                      />
+
                       {/* Minimal Top-Side Light Background Pattern (3x3 Dot Grid matching OP cancellations card) */}
                       <svg
-                        className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15 transition-transform duration-300 group-hover:scale-110"
+                        className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15"
                         viewBox="0 0 36 36"
                         fill="none"
                         aria-hidden="true"
@@ -651,9 +679,9 @@ function Index() {
                       </div>
 
                       {/* Prompt to create case with prefilled details */}
-                      <div className="relative z-10 mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black">
+                      <div className="relative z-10 mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black transition-colors">
                         <span>Create case</span>
-                        <Plus className="size-3.5 group-hover:scale-125 transition-transform" />
+                        <Plus className="size-3.5" />
                       </div>
                     </div>
                   ))}
@@ -699,7 +727,7 @@ function Index() {
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {displayedCases.map((c, i) => {
-                    const isLive = c.title === "Increasing Patient Wait Time";
+                    const isLive = c.isLive ?? (c.title === "Increasing Patient Wait Time" || c.title === "Q3 Revenue Drop & Margin Compression Analysis");
                     return (
                       <div key={`${c.title}-${i}`} className="flex flex-col rounded-2xl bg-tile p-5 relative group">
                         <div className="flex items-center justify-between">
@@ -713,13 +741,17 @@ function Index() {
                           </div>
                           <div className="flex items-center gap-2 relative">
                             {isLive && (
-                              <span className="relative flex size-2.5" title="Live" aria-label="Live">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex size-2.5 rounded-full bg-red-500"></span>
+                              <span
+                                className="inline-flex items-center gap-1.5 rounded-full bg-[#f0f8ff] px-2.5 py-0.5 text-emerald-800 dark:text-emerald-900 border border-emerald-500/30 text-[11px] font-medium shadow-2xs"
+                                title="Continuous monitoring — Auditing mode is active"
+                                aria-label="Continuous monitoring — Auditing mode is active"
+                              >
+                                <ScanningRadarIcon size={18} />
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-900">Auditing</span>
                               </span>
                             )}
 
-                            {/* Three dot action menu containing Archive */}
+                            {/* Three dot action menu containing Archive and Auditing toggle */}
                             <div className="relative">
                               <button
                                 onClick={(e) => {
@@ -736,8 +768,18 @@ function Index() {
                               {openCaseMenu === c.title && (
                                 <div
                                   onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+                                  className="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
                                 >
+                                  <button
+                                    onClick={() => {
+                                      toggleLiveMonitoring(c.title);
+                                      setOpenCaseMenu(null);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground hover:bg-tile hover:text-emerald-700 dark:hover:text-emerald-300 transition cursor-pointer"
+                                  >
+                                    <ScanningRadarIcon size={15} />
+                                    <span>{isLive ? "Pause Auditing" : "Enable Auditing"}</span>
+                                  </button>
                                   <button
                                     onClick={() => {
                                       archiveCase(c.title);
