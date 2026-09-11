@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  ArrowDown,
   ArrowRight,
   Check,
   CheckCircle2,
@@ -9,9 +10,13 @@ import {
   FileText,
   Landmark,
   Loader2,
+  Radio,
   RotateCw,
+  ShieldCheck,
+  Sparkles,
   Table2,
   Trash2,
+  TrendingUp,
   UploadCloud,
   Workflow,
 } from "lucide-react";
@@ -19,19 +24,25 @@ import {
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Welcome — CXO Platform" },
+      { title: "Welcome — CXO" },
       {
         name: "description",
         content:
-          "Welcome to CXO. Connect Good Doc, Good Bank, and your operational data to get started.",
+          "Welcome to CXO. Connect Good Doc, Good Bank, and operational data to surface cases from day one.",
       },
-      { property: "og:title", content: "Welcome — CXO Platform" },
+      { property: "og:title", content: "Welcome — CXO" },
       {
         property: "og:description",
         content: "Connect Good Doc, Good Bank, and upload files to start analyzing cases.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&display=swap",
+      },
     ],
   }),
   component: WelcomePage,
@@ -91,6 +102,45 @@ const services: {
   },
 ];
 
+const featureBanners = [
+  {
+    id: "cases",
+    eyebrow: "Case intelligence",
+    title: "Cases appear the moment ops drift",
+    body: "CXO watches scheduling, billing, and clinical signals so anomalies become actionable cases—not buried reports.",
+    icon: Radio,
+    image: "/medical_scan.jpg",
+    tone: "from-[oklch(0.28_0.05_250)] to-[oklch(0.38_0.08_230)]",
+  },
+  {
+    id: "connect",
+    eyebrow: "Live connectors",
+    title: "Good Doc and Good Bank, linked in minutes",
+    body: "Authorize document and treasury feeds once. CXO keeps operational and financial context in the same workspace.",
+    icon: Landmark,
+    image: "/medical_lab.jpg",
+    tone: "from-[oklch(0.30_0.06_160)] to-[oklch(0.36_0.07_200)]",
+  },
+  {
+    id: "insights",
+    eyebrow: "Executive feed",
+    title: "Revenue and care signals in one stream",
+    body: "Margin pressure, wait-time spikes, and utilization gaps surface together so leadership can act with shared context.",
+    icon: TrendingUp,
+    image: "/medical_surgery.jpg",
+    tone: "from-[oklch(0.32_0.06_40)] to-[oklch(0.38_0.08_55)]",
+  },
+  {
+    id: "secure",
+    eyebrow: "Enterprise intake",
+    title: "Upload internal files when systems lag",
+    body: "Drop spreadsheets, audits, and PDFs into Data Center. Sensitive ops files stay inside your controlled workspace.",
+    icon: ShieldCheck,
+    image: "/medical_lab.jpg",
+    tone: "from-[oklch(0.30_0.04_280)] to-[oklch(0.36_0.06_250)]",
+  },
+];
+
 interface UploadedFile {
   name: string;
   size: string;
@@ -111,12 +161,19 @@ function WelcomePage() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [finishing, setFinishing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const featuresRef = useRef<HTMLElement>(null);
 
   const primaryServices = services.slice(0, 3);
   const extraServices = services.slice(3);
   const visibleServices = showMore ? services : primaryServices;
   const connectedCount = Object.values(connected).filter(Boolean).length;
   const canContinueFromConnect = connectedCount > 0;
+
+  const startConnect = () => setStep(1);
+
+  const scrollToFeatures = () => {
+    featuresRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const handleConnectService = (service: (typeof services)[number]) => {
     if (connected[service.id]) {
@@ -153,6 +210,213 @@ function WelcomePage() {
     }, 900);
   };
 
+  if (step === 0) {
+    return (
+      <div className="min-h-screen bg-[oklch(0.97_0.01_230)] font-sans text-foreground">
+        <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-5 sm:px-8">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-semibold text-surface shadow-xs">
+              CX
+            </span>
+            <span
+              className="text-2xl tracking-tight text-surface sm:text-[28px]"
+              style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+            >
+              CXO
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={scrollToFeatures}
+              className="hidden text-sm text-surface/80 hover:text-surface transition sm:inline cursor-pointer"
+            >
+              Features
+            </button>
+            <Link
+              to="/"
+              className="text-sm text-surface/80 hover:text-surface transition"
+            >
+              Skip for now
+            </Link>
+          </div>
+        </header>
+
+        {/* Full-bleed hero — one composition */}
+        <section className="relative isolate flex min-h-[100svh] items-end overflow-hidden">
+          <img
+            src="/medical_surgery.jpg"
+            alt=""
+            className="absolute inset-0 size-full object-cover welcome-hero-pan"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,oklch(0.22_0.04_240_/0.45)_0%,oklch(0.18_0.05_230_/0.55)_42%,oklch(0.16_0.04_220_/0.88)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_10%,oklch(0.55_0.08_200_/0.25),transparent_55%)]" />
+
+          <div className="relative z-10 w-full px-4 pb-16 pt-28 sm:px-8 sm:pb-20">
+            <div className="welcome-hero-copy max-w-3xl">
+              <p
+                className="text-sm font-semibold tracking-[0.2em] text-[oklch(0.86_0.04_200)] uppercase"
+                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+              >
+                CXO
+              </p>
+              <h1
+                className="mt-4 max-w-2xl text-4xl font-semibold leading-[1.05] tracking-tight text-surface sm:text-6xl"
+                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+              >
+                Welcome. Your hospital ops, finally readable.
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-surface/85 sm:text-lg">
+                Connect Good Doc, Good Bank, and the rest of your stack so CXO can open cases
+                before the next board deck is late.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={startConnect}
+                  className="inline-flex items-center gap-2 rounded-full bg-surface px-6 py-3 text-sm font-semibold text-foreground hover:bg-surface/95 transition cursor-pointer"
+                >
+                  Connect your data
+                  <ArrowRight className="size-4" />
+                </button>
+                <button
+                  onClick={scrollToFeatures}
+                  className="inline-flex items-center gap-2 rounded-full border border-surface/35 bg-surface/10 px-5 py-3 text-sm font-medium text-surface backdrop-blur-sm hover:bg-surface/15 transition cursor-pointer"
+                >
+                  See what CXO unlocks
+                  <ArrowDown className="size-4 welcome-bounce" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Feature banners */}
+        <section ref={featuresRef} className="px-4 py-16 sm:px-8 sm:py-20">
+          <div className="mx-auto max-w-6xl">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-blue">
+                Built for operators
+              </p>
+              <h2
+                className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+              >
+                Feature banners that map to your first week
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Start with connectors, then let CXO watch the feeds that already run your
+                hospitals.
+              </p>
+            </div>
+
+            <div className="mt-10 space-y-5">
+              {featureBanners.map((banner, index) => {
+                const Icon = banner.icon;
+                const reverse = index % 2 === 1;
+                return (
+                  <article
+                    key={banner.id}
+                    className={`welcome-banner group relative overflow-hidden rounded-[28px] bg-gradient-to-br ${banner.tone}`}
+                    style={{ animationDelay: `${index * 80}ms` }}
+                  >
+                    <div
+                      className={`grid min-h-[240px] items-stretch sm:min-h-[280px] ${
+                        reverse ? "sm:grid-cols-[1.05fr_0.95fr]" : "sm:grid-cols-[0.95fr_1.05fr]"
+                      }`}
+                    >
+                      <div
+                        className={`relative flex flex-col justify-end p-6 sm:p-8 ${
+                          reverse ? "sm:order-2" : ""
+                        }`}
+                      >
+                        <span className="mb-4 grid size-11 place-items-center rounded-2xl bg-surface/15 text-surface backdrop-blur-sm">
+                          <Icon className="size-5" />
+                        </span>
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-surface/70">
+                          {banner.eyebrow}
+                        </p>
+                        <h3
+                          className="mt-2 max-w-md text-2xl font-semibold leading-tight text-surface sm:text-3xl"
+                          style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+                        >
+                          {banner.title}
+                        </h3>
+                        <p className="mt-3 max-w-md text-sm leading-relaxed text-surface/80">
+                          {banner.body}
+                        </p>
+                      </div>
+                      <div
+                        className={`relative min-h-[180px] overflow-hidden ${
+                          reverse ? "sm:order-1" : ""
+                        }`}
+                      >
+                        <img
+                          src={banner.image}
+                          alt=""
+                          className="absolute inset-0 size-full object-cover opacity-80 transition duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent sm:bg-gradient-to-r sm:from-transparent sm:via-transparent sm:to-black/10" />
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Sources strip */}
+        <section className="border-y border-border/70 bg-surface px-4 py-12 sm:px-8">
+          <div className="mx-auto max-w-6xl">
+            <p className="text-center text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Connect on day one
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+              {services.map((service) => {
+                const Icon = service.icon;
+                return (
+                  <div
+                    key={service.id}
+                    className="inline-flex items-center gap-2.5 rounded-full border border-border bg-tile/60 px-4 py-2.5"
+                  >
+                    <span className={`grid size-8 place-items-center rounded-full ${service.tint}`}>
+                      <Icon className="size-3.5" />
+                    </span>
+                    <span className="text-sm font-medium text-foreground">{service.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Closing CTA */}
+        <section className="relative overflow-hidden px-4 py-16 sm:px-8 sm:py-20">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,oklch(0.92_0.03_220),transparent_60%)]" />
+          <div className="relative mx-auto max-w-3xl text-center">
+            <Sparkles className="mx-auto size-6 text-brand-blue" />
+            <h2
+              className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+              style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+            >
+              Ready when your data is
+            </h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Connect at least one source—Good Doc or Good Bank is enough to open your first live
+              cases.
+            </p>
+            <button
+              onClick={startConnect}
+              className="mt-8 inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3.5 text-sm font-semibold text-surface hover:opacity-90 transition cursor-pointer"
+            >
+              Start connecting
+              <ArrowRight className="size-4" />
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       <header className="flex items-center justify-between px-4 py-4 sm:px-6">
@@ -160,13 +424,12 @@ function WelcomePage() {
           <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-surface shadow-xs">
             CX
           </span>
-          <span className="text-xl sm:text-[22px]">CXO</span>
+          <span className="text-xl sm:text-[22px]" style={{ fontFamily: "Syne, Archivo, sans-serif" }}>
+            CXO
+          </span>
         </div>
         {step < 3 && (
-          <Link
-            to="/"
-            className="text-sm text-muted-foreground hover:text-foreground transition"
-          >
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition">
             Skip for now
           </Link>
         )}
@@ -198,45 +461,14 @@ function WelcomePage() {
         )}
 
         <section className="rounded-3xl bg-surface p-5 sm:p-7">
-          {step === 0 && (
-            <div className="py-4 text-center sm:py-8">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-blue">
-                Getting started
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Welcome to CXO
-              </h1>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Connect your operational sources so CXO can surface cases, revenue signals, and
-                clinical insights from day one.
-              </p>
-
-              <div className="mx-auto mt-8 grid max-w-lg gap-3 text-left sm:grid-cols-3">
-                {[
-                  { label: "Step 1", body: "Connect Good Doc, Good Bank & more" },
-                  { label: "Step 2", body: "Upload internal files if needed" },
-                  { label: "Step 3", body: "Open your cases dashboard" },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-2xl bg-tile p-4">
-                    <p className="text-xs font-medium text-brand-blue">{item.label}</p>
-                    <p className="mt-1 text-sm text-foreground">{item.body}</p>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setStep(1)}
-                className="mt-8 inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
-              >
-                Connect your data
-                <ArrowRight className="size-4" />
-              </button>
-            </div>
-          )}
-
           {step === 1 && (
             <>
-              <h2 className="text-[22px]">Connect your data</h2>
+              <h2
+                className="text-[22px] font-semibold"
+                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+              >
+                Connect your data
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Connect external accounts to feed live documents and financial data into your
                 workspace. Connect at least one service to continue.
@@ -309,7 +541,12 @@ function WelcomePage() {
             <>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-[22px]">Upload files</h2>
+                  <h2
+                    className="text-[22px] font-semibold"
+                    style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+                  >
+                    Upload files
+                  </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Optionally upload spreadsheets, documents, or reports for analysis. You can
                     skip this and add files later in Data Center.
@@ -382,7 +619,12 @@ function WelcomePage() {
           {step === 3 && (
             <div className="py-8 text-center">
               <CheckCircle2 className="mx-auto size-12 text-positive" />
-              <h2 className="mt-4 text-[22px]">You&apos;re ready</h2>
+              <h2
+                className="mt-4 text-[22px] font-semibold"
+                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+              >
+                You&apos;re ready
+              </h2>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                 {connectedCount > 0
                   ? `${connectedCount} service${connectedCount === 1 ? "" : "s"} connected`
@@ -457,7 +699,7 @@ function WelcomePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="flex w-full max-w-sm flex-col items-center space-y-5 rounded-3xl border border-border/80 bg-surface p-8 text-center shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="relative flex items-center justify-center">
-              <div className="size-16 animate-spin rounded-full border-3 border-brand-blue/20 border-t-brand-blue" />
+              <div className="size-16 animate-spin rounded-full border-[3px] border-brand-blue/20 border-t-brand-blue" />
               <div className="absolute flex size-9 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
                 <RotateCw className="size-5 animate-spin" />
               </div>
