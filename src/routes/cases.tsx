@@ -13,6 +13,7 @@ import {
   Search,
   CheckCircle2,
 } from "lucide-react";
+import { ScanningRadarIcon } from "../components/ScanningRadarIcon";
 
 export const Route = createFileRoute("/cases")({
   head: () => ({
@@ -190,9 +191,12 @@ const renderStatusBadge = (status: CaseRow["status"]) => {
       );
     case "Live":
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/60 px-2.5 py-0.5 text-xs font-medium">
-          <span className="size-1.5 rounded-full bg-rose-500 animate-ping" />
-          Live
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full bg-[#f0f8ff] text-emerald-800 dark:text-emerald-900 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-medium shadow-2xs"
+          title="Continuous monitoring — Auditing active"
+        >
+          <ScanningRadarIcon size={14} />
+          Auditing
         </span>
       );
     case "Archived":
@@ -310,12 +314,12 @@ function CasesPage() {
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${active
-                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
-                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${active
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile"
                   }`}
               >
-                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+                <Icon className="size-5" />
               </Link>
 
               {/* Floating Tooltip on Hover */}
@@ -454,9 +458,11 @@ function CasesPage() {
                               </span>
                             )}
                             {isLive && (
-                              <span className="relative flex size-2 shrink-0">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                                <span className="relative inline-flex size-2 rounded-full bg-red-500" />
+                              <span
+                                title="Continuous monitoring — Auditing active"
+                                className="inline-flex items-center shrink-0"
+                              >
+                                <ScanningRadarIcon size={16} />
                               </span>
                             )}
                             <Link

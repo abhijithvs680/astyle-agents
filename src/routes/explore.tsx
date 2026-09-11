@@ -40,6 +40,7 @@ const railIcons = [
 interface ExploreCase {
   up: boolean;
   tint: string;
+  hoverGradient: string;
   iconTint: string;
   title: string;
   titleWeight: string;
@@ -51,16 +52,18 @@ interface ExploreCase {
 const exploreCases: ExploreCase[] = [
   {
     up: true,
-    tint: "bg-[#d8f6de]",
+    tint: "bg-gradient-to-br from-[#e8fbee] via-[#d8f6de] to-[#c2eed0]",
+    hoverGradient: "bg-gradient-to-br from-[#d4f6dc] via-[#bbf0c8] to-[#9ee5b0]",
     iconTint: "bg-[#107f47]",
-    title: "Patient volume dropped by 14%",
+    title: "3 Cross-sell opportunity identified",
     titleWeight: "font-medium",
-    body: "A significant decline in patient visits was detected compared with the previous period.",
+    body: "Prescription attach rate analysis identified high-conversion ancillary lab and wellness packages.",
     bodyColor: "text-[#3b5e48]",
   },
   {
     up: false,
-    tint: "bg-[#f4dbf8]",
+    tint: "bg-gradient-to-br from-[#faecfd] via-[#f4dbf8] to-[#e8c7f2]",
+    hoverGradient: "bg-gradient-to-br from-[#f6ddfc] via-[#eebeef] to-[#e3a4e4]",
     iconTint: "bg-[#dc2626]",
     title: "OP cancellations increased by 18%",
     titleWeight: "font-medium",
@@ -69,7 +72,8 @@ const exploreCases: ExploreCase[] = [
   },
   {
     up: false,
-    tint: "bg-[#d8ecfe]",
+    tint: "bg-gradient-to-br from-[#eaf4fe] via-[#d8ecfe] to-[#bfdffa]",
+    hoverGradient: "bg-gradient-to-br from-[#d7ebfd] via-[#bfdefc] to-[#9ecbf9]",
     iconTint: "bg-[#dc2626]",
     title: "Complaint volume increased by 16%",
     titleWeight: "font-semibold",
@@ -78,16 +82,18 @@ const exploreCases: ExploreCase[] = [
   },
   {
     up: true,
-    tint: "bg-[#d8f6de]",
+    tint: "bg-gradient-to-br from-[#e8fbee] via-[#d8f6de] to-[#c2eed0]",
+    hoverGradient: "bg-gradient-to-br from-[#d4f6dc] via-[#bbf0c8] to-[#9ee5b0]",
     iconTint: "bg-[#107f47]",
-    title: "7 doctors show low utilization",
+    title: "2 Discount leakage identified",
     titleWeight: "font-medium",
-    body: "Consultation capacity is significantly underused for selected doctors.",
+    body: "Unapproved concession overrides and compounding pharmacy discounts exceeded departmental margin thresholds.",
     bodyColor: "text-[#3b5e48]",
   },
   {
     up: false,
-    tint: "bg-[#fedfc3]",
+    tint: "bg-gradient-to-br from-[#fff0e2] via-[#fedfc3] to-[#fbcfa8]",
+    hoverGradient: "bg-gradient-to-br from-[#ffe4cc] via-[#fecda4] to-[#fdb57d]",
     iconTint: "bg-[#dc2626]",
     title: "4 lab revenue anomalies found",
     titleWeight: "font-medium",
@@ -96,7 +102,8 @@ const exploreCases: ExploreCase[] = [
   },
   {
     up: false,
-    tint: "bg-[#f4dbf8]",
+    tint: "bg-gradient-to-br from-[#faecfd] via-[#f4dbf8] to-[#e8c7f2]",
+    hoverGradient: "bg-gradient-to-br from-[#f6ddfc] via-[#eebeef] to-[#e3a4e4]",
     iconTint: "bg-[#dc2626]",
     title: "Operating Room turnover delay by 18%",
     titleWeight: "font-medium",
@@ -105,7 +112,8 @@ const exploreCases: ExploreCase[] = [
   },
   {
     up: true,
-    tint: "bg-[#d8f6de]",
+    tint: "bg-gradient-to-br from-[#e8fbee] via-[#d8f6de] to-[#c2eed0]",
+    hoverGradient: "bg-gradient-to-br from-[#d4f6dc] via-[#bbf0c8] to-[#9ee5b0]",
     iconTint: "bg-[#107f47]",
     title: "Pharmacy low sales share despite moderate stock",
     titleWeight: "font-medium",
@@ -114,7 +122,8 @@ const exploreCases: ExploreCase[] = [
   },
   {
     up: false,
-    tint: "bg-[#fedfc3]",
+    tint: "bg-gradient-to-br from-[#fff0e2] via-[#fedfc3] to-[#fbcfa8]",
+    hoverGradient: "bg-gradient-to-br from-[#ffe4cc] via-[#fecda4] to-[#fdb57d]",
     iconTint: "bg-[#dc2626]",
     title: "Inpatient discharge turnaround lag",
     titleWeight: "font-medium",
@@ -188,13 +197,13 @@ function ExplorePage() {
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
+                className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
                   active
-                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
-                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile"
                 }`}
               >
-                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+                <Icon className="size-5" />
               </Link>
 
               {/* Floating Tooltip on Hover */}
@@ -268,11 +277,16 @@ function ExplorePage() {
                 onClick={() => handleOpenCreateForInsight(c.title, c.body)}
                 role="button"
                 tabIndex={0}
-                className={`group relative overflow-hidden flex flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
+                className={`group relative overflow-hidden flex flex-col justify-between rounded-3xl p-5 sm:p-6 cursor-pointer ${c.tint}`}
               >
+                {/* Hover Gradient Overlay (Smoothly shifts gradient color on hover) */}
+                <div
+                  className={`pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${c.hoverGradient}`}
+                />
+
                 {/* Minimal Top-Side Light Background Pattern (3x3 Dot Grid matching OP cancellations card) */}
                 <svg
-                  className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15 transition-transform duration-300 group-hover:scale-110"
+                  className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15"
                   viewBox="0 0 36 36"
                   fill="none"
                   aria-hidden="true"
@@ -310,9 +324,9 @@ function ExplorePage() {
                 </div>
 
                 {/* Prompt to create case with prefilled details */}
-                <div className="mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black">
+                <div className="relative z-10 mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black transition-colors">
                   <span>Create case</span>
-                  <Plus className="size-3.5 group-hover:scale-125 transition-transform" />
+                  <Plus className="size-3.5" />
                 </div>
               </div>
             ))}

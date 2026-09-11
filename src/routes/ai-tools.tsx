@@ -142,13 +142,13 @@ Ready to commit and deploy this schema definition to your active data center bra
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
+                className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
                   active
-                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
-                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile"
                 }`}
               >
-                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+                <Icon className="size-5" />
               </Link>
 
               {/* Floating Tooltip on Hover */}
