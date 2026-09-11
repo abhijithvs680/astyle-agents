@@ -41,7 +41,7 @@ export interface CaseRow {
   title: string;
   department: string;
   timestamp: string;
-  status: "Active" | "In Progress" | "In Review" | "Live" | "Archived";
+  status: "Active" | "In Progress" | "Live" | "Archived";
   impactMetric: string;
   impactPositive: boolean;
   newInsightsCount: number;
@@ -67,7 +67,7 @@ const initialCases: CaseRow[] = [
     title: "Patient volume dropped by 14%",
     department: "Outpatient Surgery",
     timestamp: "02 Sept 2026, 11:20 am",
-    status: "In Review",
+    status: "In Progress",
     impactMetric: "↓ 14% inflow drop",
     impactPositive: false,
     newInsightsCount: 3,
@@ -103,7 +103,7 @@ const initialCases: CaseRow[] = [
     title: "Overstocking of Medicines",
     department: "Pharmacy & Dispensary",
     timestamp: "2 hrs ago",
-    status: "In Review",
+    status: "In Progress",
     impactMetric: "$5,000 locked capital",
     impactPositive: false,
     newInsightsCount: 1,
@@ -171,6 +171,45 @@ const initialCases: CaseRow[] = [
     archived: true,
   },
 ];
+
+const renderStatusBadge = (status: CaseRow["status"]) => {
+  switch (status) {
+    case "In Progress":
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 px-2.5 py-0.5 text-xs font-medium">
+          <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+          In Progress
+        </span>
+      );
+    case "Active":
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 px-2.5 py-0.5 text-xs font-medium">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
+          Active
+        </span>
+      );
+    case "Live":
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/60 px-2.5 py-0.5 text-xs font-medium">
+          <span className="size-1.5 rounded-full bg-rose-500 animate-ping" />
+          Live
+        </span>
+      );
+    case "Archived":
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 px-2.5 py-0.5 text-xs font-medium">
+          <Archive className="size-3 text-slate-500" />
+          Archived
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5 text-xs font-medium">
+          {status}
+        </span>
+      );
+  }
+};
 
 function CasesPage() {
   const [cases, setCases] = useState<CaseRow[]>(initialCases);
@@ -288,8 +327,8 @@ function CasesPage() {
           ))}
         </nav>
 
-        {/* Main Content Area */}
-        <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-8 sm:pt-8 max-w-7xl mx-auto space-y-6">
+        {/* Main Content Area - Full width */}
+        <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-8 sm:pt-8 w-full space-y-6">
           {/* Page Title */}
           <div className="flex items-center gap-2">
             <Briefcase className="size-6 text-brand-blue" />
@@ -376,7 +415,8 @@ function CasesPage() {
                         aria-label="Select all cases"
                       />
                     </th>
-                    <th className="px-6 py-3.5 w-full min-w-[380px]">Case Name</th>
+                    <th className="px-6 py-3.5 w-full min-w-[340px]">Case Name</th>
+                    <th className="px-6 py-3.5 whitespace-nowrap">Status</th>
                     <th className="px-6 py-3.5 whitespace-nowrap">Updated</th>
                     <th className="px-6 py-3.5 text-center whitespace-nowrap">Insights</th>
                     <th className="px-6 py-3.5 text-right whitespace-nowrap">Actions</th>
@@ -432,20 +472,25 @@ function CasesPage() {
                           </span>
                         </td>
 
+                        {/* Status Column */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {renderStatusBadge(row.status)}
+                        </td>
+
                         {/* Timestamp */}
                         <td className="px-6 py-4 text-xs text-muted-foreground font-mono whitespace-nowrap">
                           {row.timestamp}
                         </td>
 
-                        {/* In the table at the end: X new insights badge */}
+                        {/* In the table at the end: X insights badge (e.g., 4 insights) */}
                         <td className="px-6 py-4 text-center whitespace-nowrap">
                           <Link
                             to="/details"
                             className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-brand-blue dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/50 px-3 py-1 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/80 transition-colors shadow-2xs"
-                            title={`${row.newInsightsCount} new insights detected by AI diagnostic engine`}
+                            title={`${row.newInsightsCount} insights detected by AI diagnostic engine`}
                           >
                             <Sparkles className="size-3.5 text-brand-blue dark:text-blue-300" />
-                            <span>{row.newInsightsCount} new insights</span>
+                            <span>{row.newInsightsCount} insights</span>
                           </Link>
                         </td>
 
