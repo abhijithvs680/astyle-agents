@@ -185,7 +185,7 @@ function DataCenterPage() {
                   <div className="min-w-0 flex-1">
                     <span className="block font-medium">Good Doc</span>
                     <span className="block truncate text-sm text-muted-foreground">
-                      {goodDocConnected ? "Google Docs & Workspace connected" : "Google Docs & Workspace"}
+                      {goodDocConnected ? "Hospital operating system connected" : "Hospital operating system"}
                     </span>
                   </div>
                   <button
@@ -193,7 +193,7 @@ function DataCenterPage() {
                       if (goodDocConnected) {
                         setGoodDocConnected(false);
                       } else {
-                        handleConnectService("Google Docs & Workspace", () => setGoodDocConnected(true));
+                        handleConnectService("Hospital operating system", () => setGoodDocConnected(true));
                       }
                     }}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition cursor-pointer ${

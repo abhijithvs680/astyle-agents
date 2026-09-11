@@ -62,7 +62,7 @@ const services: {
   {
     id: "goodDoc",
     name: "Good Doc",
-    detail: "Google Docs & Workspace",
+    detail: "Hospital operating system",
     connectedDetail: "Docs & Workspace linked",
     icon: FileText,
     tint: "bg-[oklch(0.93_0.05_255)] text-[oklch(0.5_0.16_255)]",
