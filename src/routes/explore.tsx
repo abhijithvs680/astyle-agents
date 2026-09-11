@@ -13,6 +13,7 @@ import {
   Search,
   Check,
   X,
+  ChevronDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/explore")({
@@ -127,7 +128,7 @@ function ExplorePage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [casePrompt, setCasePrompt] = useState("");
   const [caseDescription, setCaseDescription] = useState("");
-  const [caseExpiryDate, setCaseExpiryDate] = useState("");
+  const [caseExpiryDate, setCaseExpiryDate] = useState("Until I stop");
   const [createdNotification, setCreatedNotification] = useState<string | null>(null);
 
   const filteredInsights = exploreCases.filter((item) => {
@@ -151,7 +152,7 @@ function ExplorePage() {
     setIsCreateOpen(false);
     setCasePrompt("");
     setCaseDescription("");
-    setCaseExpiryDate("");
+    setCaseExpiryDate("Until I stop");
   };
 
   return (
@@ -381,16 +382,27 @@ function ExplorePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-1.5 flex items-center justify-between">
-                  <span>Expiry Date</span>
-                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                <label className="block text-sm font-semibold text-foreground mb-1">
+                  Case Duration
                 </label>
-                <input
-                  type="date"
-                  value={caseExpiryDate}
-                  onChange={(e) => setCaseExpiryDate(e.target.value)}
-                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer"
-                />
+                <p className="text-xs text-muted-foreground mb-2">
+                  New insights will be generated until the duration expires.
+                </p>
+                <div className="relative">
+                  <select
+                    value={caseExpiryDate}
+                    onChange={(e) => setCaseExpiryDate(e.target.value)}
+                    className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer appearance-none pr-10"
+                  >
+                    <option value="Until I stop">Until I stop</option>
+                    <option value="10 days">10 days</option>
+                    <option value="30 days">30 days</option>
+                    <option value="60 days">60 days</option>
+                    <option value="90 days">90 days</option>
+                    <option value="1 year">1 year</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                </div>
               </div>
 
               {/* Modal Actions */}

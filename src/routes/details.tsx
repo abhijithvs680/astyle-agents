@@ -26,6 +26,7 @@ import {
   CheckSquare,
   Square,
   AlertTriangle,
+  ChevronDown,
 } from "lucide-react";
 import { AIAssistantDefaultView } from "../components/AIAssistantDefaultView";
 
@@ -411,6 +412,47 @@ const caseSectionData: Record<string, CaseSectionData> = {
   },
 };
 
+export type CaseDetailsStatus = "Open" | "Hold" | "Close" | "Reopen";
+
+interface StatusOption {
+  value: CaseDetailsStatus;
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+  description: string;
+}
+
+const statusOptions: StatusOption[] = [
+  {
+    value: "Open",
+    label: "Open",
+    badgeClass: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60",
+    dotClass: "bg-blue-600 dark:bg-blue-400 animate-pulse",
+    description: "Active investigation in progress",
+  },
+  {
+    value: "Hold",
+    label: "Hold",
+    badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60",
+    dotClass: "bg-amber-500",
+    description: "Temporarily paused pending data",
+  },
+  {
+    value: "Close",
+    label: "Close",
+    badgeClass: "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border-slate-300 dark:border-zinc-700",
+    dotClass: "bg-slate-500",
+    description: "Findings and actions finalized",
+  },
+  {
+    value: "Reopen",
+    label: "Reopen",
+    badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60",
+    dotClass: "bg-emerald-500 animate-pulse",
+    description: "Re-activated for follow-up audit",
+  },
+];
+
 function CaseDetailsPage() {
   const [selectedCaseId, setSelectedCaseId] = useState<string>("case-1");
   // Case History collapsed by default
@@ -420,14 +462,21 @@ function CaseDetailsPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
   const [isArchived, setIsArchived] = useState<boolean>(false);
-  const [isClosed, setIsClosed] = useState<boolean>(false);
+  const [projectStatus, setProjectStatus] = useState<CaseDetailsStatus>("Open");
+  const [showStatusDropdown, setShowStatusDropdown] = useState<boolean>(false);
   const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
 
   useEffect(() => {
-    const handleOutsideClick = () => setShowMoreMenu(false);
+    const handleOutsideClick = () => {
+      setShowMoreMenu(false);
+      setShowStatusDropdown(false);
+    };
     window.addEventListener("click", handleOutsideClick);
     return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
+
+  const currentStatusConfig =
+    statusOptions.find((s) => s.value === projectStatus) ?? statusOptions[0]!;
 
   // AI Assistant Chat state (starts empty to display default layout from attached reference)
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -559,20 +608,17 @@ function CaseDetailsPage() {
     <div className="h-screen bg-surface-tint font-sans text-foreground flex flex-col overflow-hidden">
       {/* Top Header Bar - identical styling and height as home page */}
       <header className="sticky top-0 z-40 h-16 shrink-0 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
-        {/* Left Side: Back Arrow and Title only (Icon and Completed status removed) */}
-        <div className="flex items-center gap-3 min-w-0">
+        {/* Left Side: Back button with Arrow and "Back" text */}
+        <div className="flex items-center gap-2 min-w-0">
           <Link
             to="/"
-            className="grid size-9 place-items-center rounded-full hover:bg-tile text-muted-foreground hover:text-foreground transition cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-xl px-2.5 py-1.5 hover:bg-tile text-muted-foreground hover:text-foreground transition cursor-pointer group"
             aria-label="Back to dashboard"
             title="Back to Dashboard"
           >
-            <ArrowLeft className="size-5" />
+            <ArrowLeft className="size-5 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="text-sm sm:text-base font-semibold text-foreground">Back</span>
           </Link>
-
-          <h1 className="text-base sm:text-lg font-semibold text-foreground truncate">
-            {selectedCase.title}
-          </h1>
         </div>
 
         {/* Right Side Options: Check Status Now, Case History, Continuous Auditing, Three Dots */}
@@ -584,9 +630,8 @@ function CaseDetailsPage() {
             className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-tile transition shadow-2xs cursor-pointer active:scale-95 disabled:opacity-60"
           >
             <RotateCw
-              className={`size-4 ${
-                isCheckingStatus ? "animate-spin text-brand-blue" : "text-muted-foreground"
-              }`}
+              className={`size-4 ${isCheckingStatus ? "animate-spin text-brand-blue" : "text-muted-foreground"
+                }`}
             />
             Check Status Now
           </button>
@@ -594,11 +639,10 @@ function CaseDetailsPage() {
           {/* 2. Case History */}
           <button
             onClick={() => setShowHistory((prev) => !prev)}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-medium transition cursor-pointer ${
-              showHistory
-                ? "border-brand-blue bg-blue-50/70 text-brand-blue dark:bg-blue-950/50"
-                : "border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile"
-            }`}
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-medium transition cursor-pointer ${showHistory
+              ? "border-brand-blue bg-blue-50/70 text-brand-blue dark:bg-blue-950/50"
+              : "border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile"
+              }`}
             title="View or hide Case History"
           >
             <History className="size-4" />
@@ -619,11 +663,10 @@ function CaseDetailsPage() {
                 return next;
               });
             }}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-medium transition cursor-pointer active:scale-95 shadow-2xs ${
-              isFollowing
-                ? "border-emerald-500/80 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700"
-                : "border-border bg-surface text-foreground hover:bg-tile"
-            }`}
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-medium transition cursor-pointer active:scale-95 shadow-2xs ${isFollowing
+              ? "border-emerald-500/80 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700"
+              : "border-border bg-surface text-foreground hover:bg-tile"
+              }`}
             title={isFollowing ? "Continuous auditing active" : "Enable continuous auditing"}
           >
             {isFollowing ? (
@@ -646,11 +689,10 @@ function CaseDetailsPage() {
                 e.stopPropagation();
                 setShowMoreMenu((prev) => !prev);
               }}
-              className={`inline-flex items-center justify-center rounded-xl border p-2 transition cursor-pointer active:scale-95 shadow-2xs ${
-                isArchived || isClosed
-                  ? "border-amber-500/80 bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700"
-                  : "border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile"
-              }`}
+              className={`inline-flex items-center justify-center rounded-xl border p-2 transition cursor-pointer active:scale-95 shadow-2xs ${isArchived || projectStatus === "Close"
+                ? "border-amber-500/80 bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700"
+                : "border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile"
+                }`}
               title="More options"
               aria-label="More options"
             >
@@ -662,35 +704,32 @@ function CaseDetailsPage() {
                 onClick={(e) => e.stopPropagation()}
                 className="absolute right-0 top-full mt-1.5 z-40 w-56 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
               >
-                {/* Switch Status to Close / Reopen Project */}
-                <button
-                  onClick={() => {
-                    setIsClosed((prev) => {
-                      const next = !prev;
-                      setStatusMessage(
-                        next
-                          ? "Project status updated to Closed"
-                          : "Project reopened (In Progress)"
-                      );
-                      setTimeout(() => setStatusMessage(null), 3000);
-                      return next;
-                    });
-                    setShowMoreMenu(false);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-tile transition cursor-pointer"
-                >
-                  {isClosed ? (
-                    <>
-                      <RotateCcw className="size-4 text-blue-600 dark:text-blue-400" />
-                      <span>Reopen Project</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-                      <span>Close Project</span>
-                    </>
-                  )}
-                </button>
+                {/* Status Switcher Header */}
+                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Status
+                </div>
+                <div className="grid grid-cols-2 gap-1 px-1.5 pb-1.5">
+                  {statusOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setProjectStatus(opt.value);
+                        setStatusMessage(`Status updated to "${opt.label}"`);
+                        setTimeout(() => setStatusMessage(null), 3000);
+                        setShowMoreMenu(false);
+                      }}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${projectStatus === opt.value
+                        ? "bg-tile font-semibold text-foreground border border-border/80"
+                        : "hover:bg-tile text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                      <span className={`size-1.5 rounded-full ${opt.dotClass}`} />
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="my-1 border-t border-border/50" />
 
                 {/* Consolidated Report */}
                 <button
@@ -731,7 +770,7 @@ function CaseDetailsPage() {
       </header>
 
       {/* Project Closed notification banner */}
-      {isClosed && (
+      {projectStatus === "Close" && (
         <div className="bg-slate-500/10 border-b border-slate-500/25 text-slate-800 dark:text-slate-200 text-xs py-2 px-4 flex items-center justify-between font-medium">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -739,13 +778,33 @@ function CaseDetailsPage() {
           </div>
           <button
             onClick={() => {
-              setIsClosed(false);
-              setStatusMessage("Project reopened (In Progress)");
+              setProjectStatus("Reopen");
+              setStatusMessage("Project reopened");
               setTimeout(() => setStatusMessage(null), 3000);
             }}
             className="underline font-semibold hover:text-slate-950 dark:hover:text-slate-100 cursor-pointer"
           >
             Reopen Project
+          </button>
+        </div>
+      )}
+
+      {/* Project on Hold notification banner */}
+      {projectStatus === "Hold" && (
+        <div className="bg-amber-500/10 border-b border-amber-500/25 text-amber-900 dark:text-amber-200 text-xs py-2 px-4 flex items-center justify-between font-medium">
+          <div className="flex items-center gap-2">
+            <Clock className="size-3.5 text-amber-600 dark:text-amber-400" />
+            <span>This project is currently on Hold. Investigation is paused pending clinical data.</span>
+          </div>
+          <button
+            onClick={() => {
+              setProjectStatus("Open");
+              setStatusMessage("Project resumed (Open)");
+              setTimeout(() => setStatusMessage(null), 3000);
+            }}
+            className="underline font-semibold hover:text-amber-950 dark:hover:text-amber-100 cursor-pointer"
+          >
+            Resume Project
           </button>
         </div>
       )}
@@ -799,16 +858,14 @@ function CaseDetailsPage() {
                   <button
                     key={item.id}
                     onClick={() => setSelectedCaseId(item.id)}
-                    className={`w-full text-left rounded-2xl p-3.5 transition-all border relative cursor-pointer ${
-                      isSelected
-                        ? "border-blue-400/80 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-800 shadow-xs"
-                        : "border-border/60 bg-surface hover:bg-tile/70 text-muted-foreground"
-                    }`}
+                    className={`w-full text-left rounded-2xl p-3.5 transition-all border relative cursor-pointer ${isSelected
+                      ? "border-blue-400/80 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-800 shadow-xs"
+                      : "border-border/60 bg-surface hover:bg-tile/70 text-muted-foreground"
+                      }`}
                   >
                     <h4
-                      className={`text-xs leading-snug ${
-                        isSelected ? "text-foreground font-semibold" : "text-foreground/80 font-medium"
-                      }`}
+                      className={`text-xs leading-snug ${isSelected ? "text-foreground font-semibold" : "text-foreground/80 font-medium"
+                        }`}
                     >
                       {item.title}
                     </h4>
@@ -831,33 +888,59 @@ function CaseDetailsPage() {
           <div className="max-w-4xl mx-auto space-y-4 sm:space-y-5">
             {/* Card 1: Case Title & Scope */}
             <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-2xs space-y-3">
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                {isClosed ? (
-                  <button
-                    onClick={() => {
-                      setIsClosed(false);
-                      setStatusMessage("Project reopened (In Progress)");
-                      setTimeout(() => setStatusMessage(null), 3000);
-                    }}
-                    title="Click to switch status / Reopen project"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 px-3 py-1 font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition cursor-pointer"
+              <div className="relative inline-block text-xs">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowStatusDropdown((prev) => !prev);
+                  }}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1 font-semibold transition cursor-pointer active:scale-95 shadow-2xs ${currentStatusConfig.badgeClass} hover:opacity-90`}
+                  title="Click to change status"
+                  aria-expanded={showStatusDropdown}
+                >
+                  <span className={`size-2 rounded-full ${currentStatusConfig.dotClass}`} />
+                  <span>Status: {currentStatusConfig.label}</span>
+                  <ChevronDown
+                    className={`size-3.5 text-current transition-transform duration-200 ${showStatusDropdown ? "rotate-180" : ""
+                      }`}
+                  />
+                </button>
+
+                {showStatusDropdown && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute left-0 top-full mt-2 z-30 w-44 rounded-2xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
                   >
-                    <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>Status: Closed</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setIsClosed(true);
-                      setStatusMessage("Project status updated to Closed");
-                      setTimeout(() => setStatusMessage(null), 3000);
-                    }}
-                    title="Click to switch status / Close project"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-3 py-1 font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition cursor-pointer"
-                  >
-                    <Clock className="size-3.5" />
-                    <span>Status: In Progress</span>
-                  </button>
+                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-1">
+                      Change Status
+                    </div>
+                    {statusOptions.map((opt) => {
+                      const isSelected = projectStatus === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setProjectStatus(opt.value);
+                            setStatusMessage(`Status updated to "${opt.label}"`);
+                            setTimeout(() => setStatusMessage(null), 3000);
+                            setShowStatusDropdown(false);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition cursor-pointer ${isSelected
+                            ? "bg-tile font-semibold text-foreground"
+                            : "text-foreground/80 hover:bg-tile hover:text-foreground"
+                            }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className={`size-2 rounded-full ${opt.dotClass}`} />
+                            <span className="font-medium text-foreground">{opt.label}</span>
+                          </div>
+                          {isSelected && <Check className="size-3.5 text-brand-blue shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 
@@ -884,11 +967,10 @@ function CaseDetailsPage() {
                 Overall chain revenue declined 11.4% MoM in August, driven primarily by acute stockouts in top-margin chronic-care medications across the Central Zone and a 19% drop in walk-in footfall following the launch of a competing 10-minute delivery model. High operational overhead and dead-stock buildup in secondary product categories further compressed EBITDA margins from 14.2% to 9.8%.
               </p>
 
-              {/* Executive Quote Block */}
-              <blockquote className="relative my-3 rounded-2xl border-l-4 border-rose-500 bg-rose-50/70 dark:bg-rose-950/30 p-5 sm:p-6 border-y border-r border-rose-200/70 dark:border-rose-900/40 shadow-xs space-y-2">
-                <Quote className="size-7 text-rose-500/50 dark:text-rose-400/50 -mb-1" />
+              {/* Executive Quote Block (Quote icon removed) */}
+              <blockquote className="relative my-3 rounded-2xl border-l-4 border-rose-500 bg-rose-50/70 dark:bg-rose-950/30 p-5 sm:p-6 border-y border-r border-rose-200/70 dark:border-rose-900/40 shadow-xs">
                 <p className="text-base sm:text-lg font-medium italic leading-relaxed text-foreground/95">
-                  “Gross revenue fell from $1.60M to $1.42M (-11.4%), while EBITDA margins contracted from 14.2% to 9.8%. Immediate recovery requires emergency central stock rebalancing, vendor SLA escalation, and liquidating $310,000 in non-pharma dead stock.”
+                  Gross revenue fell from $1.60M to $1.42M (-11.4%), while EBITDA margins contracted from 14.2% to 9.8%. Immediate recovery requires emergency central stock rebalancing, vendor SLA escalation, and liquidating $310,000 in non-pharma dead stock.
                 </p>
               </blockquote>
             </section>
