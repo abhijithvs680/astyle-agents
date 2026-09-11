@@ -176,10 +176,10 @@
   line-height: 1.75rem;
 }
 
-@keyframes welcome-hero-copy-in {
+@keyframes welcome-app-banner-in {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -187,58 +187,12 @@
   }
 }
 
-@keyframes welcome-hero-pan {
-  from {
-    transform: scale(1.08) translate3d(0, 0, 0);
-  }
-  to {
-    transform: scale(1.12) translate3d(-1.5%, -1%, 0);
-  }
-}
-
-@keyframes welcome-bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(4px);
-  }
-}
-
-@keyframes welcome-banner-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.welcome-hero-copy {
-  animation: welcome-hero-copy-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.welcome-hero-pan {
-  animation: welcome-hero-pan 18s ease-out forwards;
-  will-change: transform;
-}
-
-.welcome-bounce {
-  animation: welcome-bounce 1.6s ease-in-out infinite;
-}
-
-.welcome-banner {
-  animation: welcome-banner-in 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.welcome-app-banner {
+  animation: welcome-app-banner-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .welcome-hero-copy,
-  .welcome-hero-pan,
-  .welcome-bounce,
-  .welcome-banner {
+  .welcome-app-banner {
     animation: none;
   }
 }
