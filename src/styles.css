@@ -234,11 +234,25 @@
   animation: welcome-banner-in 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes welcome-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.welcome-marquee {
+  animation: welcome-marquee 28s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .welcome-hero-copy,
   .welcome-hero-pan,
   .welcome-bounce,
-  .welcome-banner {
+  .welcome-banner,
+  .welcome-marquee {
     animation: none;
   }
 }

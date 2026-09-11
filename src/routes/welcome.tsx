@@ -105,40 +105,71 @@ const services: {
 const featureBanners = [
   {
     id: "cases",
+    number: "01",
     eyebrow: "Case intelligence",
     title: "Cases appear the moment ops drift",
     body: "CXO watches scheduling, billing, and clinical signals so anomalies become actionable cases—not buried reports.",
     icon: Radio,
     image: "/medical_scan.jpg",
-    tone: "from-[oklch(0.28_0.05_250)] to-[oklch(0.38_0.08_230)]",
+    tone: "from-[oklch(0.26_0.05_248)] via-[oklch(0.32_0.07_235)] to-[oklch(0.38_0.06_220)]",
   },
   {
     id: "connect",
+    number: "02",
     eyebrow: "Live connectors",
     title: "Good Doc and Good Bank, linked in minutes",
     body: "Authorize document and treasury feeds once. CXO keeps operational and financial context in the same workspace.",
     icon: Landmark,
     image: "/medical_lab.jpg",
-    tone: "from-[oklch(0.30_0.06_160)] to-[oklch(0.36_0.07_200)]",
+    tone: "from-[oklch(0.28_0.06_165)] via-[oklch(0.33_0.07_185)] to-[oklch(0.37_0.06_205)]",
   },
   {
     id: "insights",
+    number: "03",
     eyebrow: "Executive feed",
     title: "Revenue and care signals in one stream",
     body: "Margin pressure, wait-time spikes, and utilization gaps surface together so leadership can act with shared context.",
     icon: TrendingUp,
     image: "/medical_surgery.jpg",
-    tone: "from-[oklch(0.32_0.06_40)] to-[oklch(0.38_0.08_55)]",
+    tone: "from-[oklch(0.30_0.06_45)] via-[oklch(0.34_0.07_50)] to-[oklch(0.38_0.06_60)]",
   },
   {
     id: "secure",
+    number: "04",
     eyebrow: "Enterprise intake",
     title: "Upload internal files when systems lag",
     body: "Drop spreadsheets, audits, and PDFs into Data Center. Sensitive ops files stay inside your controlled workspace.",
     icon: ShieldCheck,
     image: "/medical_lab.jpg",
-    tone: "from-[oklch(0.30_0.04_280)] to-[oklch(0.36_0.06_250)]",
+    tone: "from-[oklch(0.28_0.04_275)] via-[oklch(0.33_0.05_260)] to-[oklch(0.37_0.05_245)]",
   },
+];
+
+const journeySteps = [
+  {
+    label: "Connect",
+    detail: "Link Good Doc, Good Bank, and the systems you already trust.",
+  },
+  {
+    label: "Watch",
+    detail: "CXO listens for drift across ops, revenue, and care signals.",
+  },
+  {
+    label: "Act",
+    detail: "Open cases with shared context before issues harden into crises.",
+  },
+];
+
+const marqueeItems = [
+  "Case detection",
+  "Good Doc",
+  "Good Bank",
+  "Treasury signals",
+  "Wait-time spikes",
+  "OR utilization",
+  "Workflow Agent",
+  "Data Center intake",
+  "Executive feed",
 ];
 
 interface UploadedFile {
@@ -212,7 +243,7 @@ function WelcomePage() {
 
   if (step === 0) {
     return (
-      <div className="min-h-screen bg-[oklch(0.97_0.01_230)] font-sans text-foreground">
+      <div className="min-h-screen overflow-x-hidden bg-[oklch(0.965_0.012_225)] font-sans text-foreground">
         <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-5 sm:px-8">
           <div className="flex items-center gap-3">
             <span className="grid size-10 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-semibold text-surface shadow-xs">
@@ -225,45 +256,43 @@ function WelcomePage() {
               CXO
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <button
               onClick={scrollToFeatures}
-              className="hidden text-sm text-surface/80 hover:text-surface transition sm:inline cursor-pointer"
+              className="hidden text-sm text-surface/80 transition hover:text-surface sm:inline cursor-pointer"
             >
               Features
             </button>
-            <Link
-              to="/"
-              className="text-sm text-surface/80 hover:text-surface transition"
-            >
+            <Link to="/" className="text-sm text-surface/80 transition hover:text-surface">
               Skip for now
             </Link>
           </div>
         </header>
 
-        {/* Full-bleed hero — one composition */}
+        {/* Full-bleed welcome hero */}
         <section className="relative isolate flex min-h-[100svh] items-end overflow-hidden">
           <img
             src="/medical_surgery.jpg"
             alt=""
             className="absolute inset-0 size-full object-cover welcome-hero-pan"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,oklch(0.22_0.04_240_/0.45)_0%,oklch(0.18_0.05_230_/0.55)_42%,oklch(0.16_0.04_220_/0.88)_100%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_10%,oklch(0.55_0.08_200_/0.25),transparent_55%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,oklch(0.22_0.04_240_/0.42)_0%,oklch(0.17_0.05_230_/0.58)_45%,oklch(0.14_0.04_220_/0.92)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_18%_12%,oklch(0.58_0.09_195_/0.28),transparent_52%)]" />
 
           <div className="relative z-10 w-full px-4 pb-16 pt-28 sm:px-8 sm:pb-20">
             <div className="welcome-hero-copy max-w-3xl">
               <p
-                className="text-sm font-semibold tracking-[0.2em] text-[oklch(0.86_0.04_200)] uppercase"
+                className="text-sm font-semibold uppercase tracking-[0.22em] text-[oklch(0.86_0.04_200)]"
                 style={{ fontFamily: "Syne, Archivo, sans-serif" }}
               >
-                CXO
+                Welcome customers
               </p>
               <h1
-                className="mt-4 max-w-2xl text-4xl font-semibold leading-[1.05] tracking-tight text-surface sm:text-6xl"
+                className="mt-4 max-w-2xl text-4xl font-semibold leading-[1.04] tracking-tight text-surface sm:text-6xl lg:text-[4.25rem]"
                 style={{ fontFamily: "Syne, Archivo, sans-serif" }}
               >
-                Welcome. Your hospital ops, finally readable.
+                Your hospital ops,
+                <span className="block text-[oklch(0.88_0.05_195)]">finally readable.</span>
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-surface/85 sm:text-lg">
                 Connect Good Doc, Good Bank, and the rest of your stack so CXO can open cases
@@ -272,16 +301,16 @@ function WelcomePage() {
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <button
                   onClick={startConnect}
-                  className="inline-flex items-center gap-2 rounded-full bg-surface px-6 py-3 text-sm font-semibold text-foreground hover:bg-surface/95 transition cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-full bg-surface px-6 py-3 text-sm font-semibold text-foreground transition hover:bg-surface/95 cursor-pointer"
                 >
                   Connect your data
                   <ArrowRight className="size-4" />
                 </button>
                 <button
                   onClick={scrollToFeatures}
-                  className="inline-flex items-center gap-2 rounded-full border border-surface/35 bg-surface/10 px-5 py-3 text-sm font-medium text-surface backdrop-blur-sm hover:bg-surface/15 transition cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-full border border-surface/35 bg-surface/10 px-5 py-3 text-sm font-medium text-surface backdrop-blur-sm transition hover:bg-surface/15 cursor-pointer"
                 >
-                  See what CXO unlocks
+                  Explore feature banners
                   <ArrowDown className="size-4 welcome-bounce" />
                 </button>
               </div>
@@ -289,23 +318,47 @@ function WelcomePage() {
           </div>
         </section>
 
+        {/* Moving capability ribbon */}
+        <div className="border-y border-border/60 bg-surface py-3 overflow-hidden">
+          <div className="welcome-marquee flex w-max gap-8 whitespace-nowrap px-4">
+            {[...marqueeItems, ...marqueeItems].map((item, i) => (
+              <span
+                key={`${item}-${i}`}
+                className="inline-flex items-center gap-8 text-sm font-medium text-muted-foreground"
+              >
+                <span className="size-1.5 rounded-full bg-brand-blue" />
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
         {/* Feature banners */}
         <section ref={featuresRef} className="px-4 py-16 sm:px-8 sm:py-20">
           <div className="mx-auto max-w-6xl">
-            <div className="max-w-2xl">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-blue">
-                Built for operators
-              </p>
-              <h2
-                className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
-                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-blue">
+                  Feature banners
+                </p>
+                <h2
+                  className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+                  style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+                >
+                  What customers unlock in week one
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  Four immersive banners—connectors, cases, executive signal, and secure intake—
+                  mapped to the path from welcome to first live case.
+                </p>
+              </div>
+              <button
+                onClick={startConnect}
+                className="inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium transition hover:bg-tile cursor-pointer sm:self-auto"
               >
-                Feature banners that map to your first week
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Start with connectors, then let CXO watch the feeds that already run your
-                hospitals.
-              </p>
+                Start setup
+                <ArrowRight className="size-4" />
+              </button>
             </div>
 
             <div className="mt-10 space-y-5">
@@ -316,50 +369,86 @@ function WelcomePage() {
                   <article
                     key={banner.id}
                     className={`welcome-banner group relative overflow-hidden rounded-[28px] bg-gradient-to-br ${banner.tone}`}
-                    style={{ animationDelay: `${index * 80}ms` }}
+                    style={{ animationDelay: `${index * 90}ms` }}
                   >
                     <div
-                      className={`grid min-h-[240px] items-stretch sm:min-h-[280px] ${
-                        reverse ? "sm:grid-cols-[1.05fr_0.95fr]" : "sm:grid-cols-[0.95fr_1.05fr]"
+                      className={`grid min-h-[260px] items-stretch sm:min-h-[300px] ${
+                        reverse
+                          ? "sm:grid-cols-[1.08fr_0.92fr]"
+                          : "sm:grid-cols-[0.92fr_1.08fr]"
                       }`}
                     >
                       <div
-                        className={`relative flex flex-col justify-end p-6 sm:p-8 ${
+                        className={`relative flex flex-col justify-between p-6 sm:p-8 ${
                           reverse ? "sm:order-2" : ""
                         }`}
                       >
-                        <span className="mb-4 grid size-11 place-items-center rounded-2xl bg-surface/15 text-surface backdrop-blur-sm">
-                          <Icon className="size-5" />
-                        </span>
-                        <p className="text-[11px] font-bold uppercase tracking-widest text-surface/70">
-                          {banner.eyebrow}
-                        </p>
-                        <h3
-                          className="mt-2 max-w-md text-2xl font-semibold leading-tight text-surface sm:text-3xl"
-                          style={{ fontFamily: "Syne, Archivo, sans-serif" }}
-                        >
-                          {banner.title}
-                        </h3>
-                        <p className="mt-3 max-w-md text-sm leading-relaxed text-surface/80">
-                          {banner.body}
-                        </p>
+                        <div className="flex items-start justify-between gap-4">
+                          <span className="grid size-11 place-items-center rounded-2xl bg-surface/15 text-surface backdrop-blur-sm">
+                            <Icon className="size-5" />
+                          </span>
+                          <span
+                            className="text-4xl font-semibold leading-none text-surface/20 sm:text-5xl"
+                            style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+                          >
+                            {banner.number}
+                          </span>
+                        </div>
+                        <div className="mt-8 sm:mt-10">
+                          <p className="text-[11px] font-bold uppercase tracking-widest text-surface/70">
+                            {banner.eyebrow}
+                          </p>
+                          <h3
+                            className="mt-2 max-w-md text-2xl font-semibold leading-tight text-surface sm:text-3xl"
+                            style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+                          >
+                            {banner.title}
+                          </h3>
+                          <p className="mt-3 max-w-md text-sm leading-relaxed text-surface/80">
+                            {banner.body}
+                          </p>
+                        </div>
                       </div>
                       <div
-                        className={`relative min-h-[180px] overflow-hidden ${
+                        className={`relative min-h-[190px] overflow-hidden ${
                           reverse ? "sm:order-1" : ""
                         }`}
                       >
                         <img
                           src={banner.image}
                           alt=""
-                          className="absolute inset-0 size-full object-cover opacity-80 transition duration-700 group-hover:scale-105"
+                          className="absolute inset-0 size-full object-cover opacity-85 transition duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent sm:bg-gradient-to-r sm:from-transparent sm:via-transparent sm:to-black/10" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent sm:bg-gradient-to-r sm:from-transparent sm:via-transparent sm:to-black/15" />
                       </div>
                     </div>
                   </article>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        {/* Journey strip */}
+        <section className="px-4 pb-8 sm:px-8">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-border/70 bg-surface">
+            <div className="grid gap-0 md:grid-cols-3">
+              {journeySteps.map((item, index) => (
+                <div
+                  key={item.label}
+                  className={`relative p-6 sm:p-8 ${
+                    index < journeySteps.length - 1 ? "md:border-r border-border/70" : ""
+                  }`}
+                >
+                  <p
+                    className="text-sm font-semibold text-brand-blue"
+                    style={{ fontFamily: "Syne, Archivo, sans-serif" }}
+                  >
+                    {String(index + 1).padStart(2, "0")} · {item.label}
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.detail}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -389,24 +478,29 @@ function WelcomePage() {
           </div>
         </section>
 
-        {/* Closing CTA */}
-        <section className="relative overflow-hidden px-4 py-16 sm:px-8 sm:py-20">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,oklch(0.92_0.03_220),transparent_60%)]" />
+        {/* Closing CTA with atmosphere */}
+        <section className="relative overflow-hidden px-4 py-20 sm:px-8 sm:py-24">
+          <img
+            src="/medical_scan.jpg"
+            alt=""
+            className="absolute inset-0 size-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,oklch(0.965_0.012_225_/0.92)_0%,oklch(0.965_0.012_225_/0.88)_100%)]" />
           <div className="relative mx-auto max-w-3xl text-center">
             <Sparkles className="mx-auto size-6 text-brand-blue" />
             <h2
-              className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+              className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-5xl"
               style={{ fontFamily: "Syne, Archivo, sans-serif" }}
             >
               Ready when your data is
             </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Connect at least one source—Good Doc or Good Bank is enough to open your first live
-              cases.
+            <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Connect at least one source—Good Doc or Good Bank is enough to welcome your first
+              live cases into CXO.
             </p>
             <button
               onClick={startConnect}
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3.5 text-sm font-semibold text-surface hover:opacity-90 transition cursor-pointer"
+              className="mt-8 inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3.5 text-sm font-semibold text-surface transition hover:opacity-90 cursor-pointer"
             >
               Start connecting
               <ArrowRight className="size-4" />
@@ -429,7 +523,7 @@ function WelcomePage() {
           </span>
         </div>
         {step < 3 && (
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition">
+          <Link to="/" className="text-sm text-muted-foreground transition hover:text-foreground">
             Skip for now
           </Link>
         )}
@@ -523,7 +617,7 @@ function WelcomePage() {
               <div className="mt-5 text-center">
                 <button
                   onClick={() => setShowMore((prev) => !prev)}
-                  className="text-sm font-medium text-foreground hover:text-brand-blue transition-colors cursor-pointer"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-brand-blue cursor-pointer"
                 >
                   {showMore ? "Show less" : `Load more (${extraServices.length})`}
                 </button>
@@ -562,7 +656,7 @@ function WelcomePage() {
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="shrink-0 inline-flex items-center gap-2 rounded-full bg-chip-active px-4 py-2 text-sm font-medium text-chip-active-foreground hover:opacity-90 transition cursor-pointer"
+                  className="inline-flex shrink-0 items-center gap-2 rounded-full bg-chip-active px-4 py-2 text-sm font-medium text-chip-active-foreground transition hover:opacity-90 cursor-pointer"
                 >
                   <UploadCloud className="size-4" />
                   Upload file
@@ -571,7 +665,7 @@ function WelcomePage() {
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-5 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-tile/50 p-6 text-center cursor-pointer hover:bg-tile transition"
+                className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-tile/50 p-6 text-center transition hover:bg-tile"
               >
                 <UploadCloud className="mb-2 size-6 text-muted-foreground" />
                 <p className="text-sm font-medium text-foreground">
@@ -588,7 +682,7 @@ function WelcomePage() {
                   {files.map((file) => (
                     <li
                       key={file.name}
-                      className="flex items-center gap-4 p-4 hover:bg-tile transition"
+                      className="flex items-center gap-4 p-4 transition hover:bg-tile"
                     >
                       <Table2 className="size-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
@@ -599,7 +693,7 @@ function WelcomePage() {
                       </div>
                       <button
                         onClick={() => removeFile(file.name)}
-                        className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface transition cursor-pointer"
+                        className="rounded-full p-1.5 text-muted-foreground transition hover:bg-surface hover:text-foreground cursor-pointer"
                         aria-label="Remove file"
                       >
                         <Trash2 className="size-4" />
@@ -637,14 +731,14 @@ function WelcomePage() {
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   to="/"
-                  className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-surface hover:opacity-90 transition"
+                  className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-surface transition hover:opacity-90"
                 >
                   Go to dashboard
                   <ArrowRight className="size-4" />
                 </Link>
                 <Link
                   to="/data-center"
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium hover:bg-tile transition"
+                  className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium transition hover:bg-tile"
                 >
                   Open Data Center
                 </Link>
@@ -656,7 +750,7 @@ function WelcomePage() {
             <div className="mt-6 flex items-center justify-between border-t border-border pt-5">
               <button
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
-                className="rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-tile transition cursor-pointer"
+                className="rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:bg-tile cursor-pointer"
               >
                 Back
               </button>
@@ -675,7 +769,7 @@ function WelcomePage() {
                   <button
                     onClick={finishSetup}
                     disabled={finishing}
-                    className="rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-tile transition cursor-pointer disabled:opacity-70"
+                    className="rounded-full border border-border px-4 py-2 text-sm font-medium transition hover:bg-tile disabled:opacity-70 cursor-pointer"
                   >
                     Skip
                   </button>
@@ -696,7 +790,7 @@ function WelcomePage() {
       </main>
 
       {connectingServiceName && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
           <div className="flex w-full max-w-sm flex-col items-center space-y-5 rounded-3xl border border-border/80 bg-surface p-8 text-center shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="relative flex items-center justify-center">
               <div className="size-16 animate-spin rounded-full border-[3px] border-brand-blue/20 border-t-brand-blue" />
