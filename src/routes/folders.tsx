@@ -152,7 +152,8 @@ const initialFolders: CaseFolder[] = [
         severity: "High",
       },
       {
-        id: "case-b4", Overstocking of MedicinesDead stock ties up cash",
+        id: "case-b4",
+        title: "Overstocking of Medicines",
         age: "2 hrs ago",
         severity: "Medium",
       },
@@ -305,8 +306,8 @@ function FoldersPage() {
                 to={to}
                 aria-label={label}
                 className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${active
-                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
-                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                  ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
                   }`}
               >
                 <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
