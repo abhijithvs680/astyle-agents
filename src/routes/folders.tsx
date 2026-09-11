@@ -73,7 +73,7 @@ const initialFolders: CaseFolder[] = [
     cases: [
       {
         id: "case-p1",
-        title: "Low sales share despite moderate stock",
+        title: "Q3 Revenue Drop & Margin Compression Analysis",
         age: "04 Sept 2026, 05:57 am",
         severity: "High",
       },

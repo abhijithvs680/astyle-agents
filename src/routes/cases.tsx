@@ -41,7 +41,7 @@ export interface CaseRow {
   title: string;
   department: string;
   timestamp: string;
-  status: "Active" | "In Review" | "Live" | "Archived";
+  status: "Active" | "In Progress" | "In Review" | "Live" | "Archived";
   impactMetric: string;
   impactPositive: boolean;
   newInsightsCount: number;
@@ -52,13 +52,13 @@ export interface CaseRow {
 const initialCases: CaseRow[] = [
   {
     id: "case-1",
-    title: "Low sales share despite moderate stock",
-    department: "Clinical Pharmacy",
+    title: "Q3 Revenue Drop & Margin Compression Analysis",
+    department: "Executive Office",
     timestamp: "04 Sept 2026, 05:57 am",
-    status: "Active",
-    impactMetric: "+€18,400 / yr",
-    impactPositive: true,
-    newInsightsCount: 2,
+    status: "In Progress",
+    impactMetric: "-11.4% MoM Revenue",
+    impactPositive: false,
+    newInsightsCount: 4,
     severity: "High",
     archived: false,
   },

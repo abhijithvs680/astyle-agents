@@ -127,6 +127,7 @@ function ExplorePage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [casePrompt, setCasePrompt] = useState("");
   const [caseDescription, setCaseDescription] = useState("");
+  const [caseExpiryDate, setCaseExpiryDate] = useState("");
   const [createdNotification, setCreatedNotification] = useState<string | null>(null);
 
   const filteredInsights = exploreCases.filter((item) => {
@@ -150,6 +151,7 @@ function ExplorePage() {
     setIsCreateOpen(false);
     setCasePrompt("");
     setCaseDescription("");
+    setCaseExpiryDate("");
   };
 
   return (
@@ -375,6 +377,19 @@ function ExplorePage() {
                   onChange={(e) => setCaseDescription(e.target.value)}
                   placeholder="Add context on departments, expected metrics, or historical baseline periods..."
                   className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5 flex items-center justify-between">
+                  <span>Expiry Date</span>
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={caseExpiryDate}
+                  onChange={(e) => setCaseExpiryDate(e.target.value)}
+                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer"
                 />
               </div>
 

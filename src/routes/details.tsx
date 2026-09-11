@@ -22,17 +22,21 @@ import {
   Sparkles,
   RotateCcw,
   Table2,
+  Quote,
+  CheckSquare,
+  Square,
+  AlertTriangle,
 } from "lucide-react";
 import { AIAssistantDefaultView } from "../components/AIAssistantDefaultView";
 
 export const Route = createFileRoute("/details")({
   head: () => ({
     meta: [
-      { title: "Dead stock ties up cash — AI Analysis Report" },
+      { title: "Q3 Revenue Drop & Margin Compression Analysis — AI Analysis Report" },
       {
         name: "description",
         content:
-          "White paper analysis report and AI Assistant for dead stock recovery and working capital optimization across branches.",
+          "Comprehensive diagnostic on August revenue decline (-11.4%), acute chronic medication stockouts, footfall churn, and margin compression.",
       },
     ],
   }),
@@ -48,7 +52,7 @@ interface HistoryItem {
 const caseHistoryList: HistoryItem[] = [
   {
     id: "case-1",
-    title: "Dead stock ties up cash",
+    title: "Q3 Revenue Drop & Margin Compression Analysis",
     timestamp: "04 Sept 2026, 05:57 am",
   },
   {
@@ -78,13 +82,13 @@ const initialMessages: ChatMessage[] = [
   {
     id: "m-1",
     sender: "user",
-    content: "How much working capital is currently locked up in dead stock across branches?",
+    content: "What drove the 11.4% MoM revenue drop and margin compression in August?",
   },
   {
     id: "m-2",
     sender: "ai",
     content:
-      "A total of $5,000 in unsold medicines is currently sitting idle across 3 hospital branches (Suburban Dispensary East, North Outpatient Clinic, and Westside Daycare Unit), locking vital working capital and occupying 38 cu ft of high-demand storage space.\n\nKey Breakdown:\n• Human Albumin 20% Infusion (14 vials): $1,820 (Suburban Dispensary East - 194 days idle)\n• A to Z NS Multivitamin Tabs (120 packs): $1,450 (North Outpatient Clinic - 165 days idle)\n• Ceftriaxone 1g Injectable (65 vials): $980 (Westside Daycare Unit - 182 days idle)\n• Sterile Surgical Gauze 8Ply (85 boxes): $750 (Trauma Satellite Dispensary - 140 days idle)\n\nRecommended Action:\n1. Execute inter-branch transfers of Human Albumin and Surgical Gauze to Central Inpatient ICU and Surgery.\n2. Process vendor return credit for eligible Ceftriaxone batches ($980).\n3. Bundle remaining stock into trauma discharge packs to liquidate $1,450 within 30 days.",
+      "Chain gross revenue declined 11.4% MoM in August (falling from $1.60M to $1.42M), compressing EBITDA margins from 14.2% down to 9.8%.\n\nPrimary Contributory Drivers:\n• Acute Chronic Medication Stockouts: Stockout rates on top-50 chronic prescription drugs (antidiabetics, cardiac, antihypertensives) surged to 18.2%, causing an estimated $142,000 in lost basket conversions.\n• Quick-Commerce App Footfall Churn: Launch of competing 10-minute delivery dark stores in suburban clusters triggered a 19% drop in walk-in footfall, lowering average basket size from 3.4 to 2.6 items.\n• Severe Inventory Imbalance: While prescription essentials were unavailable, non-pharma personal care accumulated excess holding stock, locking up $310,000 in idle working capital (pushing DOS to 54 days).\n\nImmediate Action: Auto-transfer surplus cardiac/diabetic stock to Central Zone within 48 hours and launch a promotional clearance for personal care stock >90 days old.",
   },
 ];
 
@@ -105,29 +109,29 @@ interface CaseKpiItem {
 const defaultCaseKpis: [CaseKpiItem, CaseKpiItem] = [
   {
     icon: DollarSign,
-    source: "Dispensary Working Capital & Inventory Feed",
-    timeframe: "Cross-Branch Audit",
-    headline: "Locked Working Capital in Unsold Stock",
-    baselineLabel: "Allowable Idle Buffer",
-    baselineValue: "$1,200 threshold",
-    automatedLabel: "Current status",
-    automatedValue: "$5,000 locked cash",
-    delta: "↑ $3,800 above threshold",
-    status: "Stagnant across branches",
+    source: "Chain Financial & Revenue Feed",
+    timeframe: "August MoM Comparison",
+    headline: "Gross Chain Revenue Deficit",
+    baselineLabel: "August Target",
+    baselineValue: "$1.60M target",
+    automatedLabel: "Current Revenue",
+    automatedValue: "$1.42M August",
+    delta: "↓ 11.4% MoM drop",
+    status: "EBITDA compressed to 9.8%",
     positive: false,
   },
   {
-    icon: TrendingUp,
-    source: "Working Capital & Storage Reclamation",
-    timeframe: "Automated Recovery Pipeline",
-    headline: "Recoverable Capital & Shelf Space",
-    baselineLabel: "Projected Write-Off",
-    baselineValue: "$0 recovered",
-    automatedLabel: "Automated Potential",
-    automatedValue: "+$5,000 capital released",
-    delta: "↑ 38 cu ft shelf freed",
-    status: "Inter-branch transfer ready",
-    positive: true,
+    icon: TrendingDown,
+    source: "Chronic Prescription Supply Chain",
+    timeframe: "Central Zone Audit",
+    headline: "Chronic Prescription Fill Rate",
+    baselineLabel: "Target Benchmark",
+    baselineValue: "96.0% fill benchmark",
+    automatedLabel: "Current Fill Rate",
+    automatedValue: "81.8% August fill",
+    delta: "↓ 14.2% fill deficit",
+    status: "$142,000 lost conversions",
+    positive: false,
   },
 ];
 
@@ -226,10 +230,10 @@ interface CaseAssistantConfig {
 const caseAssistantConfigs: Record<string, CaseAssistantConfig> = {
   "case-1": {
     suggestions: [
-      "How to unlock the $5,000 in locked working capital?",
-      "Which branches hold the highest volume of dead stock medicines?",
-      "Recommend inter-branch stock transfers to prevent write-offs",
-      "Process supplier consignment buy-back & credit requests",
+      "Why did August gross revenue decline by 11.4%?",
+      "Which branches had chronic medication stockouts?",
+      "How to liquidate the $310,000 in personal care dead stock?",
+      "What is our strategy against competing 10-minute delivery apps?",
     ],
   },
   "case-2": {
@@ -263,19 +267,104 @@ interface CaseSectionData {
   suggestedNextSteps: string[];
 }
 
+export interface KeyMetricRow {
+  metric: string;
+  current: string;
+  target: string;
+  variance: string;
+  negative: boolean;
+}
+
+export const case1KeyMetrics: KeyMetricRow[] = [
+  {
+    metric: "Gross Revenue",
+    current: "$1.42M",
+    target: "$1.60M",
+    variance: "-11.4%",
+    negative: true,
+  },
+  {
+    metric: "Prescription Fill Rate",
+    current: "81.8%",
+    target: "96.0%",
+    variance: "-14.2%",
+    negative: true,
+  },
+  {
+    metric: "Average Basket Value (ABV)",
+    current: "$28.50",
+    target: "$34.20",
+    variance: "-16.6%",
+    negative: true,
+  },
+  {
+    metric: "Inventory Days of Supply (DOS)",
+    current: "54 Days",
+    target: "38 Days",
+    variance: "+16 Days",
+    negative: true,
+  },
+  {
+    metric: "Customer Retention (90-Day)",
+    current: "64%",
+    target: "73%",
+    variance: "-9.0%",
+    negative: true,
+  },
+];
+
+export interface SampleDataRecord {
+  branchId: string;
+  categoryItem: string;
+  issueDetected: string;
+  financialImpact: string;
+  driver: string;
+}
+
+export const case1SampleData: SampleDataRecord[] = [
+  {
+    branchId: "BR-004 (Metro Downtown)",
+    categoryItem: "Metformin 500mg, Telmisartan 40mg",
+    issueDetected: "Out of Stock (6 days)",
+    financialImpact: "-$14,200 lost sales",
+    driver: "Vendor delivery delay",
+  },
+  {
+    branchId: "BR-012 (West End Mall)",
+    categoryItem: "OTC Pain Relief & First Aid",
+    issueDetected: "Footfall drop (-28%)",
+    financialImpact: "-$21,000 vs. budget",
+    driver: "Competing app dark store nearby",
+  },
+  {
+    branchId: "BR-009 (Airport Road)",
+    categoryItem: "Premium Skincare & Cosmetics",
+    issueDetected: "Zero turnover (90+ days)",
+    financialImpact: "$46,000 trapped cash",
+    driver: "Mismatched store demographic",
+  },
+  {
+    branchId: "BR-018 (Green Valley)",
+    categoryItem: "Chronic Prescription Refills",
+    issueDetected: "Refill lapse (+31%)",
+    financialImpact: "-$18,500 recurring",
+    driver: "Service churn to quick-commerce",
+  },
+];
+
 const caseSectionData: Record<string, CaseSectionData> = {
   "case-1": {
     keyDataPoints: [
-      "$5,000 in unsold medicines sit stagnant across pharmacy branches locking working capital",
-      "Over 38 cubic feet of secure and refrigerated storage space occupied by non-moving SKUs",
-      "Holding duration exceeds 160+ days with zero dispensations recorded in suburban clinics",
-      "Expiring shelf-life creates impending write-off risk unless redistributed within 45 days",
+      "Supply Chain Breakdown in Fast-Movers: Stockout rates on top-50 chronic prescription drugs (antidiabetics, cardiac, antihypertensives) surged to 18.2%, accounting for an estimated $142,000 in lost basket conversions.",
+      "Aggressive Local Competition: Three high-density suburban clusters saw customer churn rise by 22% due to hyper-local quick-commerce apps offering 10-minute delivery on generic OTC items.",
+      "Inventory Imbalance: While prescription essentials were understocked, non-pharma personal care categories accumulated excess holding stock, tying up $310,000 in idle working capital.",
+      "Shrinking Prescription Attach Rate: Average basket size fell from 3.4 to 2.6 items per transaction as pharmacists consistently missed cross-selling OTC wellness products alongside refills.",
     ],
     suggestedNextSteps: [
-      "Initiate immediate automated inter-branch stock transfers to central trauma and ICU units",
-      "Trigger supplier consignment buy-back protocols for batches within return-eligibility windows",
-      "Apply bundled prescription clearance incentives on non-critical supportive health therapies",
-      "Activate automated reorder freeze triggers for medicine SKUs exceeding 90-day velocity lag",
+      "Emergency Central Stock Rebalancing: Auto-transfer excess cardiac and diabetic stock from slower peripheral branches to the top 6 Central Zone locations within 48 hours.",
+      "Supplier SLA Review: Meet with primary wholesale distributors regarding unfulfilled POs and activate secondary local distributors for chronic medicines.",
+      "Launch Same-Day Express Refill: Pilot a 60-minute delivery guarantee for subscription and repeat prescription patients within a 3-mile radius of key branches.",
+      "Dead-Stock Liquidation: Run a targeted promotional clearance on slow-moving FMCG and personal care stock older than 90 days to free up operational cash flow.",
     ],
   },
   "case-2": {
@@ -331,6 +420,7 @@ function CaseDetailsPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
   const [isArchived, setIsArchived] = useState<boolean>(false);
+  const [isClosed, setIsClosed] = useState<boolean>(false);
   const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
 
   useEffect(() => {
@@ -371,23 +461,54 @@ function CaseDetailsPage() {
       let replyContent = "";
       const lower = userText.toLowerCase();
 
-      // Case 1 specific responses (Dead stock ties up cash)
-      if (lower.includes("unlock") || lower.includes("5,000") || lower.includes("working capital") || lower.includes("cash")) {
-        replyContent = `The $5,000 in locked working capital is concentrated across 4 unsold medicine SKUs in 3 outpatient satellite branches. By executing automated inter-branch stock transfers to the central trauma ICU and triggering vendor consignment buy-backs, $3,270 can be liquidated within 72 hours, and the remaining $1,730 cleared through bundled recovery protocols.`;
-      } else if (lower.includes("which branch") || lower.includes("branches") || lower.includes("suburban") || lower.includes("highest volume")) {
-        replyContent = `Dead stock is distributed across 3 branches:
-• Suburban Dispensary East: $1,820 (Human Albumin 20% Infusion - 194 days idle)
-• North Outpatient Clinic: $1,450 (A to Z NS Multivitamin Tabs - 165 days idle)
-• Westside Daycare Unit: $980 (Ceftriaxone 1g Injectable - 182 days idle)
-• Trauma Satellite: $750 (Sterile Surgical Gauze 8Ply - 140 days idle)
-Suburban Dispensary East represents 36.4% of total locked capital.`;
-      } else if (lower.includes("transfer") || lower.includes("write-off") || lower.includes("inter-branch")) {
-        replyContent = `Recommended transfer routing:
-1. Transfer 14 vials of Human Albumin ($1,820) from Suburban Dispensary East to Central Inpatient ICU where weekly burn rate is 22 vials.
-2. Transfer 85 boxes of Sterile Surgical Gauze ($750) from Trauma Satellite to Main Surgical Theatres.
-This completely prevents expiration write-offs and saves $2,570 in upcoming central replenishment purchases.`;
-      } else if (lower.includes("supplier") || lower.includes("return") || lower.includes("buy-back") || lower.includes("consignment") || lower.includes("credit")) {
-        replyContent = `Ceftriaxone 1g Injectable vials ($980) were procured under standard distributor return terms with a 180-day guarantee. Generating an automated return authorization ticket now will recover a 100% account credit directly against the hospital's next pharmaceutical procurement cycle.`;
+      // Case 1 specific responses (Case #842: Q3 Revenue Drop & Margin Compression Analysis)
+      if (
+        lower.includes("why") ||
+        lower.includes("drop") ||
+        lower.includes("11.4") ||
+        lower.includes("margin") ||
+        lower.includes("ebitda") ||
+        lower.includes("revenue")
+      ) {
+        replyContent = `Overall chain revenue declined 11.4% MoM in August (from $1.60M down to $1.42M), compressing EBITDA margins from 14.2% to 9.8%.\n\nPrimary Drivers:\n1. Fast-Mover Stockouts: Chronic prescription drug stockouts surged to 18.2%, causing $142,000 in lost basket conversions.\n2. Quick-Commerce Competition: Walk-in footfall dropped 19% following the launch of competing 10-minute delivery apps, reducing Average Basket Value from $34.20 to $28.50 (-16.6%).\n3. Inventory Imbalance: Non-pharma personal care accumulated excess holding stock, tying up $310,000 in idle working capital (increasing DOS to 54 days).`;
+      } else if (
+        lower.includes("stockout") ||
+        lower.includes("chronic") ||
+        lower.includes("fast-mover") ||
+        lower.includes("metformin") ||
+        lower.includes("supply chain")
+      ) {
+        replyContent = `Stockout rates on top-50 chronic prescription drugs (antidiabetics, cardiac, antihypertensives) surged to 18.2% across Central Zone branches. In BR-004 (Metro Downtown), Metformin 500mg and Telmisartan 40mg were out of stock for 6 consecutive days due to wholesale vendor delivery delays, resulting in -$14,200 in direct lost sales and recurring patient churn.`;
+      } else if (
+        lower.includes("dead stock") ||
+        lower.includes("personal care") ||
+        lower.includes("310") ||
+        lower.includes("capital") ||
+        lower.includes("skincare") ||
+        lower.includes("imbalance")
+      ) {
+        replyContent = `While chronic prescription medications were severely understocked, non-pharma personal care categories accumulated excess holding stock, tying up $310,000 in idle working capital. In BR-009 (Airport Road), premium skincare and cosmetics have recorded zero turnover for over 90 days ($46,000 trapped cash) due to a mismatched store demographic. A targeted clearance sale is recommended immediately.`;
+      } else if (
+        lower.includes("competition") ||
+        lower.includes("delivery") ||
+        lower.includes("footfall") ||
+        lower.includes("churn") ||
+        lower.includes("10-minute") ||
+        lower.includes("dark store")
+      ) {
+        replyContent = `Three high-density suburban clusters saw customer churn rise by 22% due to hyper-local quick-commerce apps offering 10-minute delivery on generic OTC items. In BR-012 (West End Mall), footfall dropped 28% (-$21,000 vs budget) due to a competing dark store opening nearby. We recommend piloting a 60-minute delivery guarantee for repeat prescription patients within a 3-mile radius.`;
+      } else if (
+        lower.includes("action") ||
+        lower.includes("recommend") ||
+        lower.includes("to-do") ||
+        lower.includes("rebalance") ||
+        lower.includes("solution")
+      ) {
+        replyContent = `Top 4 recommended actions:
+1. Emergency Central Stock Rebalancing: Auto-transfer excess cardiac and diabetic stock from peripheral branches to the top 6 Central Zone locations within 48 hours.
+2. Supplier SLA Review: Meet with primary wholesale distributors regarding unfulfilled POs and activate secondary local distributors for chronic medicines.
+3. Launch Same-Day Express Refill: Pilot a 60-minute delivery guarantee for subscription and repeat prescription patients within a 3-mile radius of key branches.
+4. Dead-Stock Liquidation: Run a targeted promotional clearance on slow-moving FMCG and personal care stock older than 90 days to free up operational cash flow.`;
       }
       // Case 2 specific responses
       else if (lower.includes("14% drop") || lower.includes("volume dropped")) {
@@ -419,7 +540,7 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
 
   const defaultCase: HistoryItem = {
     id: "case-1",
-    title: "Low sales share despite moderate stock",
+    title: "Q3 Revenue Drop & Margin Compression Analysis",
     timestamp: "04 Sept 2026, 05:57 am",
   };
 
@@ -454,7 +575,7 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
           </h1>
         </div>
 
-        {/* Right Side Options: Check Status Now, Case History, Follow, Consolidated Report, Three Dots */}
+        {/* Right Side Options: Check Status Now, Case History, Continuous Auditing, Three Dots */}
         <div className="flex items-center gap-2.5 ml-auto">
           {/* 1. Check Status Now */}
           <button
@@ -484,12 +605,16 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
             <span>Case History</span>
           </button>
 
-          {/* 3. Follow */}
+          {/* 3. Continuous Auditing */}
           <button
             onClick={() => {
               setIsFollowing((prev) => {
                 const next = !prev;
-                setStatusMessage(next ? "You are now following this project for updates" : "Unfollowed project");
+                setStatusMessage(
+                  next
+                    ? "Continuous auditing activated for this case"
+                    : "Continuous auditing paused"
+                );
                 setTimeout(() => setStatusMessage(null), 3000);
                 return next;
               });
@@ -499,31 +624,22 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
                 ? "border-emerald-500/80 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700"
                 : "border-border bg-surface text-foreground hover:bg-tile"
             }`}
-            title={isFollowing ? "Following project" : "Follow project"}
+            title={isFollowing ? "Continuous auditing active" : "Enable continuous auditing"}
           >
             {isFollowing ? (
               <>
                 <Check className="size-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Following</span>
+                <span>Continuous Auditing</span>
               </>
             ) : (
               <>
                 <Bell className="size-4 text-muted-foreground" />
-                <span>Follow</span>
+                <span>Continuous Auditing</span>
               </>
             )}
           </button>
 
-          {/* 4. Consolidated Report */}
-          <button
-            onClick={() => setShowConsolidatedModal(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-tile transition shadow-2xs cursor-pointer active:scale-95"
-          >
-            <FileText className="size-4 text-muted-foreground" />
-            Consolidated Report
-          </button>
-
-          {/* 5. Three Dots action menu */}
+          {/* 4. Three Dots action menu (Includes Close Project, Consolidated Report, Archive Project) */}
           <div className="relative">
             <button
               onClick={(e) => {
@@ -531,11 +647,11 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
                 setShowMoreMenu((prev) => !prev);
               }}
               className={`inline-flex items-center justify-center rounded-xl border p-2 transition cursor-pointer active:scale-95 shadow-2xs ${
-                isArchived
+                isArchived || isClosed
                   ? "border-amber-500/80 bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700"
                   : "border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile"
               }`}
-              title={isArchived ? "Project archived (Click for options)" : "More options"}
+              title="More options"
               aria-label="More options"
             >
               <MoreVertical className="size-4" />
@@ -544,13 +660,60 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
             {showMoreMenu && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-1.5 z-40 w-52 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+                className="absolute right-0 top-full mt-1.5 z-40 w-56 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
               >
+                {/* Switch Status to Close / Reopen Project */}
+                <button
+                  onClick={() => {
+                    setIsClosed((prev) => {
+                      const next = !prev;
+                      setStatusMessage(
+                        next
+                          ? "Project status updated to Closed"
+                          : "Project reopened (In Progress)"
+                      );
+                      setTimeout(() => setStatusMessage(null), 3000);
+                      return next;
+                    });
+                    setShowMoreMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-tile transition cursor-pointer"
+                >
+                  {isClosed ? (
+                    <>
+                      <RotateCcw className="size-4 text-blue-600 dark:text-blue-400" />
+                      <span>Reopen Project</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>Close Project</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Consolidated Report */}
+                <button
+                  onClick={() => {
+                    setShowConsolidatedModal(true);
+                    setShowMoreMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-tile transition cursor-pointer"
+                >
+                  <FileText className="size-4 text-muted-foreground" />
+                  <span>Consolidated Report</span>
+                </button>
+
+                <div className="my-1 border-t border-border/50" />
+
+                {/* Archive Project */}
                 <button
                   onClick={() => {
                     setIsArchived((prev) => {
                       const next = !prev;
-                      setStatusMessage(next ? "Project has been archived" : "Project restored from archive");
+                      setStatusMessage(
+                        next ? "Project has been archived" : "Project restored from archive"
+                      );
                       setTimeout(() => setStatusMessage(null), 3000);
                       return next;
                     });
@@ -566,6 +729,26 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
           </div>
         </div>
       </header>
+
+      {/* Project Closed notification banner */}
+      {isClosed && (
+        <div className="bg-slate-500/10 border-b border-slate-500/25 text-slate-800 dark:text-slate-200 text-xs py-2 px-4 flex items-center justify-between font-medium">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>This project is marked as Closed. All findings and actions have been finalized.</span>
+          </div>
+          <button
+            onClick={() => {
+              setIsClosed(false);
+              setStatusMessage("Project reopened (In Progress)");
+              setTimeout(() => setStatusMessage(null), 3000);
+            }}
+            className="underline font-semibold hover:text-slate-950 dark:hover:text-slate-100 cursor-pointer"
+          >
+            Reopen Project
+          </button>
+        </div>
+      )}
 
       {/* Archive project notification banner */}
       {isArchived && (
@@ -647,13 +830,43 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
         <main className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6 lg:p-8 bg-surface-tint">
           <div className="max-w-4xl mx-auto space-y-4 sm:space-y-5">
             {/* Card 1: Case Title & Scope */}
-            <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-2xs">
+            <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-2xs space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                {isClosed ? (
+                  <button
+                    onClick={() => {
+                      setIsClosed(false);
+                      setStatusMessage("Project reopened (In Progress)");
+                      setTimeout(() => setStatusMessage(null), 3000);
+                    }}
+                    title="Click to switch status / Reopen project"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 px-3 py-1 font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition cursor-pointer"
+                  >
+                    <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Status: Closed</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsClosed(true);
+                      setStatusMessage("Project status updated to Closed");
+                      setTimeout(() => setStatusMessage(null), 3000);
+                    }}
+                    title="Click to switch status / Close project"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-3 py-1 font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition cursor-pointer"
+                  >
+                    <Clock className="size-3.5" />
+                    <span>Status: In Progress</span>
+                  </button>
+                )}
+              </div>
+
               <div className="space-y-1.5">
                 <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-snug">
                   {selectedCase.title}
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Multi-branch pharmaceutical inventory diagnostic, idle working capital recovery, and storage space optimization analysis.
+                  Comprehensive audit of August revenue contraction (-11.4%), acute chronic medication stockouts, footfall churn, and margin compression.
                 </p>
               </div>
             </section>
@@ -663,200 +876,201 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
               <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
                 <FileText className="size-4 text-brand-blue shrink-0" />
                 <h3 className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
-                  Executive Summary & Findings
+                  Executive Summary
                 </h3>
               </div>
 
               <p className="text-xs sm:text-sm leading-relaxed text-foreground/90 font-normal">
-                Multi-branch audit across hospital dispensary locations identified $5,000 in unsold pharmaceutical stock sitting stagnant across regional outpatient branches. These non-moving medicines severely lock up vital working capital while consuming critical refrigerated space and secure dispensary shelves. Telemetry from electronic health records and dispensary logs confirms zero units dispensed over the past 140–194 days for these batches, creating imminent risk of full inventory write-offs upon expiration. Automated recovery actions focus on immediate inter-branch transfers to central emergency and surgical suites, vendor consignment returns, and dynamic reorder threshold freezes.
+                Overall chain revenue declined 11.4% MoM in August, driven primarily by acute stockouts in top-margin chronic-care medications across the Central Zone and a 19% drop in walk-in footfall following the launch of a competing 10-minute delivery model. High operational overhead and dead-stock buildup in secondary product categories further compressed EBITDA margins from 14.2% to 9.8%.
               </p>
 
-              {/* Executive Callout / Core Takeaway Box */}
-              <div className="rounded-xl border-l-4 border-brand-blue bg-slate-50/90 dark:bg-zinc-800/50 p-4 sm:p-5 border-y border-r border-slate-200/70 dark:border-zinc-700/60 shadow-2xs">
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-brand-blue">
-                    Core Operational Takeaway
-                  </span>
-                  <p className="text-xs sm:text-sm leading-relaxed text-foreground/90">
-                    $5,000 in liquid capital is immobilized in dead stock across satellite branches due to fragmented cross-branch inventory visibility. Rapid inter-branch rebalancing unlocks 100% of this locked capital and frees 38 cu ft of high-value clinic storage without incurring secondary replenishment costs.
-                  </p>
-                </div>
-              </div>
+              {/* Executive Quote Block */}
+              <blockquote className="relative my-3 rounded-2xl border-l-4 border-rose-500 bg-rose-50/70 dark:bg-rose-950/30 p-5 sm:p-6 border-y border-r border-rose-200/70 dark:border-rose-900/40 shadow-xs space-y-2">
+                <Quote className="size-7 text-rose-500/50 dark:text-rose-400/50 -mb-1" />
+                <p className="text-base sm:text-lg font-medium italic leading-relaxed text-foreground/95">
+                  “Gross revenue fell from $1.60M to $1.42M (-11.4%), while EBITDA margins contracted from 14.2% to 9.8%. Immediate recovery requires emergency central stock rebalancing, vendor SLA escalation, and liquidating $310,000 in non-pharma dead stock.”
+                </p>
+              </blockquote>
             </section>
 
-            {/* Card 3: Key Data Points */}
-            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-3.5">
-              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
-                <svg
-                  className="size-4 shrink-0 text-[#2563eb] dark:text-[#60a5fa]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <circle cx="12" cy="12" r="6" />
-                  <circle cx="12" cy="12" r="2" fill="currentColor" />
-                </svg>
-                <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#2563eb] dark:text-[#60a5fa]">
-                  Key Data Points
-                </h3>
-              </div>
-
-              <div className="space-y-2">
-                {currentCaseData.keyDataPoints.map((point, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3.5 rounded-xl bg-[#f0f7ff] dark:bg-blue-950/35 border border-blue-100/60 dark:border-blue-900/30 px-3.5 py-2.5 sm:px-4 sm:py-3 transition-colors"
-                  >
-                    <span className="grid size-5.5 sm:size-6 shrink-0 place-items-center rounded-full bg-[#dbeafe] text-[#2563eb] dark:bg-blue-900/70 dark:text-blue-200 text-xs font-bold">
-                      {idx + 1}
-                    </span>
-                    <span className="text-xs sm:text-sm text-foreground/90 font-normal leading-normal">
-                      {point}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Card 4: Suggested Next Steps */}
-            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-3.5">
-              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
-                <CheckCircle2 className="size-4.5 shrink-0 text-[#059669] dark:text-[#34d399]" />
-                <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#059669] dark:text-[#34d399]">
-                  Suggested Next Steps
-                </h3>
-              </div>
-
-              <div className="space-y-2">
-                {currentCaseData.suggestedNextSteps.map((step, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3.5 rounded-xl bg-[#f0fdf4] dark:bg-emerald-950/35 border border-emerald-100/60 dark:border-emerald-900/30 px-3.5 py-2.5 sm:px-4 sm:py-3 transition-colors"
-                  >
-                    <CheckCircle2 className="size-4.5 shrink-0 text-[#059669] dark:text-[#34d399]" />
-                    <span className="text-xs sm:text-sm text-foreground/90 font-normal leading-normal">
-                      {step}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Card 5: Issue Details & Dead Stock Breakdown */}
+            {/* Card 3: High-Level Insights */}
             <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
-                <Table2 className="size-4.5 text-brand-blue shrink-0" />
-                <h3 className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
-                  Issue Details & Dead Stock Breakdown
+              <div className="border-b border-slate-200/80 dark:border-zinc-800 pb-3">
+                <h3 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+                  High-Level Insights
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                {currentCaseData.keyDataPoints.map((point, idx) => {
+                  const parts = point.split(":");
+                  const title = parts.length > 1 ? parts[0] : `Insight ${idx + 1}`;
+                  const description = parts.length > 1 ? parts.slice(1).join(":") : point;
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-xl bg-[#f0f7ff] dark:bg-blue-950/35 border border-blue-100/60 dark:border-blue-900/30 p-4 sm:p-5 transition-all hover:border-blue-200 dark:hover:border-blue-800/60"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6">
+                        {/* Left side: Bigger Title with Number */}
+                        <div className="sm:w-5/12 md:w-1/3 shrink-0 flex items-start gap-3">
+                          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#dbeafe] text-[#2563eb] dark:bg-blue-900/70 dark:text-blue-200 text-sm font-bold">
+                            {idx + 1}
+                          </span>
+                          <h4 className="text-sm sm:text-base font-normal text-foreground leading-snug pt-0.5">
+                            {title}
+                          </h4>
+                        </div>
+
+                        {/* Right side: Content */}
+                        <div className="sm:flex-1 pt-0.5 sm:border-l sm:border-blue-200/60 dark:sm:border-blue-900/40 sm:pl-6">
+                          <p className="text-sm sm:text-[15px] leading-relaxed text-foreground/85 font-normal">
+                            {description.trim()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Card 4: Key Metrics */}
+            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-zinc-800 pb-3">
+                <h3 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+                  Key Metrics
+                </h3>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  August MoM Variance
+                </span>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+                <table className="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-200 font-semibold">
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Metric</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Current (Aug)</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Target / Prior Month</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Variance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/80 dark:divide-zinc-800 text-foreground/90">
+                    {case1KeyMetrics.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                        <td className="px-4 py-3 font-medium text-foreground">{row.metric}</td>
+                        <td className="px-4 py-3 font-mono text-right font-semibold text-foreground">
+                          {row.current}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-right text-muted-foreground">
+                          {row.target}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="inline-flex items-center gap-1 font-mono font-bold text-xs px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                            {row.variance}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Card 5: Recommended Actions (To-Do) */}
+            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="border-b border-slate-200/80 dark:border-zinc-800 pb-3">
+                <h3 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+                  Recommended Actions (To-Do)
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                {currentCaseData.suggestedNextSteps.map((step, idx) => {
+                  const parts = step.split(":");
+                  const title = parts.length > 1 ? parts[0] : `Action ${idx + 1}`;
+                  const description = parts.length > 1 ? parts.slice(1).join(":") : step;
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-xl bg-[#f0fdf4] dark:bg-emerald-950/35 border border-emerald-100/60 dark:border-emerald-900/30 p-4 sm:p-5 transition-all hover:border-emerald-200 dark:hover:border-emerald-800/60"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6">
+                        {/* Left side: Title with Checkbox Indicator */}
+                        <div className="sm:w-5/12 md:w-1/3 shrink-0 flex items-start gap-2.5">
+                          <div className="mt-0.5 size-4.5 rounded-[5px] border border-emerald-500/70 bg-white dark:bg-zinc-900 flex items-center justify-center shrink-0 shadow-2xs">
+                            <Check className="size-3 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
+                          </div>
+                          <h4 className="text-sm sm:text-base font-normal text-foreground leading-snug pt-0.5">
+                            {title}
+                          </h4>
+                        </div>
+
+                        {/* Right side: Content */}
+                        <div className="sm:flex-1 pt-0.5 sm:border-l sm:border-emerald-200/60 dark:sm:border-emerald-900/40 sm:pl-6">
+                          <p className="text-sm sm:text-[15px] leading-relaxed text-foreground/85 font-normal">
+                            {description.trim()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Card 6: Sample Data Records (Underlying Evidence) */}
+            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="border-b border-slate-200/80 dark:border-zinc-800 pb-3">
+                <h3 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+                  Sample Data Records (Underlying Evidence)
                 </h3>
               </div>
 
               <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">
-                Detailed breakdown of unsold pharmaceutical inventory sitting stagnant across regional branches, with locked capital valuations, idle holding duration, and immediate reallocation routings.
+                Direct evidence telemetry from urban and suburban pharmacy branch locations detailing fast-mover stockouts, footfall churn, and dead stock capital lockup.
               </p>
-
-              <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground bg-slate-50/80 dark:bg-zinc-800/40 rounded-xl p-3 border border-slate-200/80 dark:border-zinc-700/60">
-                <span>
-                  <strong className="font-semibold text-foreground">Impact Profile:</strong> Dead Stock / Working Capital Lockup
-                </span>
-                <span className="text-slate-300 dark:text-zinc-700 hidden sm:inline">•</span>
-                <span>
-                  <strong className="font-semibold text-foreground">Audit Period:</strong> 2026-09-10
-                </span>
-                <span className="text-slate-300 dark:text-zinc-700 hidden sm:inline">•</span>
-                <span>
-                  <strong className="font-semibold text-foreground">Scope:</strong> 3 Regional Branches · 4 Target SKUs ($5,000 Total)
-                </span>
-              </div>
 
               {/* Data Table */}
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
                 <table className="w-full text-left text-xs sm:text-sm whitespace-nowrap">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-200 font-semibold">
-                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Product ID</th>
-                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Product Name</th>
-                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Branch Location</th>
-                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Stock Level</th>
-                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Holding Duration</th>
-                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Locked Capital</th>
-                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Recommended Action</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Branch ID</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Category / Item</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Issue Detected</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Financial Impact</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Driver</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/80 dark:divide-zinc-800 text-foreground/90">
-                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td className="px-4 py-3 font-mono font-medium text-foreground">48291</td>
-                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
-                        HUMAN ALBUMIN 20%<br /><span className="text-xs text-muted-foreground">50ml IV Infusion</span>
-                      </td>
-                      <td className="px-4 py-3 text-foreground/80">Suburban Dispensary East</td>
-                      <td className="px-4 py-3 font-mono text-right">14 vials</td>
-                      <td className="px-4 py-3 font-mono text-right font-medium text-rose-600 dark:text-rose-400">194 days</td>
-                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$1,820.00</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-950/60 text-brand-blue px-2.5 py-0.5 text-xs font-medium">
-                          Transfer to ICU
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td className="px-4 py-3 font-mono font-medium text-foreground">37565</td>
-                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
-                        A TO Z NS MULTI<br /><span className="text-xs text-muted-foreground">Therapeutic Tabs (30s)</span>
-                      </td>
-                      <td className="px-4 py-3 text-foreground/80">North Outpatient Clinic</td>
-                      <td className="px-4 py-3 font-mono text-right">120 packs</td>
-                      <td className="px-4 py-3 font-mono text-right font-medium text-rose-600 dark:text-rose-400">165 days</td>
-                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$1,450.00</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 text-xs font-medium">
-                          Bundled Clearance
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td className="px-4 py-3 font-mono font-medium text-foreground">51024</td>
-                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
-                        CEFTRIAXONE 1G INJ<br /><span className="text-xs text-muted-foreground">Powder for Solution</span>
-                      </td>
-                      <td className="px-4 py-3 text-foreground/80">Westside Daycare Unit</td>
-                      <td className="px-4 py-3 font-mono text-right">65 vials</td>
-                      <td className="px-4 py-3 font-mono text-right font-medium text-rose-600 dark:text-rose-400">182 days</td>
-                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$980.00</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="inline-block rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-2.5 py-0.5 text-xs font-medium">
-                          Vendor Buy-Back
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td className="px-4 py-3 font-mono font-medium text-foreground">37714</td>
-                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
-                        STERILE GAUZE 8PLY<br /><span className="text-xs text-muted-foreground">10x10cm Sponge (Pack)</span>
-                      </td>
-                      <td className="px-4 py-3 text-foreground/80">Trauma Satellite Dispensary</td>
-                      <td className="px-4 py-3 font-mono text-right">85 boxes</td>
-                      <td className="px-4 py-3 font-mono text-right font-medium text-amber-600 dark:text-amber-400">140 days</td>
-                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$750.00</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-950/60 text-brand-blue px-2.5 py-0.5 text-xs font-medium">
-                          Transfer to Surgery
-                        </span>
-                      </td>
-                    </tr>
+                    {case1SampleData.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                        <td className="px-4 py-3 font-mono font-medium text-foreground">{row.branchId}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">{row.categoryItem}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+                            {row.issueDetected}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">
+                          {row.financialImpact}
+                        </td>
+                        <td className="px-4 py-3 text-foreground/80">{row.driver}</td>
+                      </tr>
+                    ))}
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-slate-300 dark:border-zinc-700 bg-slate-50/90 dark:bg-zinc-800/80 font-semibold text-foreground">
-                      <td colSpan={5} className="px-4 py-3 text-xs uppercase tracking-wider text-muted-foreground">
-                        Total Stagnant Inventory (4 SKUs Across 3 Regional Branches)
+                      <td colSpan={3} className="px-4 py-3 text-xs uppercase tracking-wider text-muted-foreground">
+                        Total Sampled Immediate Financial Exposure
                       </td>
                       <td className="px-4 py-3 font-mono text-right text-base text-rose-600 dark:text-rose-400 font-bold">
-                        $5,000.00
+                        -$99,700
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                        100% Recoverable
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        Across 4 sample branches
                       </td>
                     </tr>
                   </tfoot>
@@ -962,10 +1176,10 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
                   Executive Brief
                 </span>
                 <h3 className="text-xl font-bold text-foreground mt-0.5">
-                  Consolidated Dead Stock & Capital Recovery Report
+                  Q3 Revenue Drop & Margin Compression Analysis
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Report ID: CR-2026-09-10 · Generated Today at 05:57 AM
+                  Generated Today at 05:57 AM
                 </p>
               </div>
               <button
@@ -983,30 +1197,30 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
                   1. Executive Summary
                 </span>
                 <p>
-                  Comprehensive cross-branch audit across hospital dispensary locations identified $5,000 in unsold pharmaceutical stock sitting stagnant across regional outpatient branches, locking up critical working capital and consuming prime dispensary storage space.
+                  Overall chain revenue declined 11.4% MoM in August, driven primarily by acute stockouts in top-margin chronic-care medications across the Central Zone and a 19% drop in walk-in footfall following the launch of a competing 10-minute delivery model. EBITDA margins compressed from 14.2% to 9.8%.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-tile/50 border border-border/40 p-3.5">
                   <span className="text-xs text-muted-foreground font-medium block">
-                    Stagnant Dead Stock
+                    August Gross Revenue
                   </span>
-                  <span className="text-lg font-bold text-rose-600 dark:text-rose-400">$5,000 USD</span>
+                  <span className="text-lg font-bold text-rose-600 dark:text-rose-400">$1.42M USD</span>
                   <span className="text-xs text-muted-foreground block mt-0.5">
-                    4 SKUs across 3 branches
+                    -11.4% vs $1.60M target
                   </span>
                 </div>
 
                 <div className="rounded-2xl bg-tile/50 border border-border/40 p-3.5">
                   <span className="text-xs text-muted-foreground font-medium block">
-                    Recoverable Working Capital
+                    Prescription Fill Rate
                   </span>
-                  <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                    +$5,000.00
+                  <span className="text-lg font-bold text-rose-600 dark:text-rose-400">
+                    81.8% Fill
                   </span>
                   <span className="text-xs text-muted-foreground block mt-0.5">
-                    Via transfers & returns
+                    $142,000 lost conversions
                   </span>
                 </div>
               </div>
@@ -1016,9 +1230,10 @@ This completely prevents expiration write-offs and saves $2,570 in upcoming cent
                   2. Immediate Recommendations
                 </span>
                 <ul className="space-y-1.5 text-xs text-muted-foreground list-disc pl-4">
-                  <li>Transfer 14 vials of Human Albumin ($1,820) from Suburban Branch directly to Central Inpatient ICU.</li>
-                  <li>Return eligible Ceftriaxone injectable batches ($980) to primary distributor for 100% account credit.</li>
-                  <li>Bundle remaining vitamins and sterile gauze ($2,200) into outpatient discharge kits.</li>
+                  <li>Emergency Central Stock Rebalancing: Auto-transfer excess cardiac and diabetic stock to top 6 Central Zone branches within 48 hours.</li>
+                  <li>Supplier SLA Review: Meet with wholesale distributors regarding unfulfilled POs and activate secondary local distributors.</li>
+                  <li>Launch Same-Day Express Refill: Pilot a 60-minute delivery guarantee for repeat prescription patients within 3 miles.</li>
+                  <li>Dead-Stock Liquidation: Promotional clearance on slow-moving FMCG and personal care stock older than 90 days to free up $310,000.</li>
                 </ul>
               </div>
             </div>

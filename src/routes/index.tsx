@@ -105,11 +105,18 @@ const newCases = [
   },
 ];
 
-const initialActiveCases = [
+interface ActiveCaseItem {
+  age: string;
+  title: string;
+  body: string;
+  expiryDate?: string;
+}
+
+const initialActiveCases: ActiveCaseItem[] = [
   {
-    age: "2 hrs ago",
-    title: "Overstocking of Medicines",
-    body: "Unsold medicines worth $5,000 sit across branches, locking working capital and consuming storage space.",
+    age: "Just now",
+    title: "Q3 Revenue Drop & Margin Compression Analysis",
+    body: "Overall chain revenue declined 11.4% MoM in August, driven by acute chronic stockouts ($142k lost) and a 19% drop in footfall.",
   },
   {
     age: "2 hrs ago",
@@ -431,6 +438,7 @@ function Index() {
   const [isAddCaseOpen, setIsAddCaseOpen] = useState(false);
   const [casePrompt, setCasePrompt] = useState("");
   const [caseDescription, setCaseDescription] = useState("");
+  const [caseExpiryDate, setCaseExpiryDate] = useState("");
 
   // Ref and scrolling for top Explore cards carousel
   const exploreScrollRef = useRef<HTMLDivElement>(null);
@@ -447,16 +455,26 @@ function Index() {
   const handleCreateCase = (e: React.FormEvent) => {
     e.preventDefault();
     if (!casePrompt.trim()) return;
-    const newCase = {
+    const formattedExpiry = caseExpiryDate
+      ? new Date(caseExpiryDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+      : undefined;
+
+    const newCase: ActiveCaseItem = {
       age: "Just now",
       title: casePrompt.trim(),
       body:
         caseDescription.trim() ||
         "AI automated discovery scan initialized across clinical scheduling and billing repositories.",
+      expiryDate: formattedExpiry,
     };
     setCasesList([newCase, ...casesList]);
     setCasePrompt("");
     setCaseDescription("");
+    setCaseExpiryDate("");
     setIsAddCaseOpen(false);
   };
 
@@ -691,7 +709,14 @@ function Index() {
                     return (
                       <div key={`${c.title}-${i}`} className="flex flex-col rounded-2xl bg-tile p-5 relative group">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">{c.age || "\u00A0"}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{c.age || "\u00A0"}</span>
+                            {c.expiryDate && (
+                              <span className="inline-flex items-center gap-1 text-[11px] rounded-md px-1.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium border border-amber-500/20">
+                                Expires: {c.expiryDate}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 relative">
                             {isLive && (
                               <span className="relative flex size-2.5" title="Live" aria-label="Live">
@@ -779,7 +804,7 @@ function Index() {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl sm:text-[22px] font-semibold text-foreground">
-                    Automated Results
+                    Continuous Auditing
                   </h2>
                   <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
                     Continuous comparative findings across previous runs and active cases.
@@ -949,6 +974,19 @@ function Index() {
                   onChange={(e) => setCaseDescription(e.target.value)}
                   placeholder="Add context on departments, expected metrics, or historical baseline periods..."
                   className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5 flex items-center justify-between">
+                  <span>Expiry Date</span>
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={caseExpiryDate}
+                  onChange={(e) => setCaseExpiryDate(e.target.value)}
+                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer"
                 />
               </div>
 
