@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiToolsRouteImport } from './routes/ai-tools'
+import { Route as CasesRouteImport } from './routes/cases'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as DataCenterRouteImport } from './routes/data-center'
 import { Route as DetailsRouteImport } from './routes/details'
@@ -25,6 +26,11 @@ const IndexRoute = IndexRouteImport.update({
 const AiToolsRoute = AiToolsRouteImport.update({
   id: '/ai-tools',
   path: '/ai-tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CasesRoute = CasesRouteImport.update({
+  id: '/cases',
+  path: '/cases',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnectRoute = ConnectRouteImport.update({
@@ -56,6 +62,7 @@ const FoldersRoute = FoldersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
+  '/cases': typeof CasesRoute
   '/connect': typeof ConnectRoute
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
+  '/cases': typeof CasesRoute
   '/connect': typeof ConnectRoute
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
+  '/cases': typeof CasesRoute
   '/connect': typeof ConnectRoute
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/ai-tools'
+    | '/cases'
     | '/connect'
     | '/data-center'
     | '/details'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/ai-tools'
+    | '/cases'
     | '/connect'
     | '/data-center'
     | '/details'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/ai-tools'
+    | '/cases'
     | '/connect'
     | '/data-center'
     | '/details'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AiToolsRoute: typeof AiToolsRoute
+  CasesRoute: typeof CasesRoute
   ConnectRoute: typeof ConnectRoute
   DataCenterRoute: typeof DataCenterRoute
   DetailsRoute: typeof DetailsRoute
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-tools'
       fullPath: '/ai-tools'
       preLoaderRoute: typeof AiToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cases': {
+      id: '/cases'
+      path: '/cases'
+      fullPath: '/cases'
+      preLoaderRoute: typeof CasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/connect': {
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiToolsRoute: AiToolsRoute,
+  CasesRoute: CasesRoute,
   ConnectRoute: ConnectRoute,
   DataCenterRoute: DataCenterRoute,
   DetailsRoute: DetailsRoute,

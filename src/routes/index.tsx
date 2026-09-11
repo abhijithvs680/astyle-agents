@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Menu,
   Home,
+  Briefcase,
   Database,
   Compass,
   FolderKanban,
@@ -49,6 +50,7 @@ export const Route = createFileRoute("/")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/", active: true },
+  { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
   { icon: Server, label: "Data Center", to: "/data-center" },
@@ -63,7 +65,7 @@ const newCases = [
     title: "Patient volume dropped by 14%",
     titleWeight: "font-medium",
     body: "A significant decline in patient visits was detected compared with the previous period.",
-    bodyColor: "text-[#3b5e48]",
+    bodyColor: "text-[#264431]",
   },
   {
     up: false,
@@ -72,7 +74,7 @@ const newCases = [
     title: "OP cancellations increased by 18%",
     titleWeight: "font-medium",
     body: "A sudden rise in appointment cancellations was detected in selected departments.",
-    bodyColor: "text-[#694a74]",
+    bodyColor: "text-[#4c2f57]",
   },
   {
     up: false,
@@ -81,7 +83,7 @@ const newCases = [
     title: "Complaint volume increased by 16%",
     titleWeight: "font-semibold",
     body: "Patient complaints grew across front-desk and billing touchpoints this quarter.",
-    bodyColor: "text-[#3f617f]",
+    bodyColor: "text-[#284661]",
   },
   {
     up: true,
@@ -90,7 +92,7 @@ const newCases = [
     title: "7 doctors show low utilization",
     titleWeight: "font-medium",
     body: "Consultation capacity is significantly underused for selected doctors.",
-    bodyColor: "text-[#3b5e48]",
+    bodyColor: "text-[#264431]",
   },
   {
     up: false,
@@ -99,15 +101,15 @@ const newCases = [
     title: "4 lab revenue anomalies found",
     titleWeight: "font-medium",
     body: "Differences were detected between ordered, completed, and billed laboratory services.",
-    bodyColor: "text-[#7a5840]",
+    bodyColor: "text-[#55361e]",
   },
 ];
 
 const initialActiveCases = [
   {
     age: "2 hrs ago",
-    title: "Specialty Revenue Decline",
-    body: "Cardiology revenue is projected to decline by 13% in 2023 despite relatively stable patient volumes.",
+    title: "Overstocking of Medicines",
+    body: "Unsold medicines worth $5,000 sit across branches, locking working capital and consuming storage space.",
   },
   {
     age: "2 hrs ago",
@@ -493,11 +495,10 @@ function Index() {
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
-                  active
-                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
-                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
-                }`}
+                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${active
+                  ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                  }`}
               >
                 <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
               </Link>
@@ -522,7 +523,7 @@ function Index() {
             />
             <Chip
               icon={Sparkles}
-              label="Insights"
+              label="My feed"
               active={mainTab === "insights"}
               onClick={() => setMainTab("insights")}
             />
@@ -550,9 +551,6 @@ function Index() {
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-[22px]">Explore Insights</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Create case based on this Insights
-                    </p>
                   </div>
 
                   {/* Left & Right Arrow Navigation (Replacing scrollbar) */}
@@ -588,7 +586,7 @@ function Index() {
                   ref={exploreScrollRef}
                   className="flex gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 >
-                  {newCases.map((c) => (
+                  {newCases.map((c, idx) => (
                     <div
                       key={c.title}
                       onClick={() => {
@@ -598,9 +596,28 @@ function Index() {
                       }}
                       role="button"
                       tabIndex={0}
-                      className={`group flex w-72 sm:w-[305px] shrink-0 flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
+                      className={`group relative overflow-hidden flex w-72 sm:w-[305px] shrink-0 flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
                     >
-                      <div>
+                      {/* Minimal Top-Side Light Background Pattern (3x3 Dot Grid matching OP cancellations card) */}
+                      <svg
+                        className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15 transition-transform duration-300 group-hover:scale-110"
+                        viewBox="0 0 36 36"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <circle cx="6" cy="6" r="1.5" fill="currentColor" />
+                        <circle cx="18" cy="6" r="1.5" fill="currentColor" />
+                        <circle cx="30" cy="6" r="1.5" fill="currentColor" />
+                        <circle cx="6" cy="18" r="1.5" fill="currentColor" />
+                        <circle cx="18" cy="18" r="1.5" fill="currentColor" />
+                        <circle cx="30" cy="18" r="1.5" fill="currentColor" />
+                        <circle cx="6" cy="30" r="1.5" fill="currentColor" />
+                        <circle cx="18" cy="30" r="1.5" fill="currentColor" />
+                        <circle cx="30" cy="30" r="1.5" fill="currentColor" />
+                      </svg>
+
+                      {/* Foreground Content */}
+                      <div className="relative z-10">
                         <span
                           className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
                         >
@@ -622,7 +639,7 @@ function Index() {
                       </div>
 
                       {/* Prompt to create case with prefilled details */}
-                      <div className="mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black">
+                      <div className="relative z-10 mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black">
                         <span>Create case</span>
                         <Plus className="size-3.5 group-hover:scale-125 transition-transform" />
                       </div>
@@ -720,7 +737,7 @@ function Index() {
                         <h4 className="mt-5 text-lg font-medium text-foreground">
                           {c.title}
                         </h4>
-                        <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                        <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/75">
                           {c.body}
                         </p>
 
@@ -773,41 +790,37 @@ function Index() {
                 <div className="flex items-center gap-1 rounded-2xl bg-surface p-1 border border-border">
                   <button
                     onClick={() => setTimeFilter("all")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
-                      timeFilter === "all"
-                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "all"
+                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     All ({smallInsights.length})
                   </button>
                   <button
                     onClick={() => setTimeFilter("today")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
-                      timeFilter === "today"
-                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "today"
+                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     Today ({smallInsights.filter((c) => c.timeframe === "today").length})
                   </button>
                   <button
                     onClick={() => setTimeFilter("week")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
-                      timeFilter === "week"
-                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "week"
+                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     This Week ({smallInsights.filter((c) => c.timeframe === "week").length})
                   </button>
                   <button
                     onClick={() => setTimeFilter("month")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
-                      timeFilter === "month"
-                        ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "month"
+                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     This Month ({smallInsights.filter((c) => c.timeframe === "month").length})
                   </button>
@@ -817,8 +830,6 @@ function Index() {
               {/* Pinterest-like Masonry Columns - Cards without images have reduced height */}
               <div className="columns-1 sm:columns-2 lg:columns-4 gap-4 sm:gap-5 w-full [column-fill:_balance]">
                 {filteredCards.map((card) => {
-                  const Icon = card.sourceIcon;
-
                   return (
                     <div key={card.id} className="break-inside-avoid mb-4 sm:mb-5">
                       <Link
@@ -826,17 +837,6 @@ function Index() {
                         className="group rounded-3xl bg-surface border border-border/70 p-4.5 sm:p-5 shadow-xs hover:border-foreground/30 hover:shadow-md transition-all duration-200 block cursor-pointer"
                       >
                         <div className="space-y-3">
-                          {/* Top Source & Timeframe */}
-                          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1.5 truncate">
-                              <Icon className="size-3.5 shrink-0 text-muted-foreground" />
-                              <span className="truncate">{card.source}</span>
-                            </div>
-                            <span className="shrink-0 rounded-full bg-tile px-2.5 py-0.5 text-[11px] font-medium text-foreground">
-                              {card.timeLabel}
-                            </span>
-                          </div>
-
                           {/* Optional subtle medical image */}
                           {card.image && (
                             <div className="overflow-hidden rounded-2xl bg-tile aspect-[16/9] w-full border border-border/40">
@@ -868,12 +868,17 @@ function Index() {
                           </div>
                         </div>
 
-                        {/* Footer: Tag & Direct Click to Details */}
+                        {/* Footer: Time Badge, Delta & Direct Click to Details */}
                         <div className="mt-3.5 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
-                          <span className="inline-block rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-0.5 text-[11px] font-medium">
-                            {card.delta}
-                          </span>
-                          <span className="inline-flex items-center gap-1 font-medium text-brand-blue group-hover:underline">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="shrink-0 rounded-full bg-tile px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground border border-border/50">
+                              {card.timeLabel}
+                            </span>
+                            <span className="inline-block rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-0.5 text-[11px] font-medium">
+                              {card.delta}
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center gap-1 font-medium text-brand-blue group-hover:underline shrink-0 ml-2">
                             View details
                             <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
                           </span>
@@ -891,6 +896,8 @@ function Index() {
               )}
             </div>
           )}
+
+
         </main>
       </div>
 
@@ -984,11 +991,10 @@ function Chip({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition cursor-pointer ${
-        active
-          ? "border-transparent bg-chip-active text-chip-active-foreground font-medium shadow-xs"
-          : "border-border bg-surface text-foreground hover:bg-tile"
-      }`}
+      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition cursor-pointer ${active
+        ? "border-transparent bg-chip-active text-chip-active-foreground font-medium shadow-xs"
+        : "border-border bg-surface text-foreground hover:bg-tile"
+        }`}
     >
       <Icon className="size-4" />
       {label}

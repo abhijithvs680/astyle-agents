@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Menu,
   Home,
+  Briefcase,
   Server,
   Compass,
   FolderKanban,
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/folders")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
+  { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders", active: true },
   { icon: Server, label: "Data Center", to: "/data-center" },
@@ -150,8 +152,7 @@ const initialFolders: CaseFolder[] = [
         severity: "High",
       },
       {
-        id: "case-b4",
-        title: "Specialty Revenue Decline",
+        id: "case-b4", Overstocking of MedicinesDead stock ties up cash",
         age: "2 hrs ago",
         severity: "Medium",
       },
@@ -303,11 +304,10 @@ function FoldersPage() {
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
-                  active
+                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${active
                     ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
                     : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
-                }`}
+                  }`}
               >
                 <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
               </Link>

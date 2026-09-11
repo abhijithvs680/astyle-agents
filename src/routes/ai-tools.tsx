@@ -1,201 +1,237 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Menu,
-  Plus,
-  Grip,
   Home,
-  Calendar,
-  BookOpenText,
+  Briefcase,
+  Compass,
+  FolderKanban,
+  Server,
   Sparkles,
-  ListFilter,
-  Users,
-  GraduationCap,
-  Archive,
-  Settings,
-  ArrowLeft,
-  NotebookPen,
-  Wand2,
-  MessageSquareText,
-  Image as ImageIcon,
-  FileText,
-  BookMarked,
-  Lightbulb,
-  PenTool,
-  BrainCircuit,
-  Stars,
+  Send,
+  RotateCcw,
 } from "lucide-react";
+import { AIAssistantDefaultView } from "../components/AIAssistantDefaultView";
 
 export const Route = createFileRoute("/ai-tools")({
   head: () => ({
     meta: [
-      { title: "AI Tools — Classroom Admin" },
+      { title: "AI Assistant — CXO Platform" },
       {
         name: "description",
         content:
-          "Explore Gemini-powered AI tools for teaching and learning in Classroom Admin.",
+          "Intelligent data engineering and clinical insights assistant powered by generative AI.",
       },
-      { property: "og:title", content: "AI Tools — Classroom Admin" },
+      { property: "og:title", content: "AI Assistant — CXO Platform" },
       {
         property: "og:description",
-        content: "Gemini-powered AI tools for teaching and learning.",
+        content: "Ask anything about schemas, channel mapping, data connections, and clinical metrics.",
       },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: AIToolsPage,
+  component: AIAssistantPage,
 });
 
 const railIcons = [
-  { icon: Home, label: "Home" },
-  { icon: Calendar, label: "Calendar" },
-  { icon: BookOpenText, label: "Classes" },
-  { icon: Sparkles, label: "AI tools", active: true },
-  { icon: ListFilter, label: "Review" },
-  { icon: Users, label: "People", gap: true },
-  { icon: GraduationCap, label: "Enrolled" },
-  { icon: Archive, label: "Archived" },
-  { icon: Settings, label: "Settings" },
+  { icon: Home, label: "Home", to: "/" },
+  { icon: Briefcase, label: "Cases", to: "/cases" },
+  { icon: Compass, label: "Explore", to: "/explore" },
+  { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: Server, label: "Data Center", to: "/data-center" },
+  { icon: Sparkles, label: "AI Assistant", to: "/ai-tools", active: true },
 ];
 
-const tools = [
-  {
-    icon: MessageSquareText,
-    tint: "bg-[oklch(0.93_0.05_255)] text-[oklch(0.55_0.16_255)]",
-    title: "Ask Gemini",
-    body: "Get quick answers, explanations, and teaching ideas grounded in your curriculum.",
-  },
-  {
-    icon: NotebookPen,
-    tint: "bg-[oklch(0.93_0.06_150)] text-[oklch(0.55_0.14_150)]",
-    title: "Gemini Notebook",
-    body: "Turn dense material into study guides, summaries, and practice questions.",
-  },
-  {
-    icon: ImageIcon,
-    tint: "bg-[oklch(0.94_0.05_300)] text-[oklch(0.58_0.15_300)]",
-    title: "Generate visuals",
-    body: "Create images, diagrams, and flashcards to make concepts stick.",
-  },
-  {
-    icon: FileText,
-    tint: "bg-[oklch(0.93_0.04_240)] text-[oklch(0.55_0.14_250)]",
-    title: "Draft assignments",
-    body: "Generate quiz questions, rubrics, and lesson outlines in seconds.",
-  },
-  {
-    icon: BookMarked,
-    tint: "bg-[oklch(0.93_0.05_60)] text-[oklch(0.62_0.15_50)]",
-    title: "Personalized reading",
-    body: "Adapt passages to reading levels and student interests.",
-  },
-  {
-    icon: Lightbulb,
-    tint: "bg-[oklch(0.93_0.05_85)] text-[oklch(0.65_0.14_75)]",
-    title: "Brainstorm ideas",
-    body: "Spark project ideas, discussion prompts, and hands-on activities.",
-  },
-  {
-    icon: PenTool,
-    tint: "bg-[oklch(0.93_0.04_200)] text-[oklch(0.55_0.14_215)]",
-    title: "Feedback assistant",
-    body: "Draft constructive feedback on student work using your grading style.",
-  },
-  {
-    icon: BrainCircuit,
-    tint: "bg-[oklch(0.93_0.05_10)] text-[oklch(0.6_0.16_10)]",
-    title: "Differentiation coach",
-    body: "Suggest modifications for English learners, advanced learners, and IEP goals.",
-  },
-];
+interface ChatMessage {
+  id: string;
+  sender: "user" | "ai";
+  content: string;
+}
 
-function AIToolsPage() {
+function AIAssistantPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState<string>("");
+
+  const handleSendMessage = (e?: React.FormEvent, customPrompt?: string) => {
+    if (e) e.preventDefault();
+    const userText = (customPrompt ?? chatInput).trim();
+    if (!userText) return;
+
+    const newMsg: ChatMessage = {
+      id: `m-${Date.now()}`,
+      sender: "user",
+      content: userText,
+    };
+    setMessages((prev) => [...prev, newMsg]);
+    setChatInput("");
+
+    // Simulate AI response
+    setTimeout(() => {
+      let replyContent = "";
+      const lower = userText.toLowerCase();
+
+      if (lower.includes("analyze schema") || lower.includes("schema and optimize")) {
+        replyContent = `Analyzed schemas across connected tables:
+• Primary keys aligned: 'catalog_id' in Amazon catalog successfully mapped to 'procurement_item_id'.
+• Identified 2 unindexed foreign keys in InboundShipmentPlan causing query latency.
+• Recommended action: Created composite index on '(shipment_id, sku_code)' and validated nullability constraints. Query response improved by 42%.`;
+      } else if (lower.includes("create a new table") || lower.includes("table schema")) {
+        replyContent = `I have drafted the schema for 'procurement_inventory_sync':
+• item_id (VARCHAR PRIMARY KEY)
+• sku_catalog_ref (VARCHAR, FK -> amazon_catalog)
+• stock_available_units (INTEGER)
+• lead_time_days (INTEGER)
+• reorder_threshold (INTEGER)
+
+Ready to commit and deploy this schema definition to your active data center branch.`;
+      } else if (lower.includes("channel mapping")) {
+        replyContent = `Channel mapping validation complete:
+• 98.4% of product SKUs match across Amazon and Hospital Inbound feeds.
+• 2 unmapped SKUs identified: 'A TO Z NS + TAB' and 'SOFT SWAB 10*10 8PLY'.
+• Matched against catalog batch IDs #B-4089 and #B-4092 with 99.1% confidence score.`;
+      } else if (lower.includes("smart metrics")) {
+        replyContent = `Added 3 real-time smart metrics to your data pipeline:
+1. Stock Turnover Velocity (STV): Current rate 0.64% vs 2.80% target benchmark.
+2. Recoverable Margin Opportunity: +€18,400 / yr via bundle optimization.
+3. Lead Time Volatility: Standard deviation normalized to 1.2 days across primary suppliers.`;
+      } else {
+        replyContent = `I've analyzed the live connected data feeds regarding "${userText}". All schema dependencies are verified and synchronized across your clinical data center.`;
+      }
+
+      const aiReply: ChatMessage = {
+        id: `m-ai-${Date.now()}`,
+        sender: "ai",
+        content: replyContent,
+      };
+      setMessages((prev) => [...prev, aiReply]);
+    }, 600);
+  };
+
   return (
-    <div className="min-h-screen bg-surface-tint font-sans text-foreground">
-      <header className="flex items-center justify-between px-4 py-3 sm:px-6">
+    <div className="min-h-screen bg-surface-tint font-sans text-foreground flex flex-col">
+      {/* Header matching CXO app */}
+      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
             <Menu className="size-6 text-muted-foreground" />
           </button>
-          <span className="grid size-7 place-items-center rounded-md bg-[oklch(0.62_0.16_150)]">
-            <BookOpenText className="size-4 text-surface" />
+          <Link to="/" className="text-xl sm:text-[22px]">
+            CXO
+          </Link>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-brand-blue dark:bg-blue-950 font-medium">
+            AI Assistant
           </span>
-          <span className="text-xl sm:text-[22px]">Classroom</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="rounded-full p-2 hover:bg-tile" aria-label="Create">
-            <Plus className="size-6 text-muted-foreground" />
-          </button>
-          <button className="rounded-full p-2 hover:bg-tile" aria-label="Google apps">
-            <Grip className="size-6 text-muted-foreground" />
-          </button>
+
+        {/* Profile icon, name, and designation */}
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-medium leading-none text-foreground">Robert</p>
+            <p className="text-xs text-muted-foreground mt-1">Chief Executive Officer</p>
+          </div>
+          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-surface shadow-xs">
+            R
+          </span>
         </div>
       </header>
 
-      <div className="flex">
-        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-1 pt-2 md:flex">
-          {railIcons.map(({ icon: Icon, label, active, gap }) => (
-            <button
-              key={label}
-              aria-label={label}
-              className={`grid size-12 place-items-center rounded-full ${gap ? "mt-4" : ""} ${
-                active
-                  ? "bg-chip-active text-chip-active-foreground"
-                  : "text-muted-foreground hover:bg-tile"
-              }`}
-            >
-              <Icon className="size-5" />
-            </button>
+      <div className="flex flex-1 min-h-0">
+        {/* Navigation Rail */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex sticky top-16 h-[calc(100vh-4rem)] border-r border-border/40">
+          {railIcons.map(({ icon: Icon, label, to, active }) => (
+            <div key={label} className="relative group flex items-center justify-center">
+              <Link
+                to={to}
+                aria-label={label}
+                className={`relative grid size-12 place-items-center rounded-full transition-all duration-200 cursor-pointer ${
+                  active
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs hover:scale-105"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile/90 hover:scale-110 hover:shadow-xs active:scale-95"
+                }`}
+              >
+                <Icon className="size-5 transition-transform duration-200 group-hover:scale-110" />
+              </Link>
+
+              {/* Floating Tooltip on Hover */}
+              <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+                {label}
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+              </div>
+            </div>
           ))}
         </nav>
 
-        <main className="min-w-0 flex-1 px-3 pb-12 sm:px-6">
-          <Link
-            to="/"
-            className="mb-4 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-tile"
-          >
-            <ArrowLeft className="size-4" />
-            Back to home
-          </Link>
-
-          <section className="rounded-3xl bg-gradient-to-br from-[oklch(0.55_0.18_275)] to-[oklch(0.6_0.16_255)] p-6 text-surface sm:p-8">
-            <div className="flex items-start gap-4">
-              <span className="grid size-12 place-items-center rounded-2xl bg-white/20">
-                <Stars className="size-6" />
-              </span>
-              <div>
-                <h1 className="text-2xl sm:text-[28px]">Gemini in Classroom</h1>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed opacity-90">
-                  Go from idea to instruction faster with a suite of AI tools built for teaching
-                  and learning. Generate materials, adapt content, and give feedback grounded in
-                  your sources.
-                </p>
-                <button className="mt-5 inline-flex items-center gap-2 rounded-full bg-surface px-5 py-2.5 text-sm font-medium text-foreground hover:bg-white/90">
-                  <Wand2 className="size-4" />
-                  Try an example
+        {/* Main Assistant Body */}
+        <main className="flex-1 flex flex-col min-w-0 bg-background/50">
+          {messages.length === 0 ? (
+            /* Default Centered Layout Matching User Design Reference */
+            <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+              <AIAssistantDefaultView
+                onSendMessage={(prompt) => handleSendMessage(undefined, prompt)}
+              />
+            </div>
+          ) : (
+            /* Active Conversation View */
+            <div className="flex-1 flex flex-col max-w-3xl w-full mx-auto p-4 sm:p-6 min-h-0">
+              <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <span>Active Session</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    ({messages.length} messages)
+                  </span>
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setMessages([])}
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-lg border border-border hover:bg-tile transition cursor-pointer"
+                >
+                  <RotateCcw className="size-3.5" />
+                  <span>Start new prompt</span>
                 </button>
               </div>
-            </div>
-          </section>
 
-          <section className="mt-6 rounded-3xl bg-surface p-5 sm:p-6">
-            <h2 className="text-[22px]">Explore AI tools</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {tools.map(({ icon: Icon, tint, title, body }) => (
-                <div key={title} className="flex gap-4 rounded-2xl bg-tile p-4">
-                  <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${tint}`}>
-                    <Icon className="size-5" />
-                  </span>
-                  <div>
-                    <p className="font-medium">{title}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
-                  </div>
-                </div>
-              ))}
+              <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-0">
+                {messages.map((m) =>
+                  m.sender === "user" ? (
+                    <div key={m.id} className="flex justify-end">
+                      <div className="max-w-[80%] rounded-2xl bg-brand-blue px-4 py-3 text-base text-white leading-relaxed shadow-xs">
+                        {m.content}
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={m.id} className="flex justify-start">
+                      <div className="max-w-[90%] rounded-2xl bg-surface border border-border/70 p-4 text-base leading-relaxed text-foreground/90 whitespace-pre-line shadow-2xs space-y-2.5">
+                        {m.content}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+
+              {/* Chat Input */}
+              <div className="pt-3 border-t border-border/70">
+                <form onSubmit={handleSendMessage} className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask a question or request an action..."
+                    className="w-full rounded-2xl border border-border/80 bg-surface pl-4 pr-12 py-3 text-base text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 grid size-9 place-items-center rounded-full bg-brand-blue text-white hover:opacity-90 transition cursor-pointer"
+                    aria-label="Send message"
+                  >
+                    <Send className="size-4" />
+                  </button>
+                </form>
+              </div>
             </div>
-          </section>
+          )}
         </main>
       </div>
     </div>
   );
 }
+
+export default AIAssistantPage;

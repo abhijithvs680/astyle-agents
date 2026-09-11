@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Menu,
   Home,
+  Briefcase,
   Database,
   Compass,
   FolderKanban,
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/data-center")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
+  { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
   { icon: Server, label: "Data Center", to: "/data-center", active: true },

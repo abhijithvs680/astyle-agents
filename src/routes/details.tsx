@@ -17,17 +17,22 @@ import {
   Bell,
   Archive,
   Check,
+  CheckCircle2,
   MoreVertical,
+  Sparkles,
+  RotateCcw,
+  Table2,
 } from "lucide-react";
+import { AIAssistantDefaultView } from "../components/AIAssistantDefaultView";
 
 export const Route = createFileRoute("/details")({
   head: () => ({
     meta: [
-      { title: "Low sales share despite moderate stock — AI Analysis Report" },
+      { title: "Dead stock ties up cash — AI Analysis Report" },
       {
         name: "description",
         content:
-          "White paper analysis report and AI Assistant for pharmacy inventory performance.",
+          "White paper analysis report and AI Assistant for dead stock recovery and working capital optimization across branches.",
       },
     ],
   }),
@@ -43,7 +48,7 @@ interface HistoryItem {
 const caseHistoryList: HistoryItem[] = [
   {
     id: "case-1",
-    title: "Low sales share despite moderate stock",
+    title: "Dead stock ties up cash",
     timestamp: "04 Sept 2026, 05:57 am",
   },
   {
@@ -73,13 +78,13 @@ const initialMessages: ChatMessage[] = [
   {
     id: "m-1",
     sender: "user",
-    content: "What are current promotion strategies for these products?",
+    content: "How much working capital is currently locked up in dead stock across branches?",
   },
   {
     id: "m-2",
     sender: "ai",
     content:
-      "Based on current data, it appears that none of the main products with increasing demand are currently benefiting from special promotional strategies like discounts. Most items do not show any discounts being applied, and the pricing remains consistent for each product (PromoPriceVariety is either 1 or 2, indicating little to no price variation for most products).\n\nKey points:\n• No discounts are being offered on these items.\n• There is very limited price variation within individual products.\n• Current strategies seem to rely on standard pricing rather than promotional offers.\n\nIf you'd like, I can suggest potential promotions or other sales strategies tailored to these products to help boost their visibility and sales. Let me know your preference!",
+      "A total of $5,000 in unsold medicines is currently sitting idle across 3 hospital branches (Suburban Dispensary East, North Outpatient Clinic, and Westside Daycare Unit), locking vital working capital and occupying 38 cu ft of high-demand storage space.\n\nKey Breakdown:\n• Human Albumin 20% Infusion (14 vials): $1,820 (Suburban Dispensary East - 194 days idle)\n• A to Z NS Multivitamin Tabs (120 packs): $1,450 (North Outpatient Clinic - 165 days idle)\n• Ceftriaxone 1g Injectable (65 vials): $980 (Westside Daycare Unit - 182 days idle)\n• Sterile Surgical Gauze 8Ply (85 boxes): $750 (Trauma Satellite Dispensary - 140 days idle)\n\nRecommended Action:\n1. Execute inter-branch transfers of Human Albumin and Surgical Gauze to Central Inpatient ICU and Surgery.\n2. Process vendor return credit for eligible Ceftriaxone batches ($980).\n3. Bundle remaining stock into trauma discharge packs to liquidate $1,450 within 30 days.",
   },
 ];
 
@@ -99,29 +104,29 @@ interface CaseKpiItem {
 
 const defaultCaseKpis: [CaseKpiItem, CaseKpiItem] = [
   {
-    icon: TrendingDown,
-    source: "Pharmacy Inventory & Sales Feed",
-    timeframe: "30-Day Audit",
-    headline: "Market Sales Share Penetration",
-    baselineLabel: "Historical Target",
-    baselineValue: "2.80% share",
+    icon: DollarSign,
+    source: "Dispensary Working Capital & Inventory Feed",
+    timeframe: "Cross-Branch Audit",
+    headline: "Locked Working Capital in Unsold Stock",
+    baselineLabel: "Allowable Idle Buffer",
+    baselineValue: "$1,200 threshold",
     automatedLabel: "Current status",
-    automatedValue: "0.64% actual",
-    delta: "↓ 2.16% below target",
-    status: "Severe SKU lag",
+    automatedValue: "$5,000 locked cash",
+    delta: "↑ $3,800 above threshold",
+    status: "Stagnant across branches",
     positive: false,
   },
   {
     icon: TrendingUp,
-    source: "Financial Impact & Opportunity",
-    timeframe: "Annualized Run Rate",
-    headline: "Recoverable Annual Margin Opportunity",
-    baselineLabel: "Unoptimized Baseline",
-    baselineValue: "€0 incremental",
+    source: "Working Capital & Storage Reclamation",
+    timeframe: "Automated Recovery Pipeline",
+    headline: "Recoverable Capital & Shelf Space",
+    baselineLabel: "Projected Write-Off",
+    baselineValue: "$0 recovered",
     automatedLabel: "Automated Potential",
-    automatedValue: "+€18,400 / yr",
-    delta: "↑ 8.2% EBITDA lift",
-    status: "Pricing & reorder fix",
+    automatedValue: "+$5,000 capital released",
+    delta: "↑ 38 cu ft shelf freed",
+    status: "Inter-branch transfer ready",
     positive: true,
   },
 ];
@@ -214,6 +219,109 @@ const caseKpis: Record<string, [CaseKpiItem, CaseKpiItem]> = {
   ],
 };
 
+interface CaseAssistantConfig {
+  suggestions: string[];
+}
+
+const caseAssistantConfigs: Record<string, CaseAssistantConfig> = {
+  "case-1": {
+    suggestions: [
+      "How to unlock the $5,000 in locked working capital?",
+      "Which branches hold the highest volume of dead stock medicines?",
+      "Recommend inter-branch stock transfers to prevent write-offs",
+      "Process supplier consignment buy-back & credit requests",
+    ],
+  },
+  "case-2": {
+    suggestions: [
+      "Identify departments with the sharpest 14% drop",
+      "Analyze doctor consultation utilization lag",
+      "Review outpatient appointment lead-time barriers",
+      "Recommend patient retention & outreach initiatives",
+    ],
+  },
+  "case-3": {
+    suggestions: [
+      "Identify root causes for the 18% cancellation spike",
+      "Evaluate appointment reminder SMS delivery timing",
+      "Analyze morning surgical suite idle buffer times",
+      "Draft cancellation mitigation protocols",
+    ],
+  },
+  "case-4": {
+    suggestions: [
+      "Reconcile unbilled vs completed laboratory orders",
+      "Identify documentation gaps causing claim rejections",
+      "Audit €38,000 unbilled pharmacy & lab revenue gap",
+      "Set up automated discrepancy alerts for billing",
+    ],
+  },
+};
+
+interface CaseSectionData {
+  keyDataPoints: string[];
+  suggestedNextSteps: string[];
+}
+
+const caseSectionData: Record<string, CaseSectionData> = {
+  "case-1": {
+    keyDataPoints: [
+      "$5,000 in unsold medicines sit stagnant across pharmacy branches locking working capital",
+      "Over 38 cubic feet of secure and refrigerated storage space occupied by non-moving SKUs",
+      "Holding duration exceeds 160+ days with zero dispensations recorded in suburban clinics",
+      "Expiring shelf-life creates impending write-off risk unless redistributed within 45 days",
+    ],
+    suggestedNextSteps: [
+      "Initiate immediate automated inter-branch stock transfers to central trauma and ICU units",
+      "Trigger supplier consignment buy-back protocols for batches within return-eligibility windows",
+      "Apply bundled prescription clearance incentives on non-critical supportive health therapies",
+      "Activate automated reorder freeze triggers for medicine SKUs exceeding 90-day velocity lag",
+    ],
+  },
+  "case-2": {
+    keyDataPoints: [
+      "Outpatient patient inflow dropped by 14% across surgical departments",
+      "Appointment lead times lengthened from 8 to 15 business days",
+      "Senior physician morning consultation slots operating at 54% utilization",
+      "Front-desk patient scheduling complaints rose 22% this month",
+    ],
+    suggestedNextSteps: [
+      "Realign morning consultation rotas to match peak afternoon demand",
+      "Implement automated appointment confirmation and waitlist backfill",
+      "Expand outpatient walk-in slots for priority specialty clinics",
+      "Audit lead-time bottlenecks across referral scheduling pipelines",
+    ],
+  },
+  "case-3": {
+    keyDataPoints: [
+      "Appointment cancellation surge concentrated on Monday & Friday mornings",
+      "68% of cancellations occurred within 4 hours of appointment time",
+      "Surgical suite idle buffer times increased to 38 minutes per turnover",
+      "SMS appointment reminder delivery rates dropped below 74%",
+    ],
+    suggestedNextSteps: [
+      "Deploy automated 24-hour and 2-hour SMS reminder notifications",
+      "Establish a rapid standby list to backfill late cancellation openings",
+      "Standardize cancellation policy with easy one-click rescheduling",
+      "Optimize surgical block scheduling buffers to reduce idle downtime",
+    ],
+  },
+  "case-4": {
+    keyDataPoints: [
+      "€38,000 in completed laboratory diagnostic orders remain unbilled",
+      "Discrepancies identified between ordered, completed, and submitted claims",
+      "42 claim rejections linked to missing clinical modifier codes",
+      "Turnaround time for billing reconciliation averaged 18 business days",
+    ],
+    suggestedNextSteps: [
+      "Reconcile electronic health record lab orders with billing clearinghouse",
+      "Implement mandatory modifier validation before claim submission",
+      "Automate daily discrepancy alerts between diagnostic tests and billing",
+      "Train clinical intake staff on required diagnosis-to-procedure codes",
+    ],
+  },
+};
+
 function CaseDetailsPage() {
   const [selectedCaseId, setSelectedCaseId] = useState<string>("case-1");
   // Case History collapsed by default
@@ -231,8 +339,8 @@ function CaseDetailsPage() {
     return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
-  // AI Assistant Chat state
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  // AI Assistant Chat state (starts empty to display default layout from attached reference)
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState<string>("");
 
   const handleCheckStatus = () => {
@@ -245,11 +353,11 @@ function CaseDetailsPage() {
     }, 1200);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
+  const handleSendMessage = (e?: React.FormEvent, customPrompt?: string) => {
+    if (e) e.preventDefault();
+    const userText = (customPrompt ?? chatInput).trim();
+    if (!userText) return;
 
-    const userText = chatInput.trim();
     const newMsg: ChatMessage = {
       id: `m-${Date.now()}`,
       sender: "user",
@@ -258,12 +366,52 @@ function CaseDetailsPage() {
     setMessages((prev) => [...prev, newMsg]);
     setChatInput("");
 
-    // Simulate AI response
+    // Simulate AI contextual response grounded in the left-side report
     setTimeout(() => {
+      let replyContent = "";
+      const lower = userText.toLowerCase();
+
+      // Case 1 specific responses (Dead stock ties up cash)
+      if (lower.includes("unlock") || lower.includes("5,000") || lower.includes("working capital") || lower.includes("cash")) {
+        replyContent = `The $5,000 in locked working capital is concentrated across 4 unsold medicine SKUs in 3 outpatient satellite branches. By executing automated inter-branch stock transfers to the central trauma ICU and triggering vendor consignment buy-backs, $3,270 can be liquidated within 72 hours, and the remaining $1,730 cleared through bundled recovery protocols.`;
+      } else if (lower.includes("which branch") || lower.includes("branches") || lower.includes("suburban") || lower.includes("highest volume")) {
+        replyContent = `Dead stock is distributed across 3 branches:
+• Suburban Dispensary East: $1,820 (Human Albumin 20% Infusion - 194 days idle)
+• North Outpatient Clinic: $1,450 (A to Z NS Multivitamin Tabs - 165 days idle)
+• Westside Daycare Unit: $980 (Ceftriaxone 1g Injectable - 182 days idle)
+• Trauma Satellite: $750 (Sterile Surgical Gauze 8Ply - 140 days idle)
+Suburban Dispensary East represents 36.4% of total locked capital.`;
+      } else if (lower.includes("transfer") || lower.includes("write-off") || lower.includes("inter-branch")) {
+        replyContent = `Recommended transfer routing:
+1. Transfer 14 vials of Human Albumin ($1,820) from Suburban Dispensary East to Central Inpatient ICU where weekly burn rate is 22 vials.
+2. Transfer 85 boxes of Sterile Surgical Gauze ($750) from Trauma Satellite to Main Surgical Theatres.
+This completely prevents expiration write-offs and saves $2,570 in upcoming central replenishment purchases.`;
+      } else if (lower.includes("supplier") || lower.includes("return") || lower.includes("buy-back") || lower.includes("consignment") || lower.includes("credit")) {
+        replyContent = `Ceftriaxone 1g Injectable vials ($980) were procured under standard distributor return terms with a 180-day guarantee. Generating an automated return authorization ticket now will recover a 100% account credit directly against the hospital's next pharmaceutical procurement cycle.`;
+      }
+      // Case 2 specific responses
+      else if (lower.includes("14% drop") || lower.includes("volume dropped")) {
+        replyContent = `Analysis of outpatient scheduling shows the 14% volume drop is concentrated in General Surgery (-22%) and Orthopedics (-17%). Key drivers are lengthened appointment lead times (from 8 to 15 days) and conflicting morning doctor rotas.`;
+      } else if (lower.includes("doctor consultation utilization") || lower.includes("utilization lag")) {
+        replyContent = `7 senior physicians currently operate at 54% consultation utilization during morning slots. Realigning outpatient consultation hours to afternoon demand spikes will recover up to 110 patient appointments weekly.`;
+      }
+      // Case 3 specific responses
+      else if (lower.includes("cancellation spike") || lower.includes("18%")) {
+        replyContent = `The 18% appointment cancellation surge peaked on Mondays and Fridays. 68% of cancellations occurred within 4 hours of appointment time, indicating patient transit friction and lack of automated SMS 24-hour reminders.`;
+      }
+      // Case 4 specific responses
+      else if (lower.includes("unbilled") || lower.includes("claim") || lower.includes("reconcil")) {
+        replyContent = `Cross-referencing laboratory order logs against billing clearinghouse identified €38,000 in unbilled diagnostic services over the last 30 days due to missing clinical modifier codes on order forms.`;
+      }
+      // General fallbacks
+      else {
+        replyContent = `Regarding "${userText}": Based on the live report and inventory data on the left for "${selectedCase.title}", all data feeds are synced. Let me know if you would like me to draft an operational action plan or export these metrics to your executive report.`;
+      }
+
       const aiReply: ChatMessage = {
         id: `m-ai-${Date.now()}`,
         sender: "ai",
-        content: `I've analyzed the live inventory feeds regarding "${userText}". The recommendation is to bundle 'A TO Z NS + TAB' with high-traffic post-op supplies to recover an estimated €18,400 in annualized sales without additional supplier cost.`,
+        content: replyContent,
       };
       setMessages((prev) => [...prev, aiReply]);
     }, 600);
@@ -278,12 +426,18 @@ function CaseDetailsPage() {
   const selectedCase: HistoryItem =
     caseHistoryList.find((c) => c.id === selectedCaseId) ?? caseHistoryList[0] ?? defaultCase;
 
+  const currentAssistantConfig: CaseAssistantConfig =
+    caseAssistantConfigs[selectedCase.id] ?? caseAssistantConfigs["case-1"]!;
+
   const currentKpis: [CaseKpiItem, CaseKpiItem] = caseKpis[selectedCase.id] ?? defaultCaseKpis;
 
+  const currentCaseData: CaseSectionData =
+    caseSectionData[selectedCase.id] ?? caseSectionData["case-1"]!;
+
   return (
-    <div className="min-h-screen bg-surface-tint font-sans text-foreground flex flex-col">
-      {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/60 px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="h-screen bg-surface-tint font-sans text-foreground flex flex-col overflow-hidden">
+      {/* Top Header Bar - identical styling and height as home page */}
+      <header className="sticky top-0 z-40 h-16 shrink-0 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
         {/* Left Side: Back Arrow and Title only (Icon and Completed status removed) */}
         <div className="flex items-center gap-3 min-w-0">
           <Link
@@ -300,9 +454,37 @@ function CaseDetailsPage() {
           </h1>
         </div>
 
-        {/* Right Side Options: Follow, Archive, Case History, Consolidated Report, Check Status Now */}
+        {/* Right Side Options: Check Status Now, Case History, Follow, Consolidated Report, Three Dots */}
         <div className="flex items-center gap-2.5 ml-auto">
-          {/* Follow Button */}
+          {/* 1. Check Status Now */}
+          <button
+            onClick={handleCheckStatus}
+            disabled={isCheckingStatus}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-tile transition shadow-2xs cursor-pointer active:scale-95 disabled:opacity-60"
+          >
+            <RotateCw
+              className={`size-4 ${
+                isCheckingStatus ? "animate-spin text-brand-blue" : "text-muted-foreground"
+              }`}
+            />
+            Check Status Now
+          </button>
+
+          {/* 2. Case History */}
+          <button
+            onClick={() => setShowHistory((prev) => !prev)}
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-medium transition cursor-pointer ${
+              showHistory
+                ? "border-brand-blue bg-blue-50/70 text-brand-blue dark:bg-blue-950/50"
+                : "border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile"
+            }`}
+            title="View or hide Case History"
+          >
+            <History className="size-4" />
+            <span>Case History</span>
+          </button>
+
+          {/* 3. Follow */}
           <button
             onClick={() => {
               setIsFollowing((prev) => {
@@ -332,7 +514,16 @@ function CaseDetailsPage() {
             )}
           </button>
 
-          {/* Three dot action menu containing Archive option */}
+          {/* 4. Consolidated Report */}
+          <button
+            onClick={() => setShowConsolidatedModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-tile transition shadow-2xs cursor-pointer active:scale-95"
+          >
+            <FileText className="size-4 text-muted-foreground" />
+            Consolidated Report
+          </button>
+
+          {/* 5. Three Dots action menu */}
           <div className="relative">
             <button
               onClick={(e) => {
@@ -373,43 +564,6 @@ function CaseDetailsPage() {
               </div>
             )}
           </div>
-
-          {/* Option to view Case History (collapsed by default) */}
-          <button
-            onClick={() => setShowHistory((prev) => !prev)}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-medium transition cursor-pointer ${
-              showHistory
-                ? "border-brand-blue bg-blue-50/70 text-brand-blue dark:bg-blue-950/50"
-                : "border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile"
-            }`}
-            title="View or hide Case History"
-          >
-            <History className="size-4" />
-            <span>Case History</span>
-          </button>
-
-          {/* Option to Consolidate Report */}
-          <button
-            onClick={() => setShowConsolidatedModal(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-tile transition shadow-2xs cursor-pointer active:scale-95"
-          >
-            <FileText className="size-4 text-muted-foreground" />
-            Consolidated Report
-          </button>
-
-          {/* Option to Check Status Now */}
-          <button
-            onClick={handleCheckStatus}
-            disabled={isCheckingStatus}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-1.5 text-sm font-medium text-foreground hover:bg-tile transition shadow-2xs cursor-pointer active:scale-95 disabled:opacity-60"
-          >
-            <RotateCw
-              className={`size-4 ${
-                isCheckingStatus ? "animate-spin text-brand-blue" : "text-muted-foreground"
-              }`}
-            />
-            Check Status Now
-          </button>
         </div>
       </header>
 
@@ -441,10 +595,10 @@ function CaseDetailsPage() {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* LEFT COLUMN: CASE HISTORY (Collapsed by default, expands on click) */}
         {showHistory && (
-          <aside className="w-64 shrink-0 border-r border-border/80 bg-surface p-4 space-y-3 overflow-y-auto hidden md:block animate-in slide-in-from-left duration-200">
+          <aside className="w-64 shrink-0 border-r border-border/80 bg-surface p-4 space-y-3 overflow-y-auto no-scrollbar hidden md:block animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between pb-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <Clock className="size-3" />
@@ -489,309 +643,305 @@ function CaseDetailsPage() {
           </aside>
         )}
 
-        {/* CENTER COLUMN: AI ANALYSIS REPORT (White Card / Document / Whitepaper Style) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* White Paper Document Card */}
-            <article className="rounded-3xl bg-surface border border-border/80 p-7 sm:p-10 lg:p-12 shadow-xs space-y-8">
-              {/* Document Header */}
-              <div className="border-b border-border/60 pb-6 space-y-3">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="font-semibold uppercase tracking-widest text-xs text-brand-blue">
-                    AI Analysis Report
-                  </span>
-                  <span className="rounded-full bg-tile border border-border/60 px-3 py-0.5 text-xs font-medium text-foreground">
-                    85% Confidence
-                  </span>
-                </div>
-
-                {/* Subject as main title: Large font size with clean non-bold font-normal */}
-                <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-foreground leading-[1.18]">
+        {/* CENTER COLUMN: AI ANALYSIS REPORT (Modular Cards) */}
+        <main className="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6 lg:p-8 bg-surface-tint">
+          <div className="max-w-4xl mx-auto space-y-4 sm:space-y-5">
+            {/* Card 1: Case Title & Scope */}
+            <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-2xs">
+              <div className="space-y-1.5">
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-snug">
                   {selectedCase.title}
                 </h2>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Multi-branch pharmaceutical inventory diagnostic, idle working capital recovery, and storage space optimization analysis.
+                </p>
+              </div>
+            </section>
+
+            {/* Card 2: Executive Summary & Findings */}
+            <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-2xs space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
+                <FileText className="size-4 text-brand-blue shrink-0" />
+                <h3 className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
+                  Executive Summary & Findings
+                </h3>
               </div>
 
-              {/* Section 1: Executive Summary & Findings */}
-              <section className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  1. Executive Summary & Findings
-                </h3>
-                <p className="text-base sm:text-[17px] leading-relaxed text-foreground/90 font-normal">
-                  Analyzed pharmacy product data to identify products with moderate stock levels and low sales share, indicating potential growth opportunities. Products with steady or increasing demand but not translating to proportional sales share were focused on. Products with moderate stock but low sales (less than 1% sales share) were identified as underperforming. Potential reasons include visibility, pricing, or placement issues, especially for products with positive sales quantities but low sales share percentage. Suggested targeted promotional strategies, inventory adjustments, and pricing reviews to improve performance.
-                </p>
-              </section>
+              <p className="text-xs sm:text-sm leading-relaxed text-foreground/90 font-normal">
+                Multi-branch audit across hospital dispensary locations identified $5,000 in unsold pharmaceutical stock sitting stagnant across regional outpatient branches. These non-moving medicines severely lock up vital working capital while consuming critical refrigerated space and secure dispensary shelves. Telemetry from electronic health records and dispensary logs confirms zero units dispensed over the past 140–194 days for these batches, creating imminent risk of full inventory write-offs upon expiration. Automated recovery actions focus on immediate inter-branch transfers to central emergency and surgical suites, vendor consignment returns, and dynamic reorder threshold freezes.
+              </p>
 
-              {/* Automated Discovery KPI Metrics (styled like Insights tab) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                {currentKpis.map((kpi, idx) => (
+              {/* Executive Callout / Core Takeaway Box */}
+              <div className="rounded-xl border-l-4 border-brand-blue bg-slate-50/90 dark:bg-zinc-800/50 p-4 sm:p-5 border-y border-r border-slate-200/70 dark:border-zinc-700/60 shadow-2xs">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-brand-blue">
+                    Core Operational Takeaway
+                  </span>
+                  <p className="text-xs sm:text-sm leading-relaxed text-foreground/90">
+                    $5,000 in liquid capital is immobilized in dead stock across satellite branches due to fragmented cross-branch inventory visibility. Rapid inter-branch rebalancing unlocks 100% of this locked capital and frees 38 cu ft of high-value clinic storage without incurring secondary replenishment costs.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Card 3: Key Data Points */}
+            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
+                <svg
+                  className="size-4 shrink-0 text-[#2563eb] dark:text-[#60a5fa]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" fill="currentColor" />
+                </svg>
+                <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#2563eb] dark:text-[#60a5fa]">
+                  Key Data Points
+                </h3>
+              </div>
+
+              <div className="space-y-2">
+                {currentCaseData.keyDataPoints.map((point, idx) => (
                   <div
                     key={idx}
-                    className="rounded-3xl bg-tile/40 border border-border/70 p-5 sm:p-6 space-y-4 shadow-2xs hover:border-foreground/30 transition-all duration-200"
+                    className="flex items-center gap-3.5 rounded-xl bg-[#f0f7ff] dark:bg-blue-950/35 border border-blue-100/60 dark:border-blue-900/30 px-3.5 py-2.5 sm:px-4 sm:py-3 transition-colors"
                   >
-                    {/* Top Source & Timeframe */}
-                    <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <kpi.icon className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{kpi.source}</span>
-                      </div>
-                      <span className="shrink-0 rounded-full bg-surface border border-border/60 px-3 py-0.5 text-xs font-medium text-foreground">
-                        {kpi.timeframe}
-                      </span>
-                    </div>
-
-                    {/* Headline */}
-                    <h4 className="text-lg sm:text-xl font-normal text-foreground leading-snug">
-                      {kpi.headline}
-                    </h4>
-
-                    {/* Previous vs Current Automated Comparison Strip */}
-                    <div className="rounded-2xl bg-surface/90 dark:bg-zinc-900/70 p-3.5 border border-border/50 space-y-2 shadow-2xs">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{kpi.baselineLabel}</span>
-                        <span className="font-semibold text-foreground">{kpi.baselineValue}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{kpi.automatedLabel}</span>
-                        <span
-                          className={`font-bold text-base ${
-                            kpi.positive
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-rose-600 dark:text-rose-400"
-                          }`}
-                        >
-                          {kpi.automatedValue}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Footer: Delta & Status */}
-                    <div className="pt-2 border-t border-border/40 flex items-center justify-between text-sm">
-                      <span
-                        className={`inline-block rounded-full px-3 py-0.5 text-xs font-medium ${
-                          kpi.positive
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
-                        }`}
-                      >
-                        {kpi.delta}
-                      </span>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {kpi.status}
-                      </span>
-                    </div>
+                    <span className="grid size-5.5 sm:size-6 shrink-0 place-items-center rounded-full bg-[#dbeafe] text-[#2563eb] dark:bg-blue-900/70 dark:text-blue-200 text-xs font-bold">
+                      {idx + 1}
+                    </span>
+                    <span className="text-xs sm:text-sm text-foreground/90 font-normal leading-normal">
+                      {point}
+                    </span>
                   </div>
                 ))}
               </div>
+            </section>
 
-              {/* Section 2: Key Data Points */}
-              <section className="space-y-3 pt-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  2. Key Data Points & Empirical Metrics
+            {/* Card 4: Suggested Next Steps */}
+            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
+                <CheckCircle2 className="size-4.5 shrink-0 text-[#059669] dark:text-[#34d399]" />
+                <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#059669] dark:text-[#34d399]">
+                  Suggested Next Steps
                 </h3>
+              </div>
 
-                <div className="space-y-3">
-                  {[
-                    {
-                      label: "Identified SKUs",
-                      content:
-                        "Two products identified with low sales share but moderate stock and sales quantity: 'A TO Z NS + TAB' and 'SOFT SWAB 10*10 8PLY (GAUZE)'.",
-                    },
-                    {
-                      label: "Market Penetration",
-                      content:
-                        "Sales share percentages remain below 1%, indicating low market penetration despite steady moderate inventory availability.",
-                    },
-                    {
-                      label: "Inventory Level",
-                      content:
-                        "Stock levels maintained consistently above 15 units, confirming underperformance is not caused by stock-outs or replenishment delays.",
-                    },
-                    {
-                      label: "Demand Pattern",
-                      content:
-                        "Moderate sales quantities indicate persistent baseline demand that is unoptimized for revenue and volume growth.",
-                    },
-                    {
-                      label: "Price Calibration",
-                      content:
-                        "Average pricing structure is readily accessible for immediate review to evaluate elasticity and margin competitive balance.",
-                    },
-                  ].map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-3.5 rounded-2xl bg-tile/40 border border-border/50 p-4 sm:p-5 text-sm sm:text-base leading-relaxed"
-                    >
-                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-surface border border-border/80 text-foreground text-sm font-semibold mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <div>
-                        <span className="font-semibold text-foreground mr-2 text-base">{item.label}:</span>
-                        <span className="text-foreground/90 text-sm sm:text-base">{item.content}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Section 3: Strategic Next Steps */}
-              <section className="space-y-3 pt-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  3. Strategic Next Steps & Action Plan
-                </h3>
-
-                <div className="space-y-3">
-                  {[
-                    {
-                      action: "Shelf Placement & Merchandising",
-                      detail:
-                        "Investigate shelf placement and physical visibility for identified products in high-traffic outpatient dispensary bays.",
-                    },
-                    {
-                      action: "Pricing Competitiveness",
-                      detail:
-                        "Review current unit pricing strategy to ensure competitive parity against retail benchmarks without sacrificing contribution margin.",
-                    },
-                    {
-                      action: "Promotional Bundling",
-                      detail:
-                        "Implement targeted product bundling with post-procedure recovery kits to accelerate sales conversion and inventory turnover.",
-                    },
-                    {
-                      action: "Stock Level Optimization",
-                      detail:
-                        "Monitor stock levels closely with automated reorder thresholds to prevent overstock while preventing sudden stockouts.",
-                    },
-                    {
-                      action: "Customer & Clinician Feedback",
-                      detail:
-                        "Conduct targeted feedback collection across nursing and pharmacy staff to understand specific friction points in ordering.",
-                    },
-                  ].map((step, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-3.5 rounded-2xl border border-border/60 bg-surface p-4 sm:p-5 text-sm sm:text-base leading-relaxed"
-                    >
-                      <span className="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 text-xs font-bold mt-0.5">
-                        ✓
-                      </span>
-                      <div>
-                        <span className="font-semibold text-foreground mr-2 text-base">{step.action}:</span>
-                        <span className="text-foreground/85 text-sm sm:text-base">{step.detail}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Section 4: Issue Details (matching attached image) */}
-              <section className="space-y-4 pt-4 border-t border-border/60">
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-semibold text-foreground">
-                    Issue Details
-                  </h3>
-                  <p className="mt-1 text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    Identifies products in pharmacy with increasing demand but low sales share, finds top growth opportunities, and suggests strategies for improvement.
-                  </p>
-                  <div className="mt-3 flex items-center gap-6 text-sm text-muted-foreground">
-                    <span>
-                      <strong className="font-medium text-foreground">Impact:</strong> Moderate Stock / Low Sales
-                    </span>
-                    <span>
-                      <strong className="font-medium text-foreground">Period:</strong> 2026-09-10
+              <div className="space-y-2">
+                {currentCaseData.suggestedNextSteps.map((step, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3.5 rounded-xl bg-[#f0fdf4] dark:bg-emerald-950/35 border border-emerald-100/60 dark:border-emerald-900/30 px-3.5 py-2.5 sm:px-4 sm:py-3 transition-colors"
+                  >
+                    <CheckCircle2 className="size-4.5 shrink-0 text-[#059669] dark:text-[#34d399]" />
+                    <span className="text-xs sm:text-sm text-foreground/90 font-normal leading-normal">
+                      {step}
                     </span>
                   </div>
-                </div>
+                ))}
+              </div>
+            </section>
 
-                {/* Table matching user's attached screenshot */}
-                <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-2xs">
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead>
-                      <tr className="border-b border-border/70 bg-[#f8fafc] dark:bg-zinc-800/60 text-slate-700 dark:text-slate-200 font-semibold">
-                        <th className="px-4 py-4 text-sm">Product ID</th>
-                        <th className="px-4 py-4 text-sm">Product Name</th>
-                        <th className="px-4 py-4 text-sm">Stock Level</th>
-                        <th className="px-4 py-4 text-sm">Sales Quantity</th>
-                        <th className="px-4 py-4 text-sm">Sales Share (%)</th>
-                        <th className="px-4 py-4 text-sm">Total Revenue</th>
-                        <th className="px-4 py-4 text-sm">Average Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60 text-foreground/90">
-                      <tr className="hover:bg-tile/40 transition-colors">
-                        <td className="px-4 py-4 font-medium text-foreground">37565</td>
-                        <td className="px-4 py-4 font-medium text-foreground leading-snug">
-                          A TO Z NS +<br />TAB
-                        </td>
-                        <td className="px-4 py-4">15</td>
-                        <td className="px-4 py-4">12.07</td>
-                        <td className="px-4 py-4">0.35</td>
-                        <td className="px-4 py-4">190.1</td>
-                        <td className="px-4 py-4">15.75</td>
-                      </tr>
-                      <tr className="hover:bg-tile/40 transition-colors">
-                        <td className="px-4 py-4 font-medium text-foreground">37714</td>
-                        <td className="px-4 py-4 font-medium text-foreground leading-snug">
-                          SOFT SWAB<br />10*10 8PLY<br />(GAUZE)
-                        </td>
-                        <td className="px-4 py-4">18</td>
-                        <td className="px-4 py-4">32.38</td>
-                        <td className="px-4 py-4">0.93</td>
-                        <td className="px-4 py-4">281.52</td>
-                        <td className="px-4 py-4">8.69</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </article>
+            {/* Card 5: Issue Details & Dead Stock Breakdown */}
+            <section className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
+                <Table2 className="size-4.5 text-brand-blue shrink-0" />
+                <h3 className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
+                  Issue Details & Dead Stock Breakdown
+                </h3>
+              </div>
+
+              <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">
+                Detailed breakdown of unsold pharmaceutical inventory sitting stagnant across regional branches, with locked capital valuations, idle holding duration, and immediate reallocation routings.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground bg-slate-50/80 dark:bg-zinc-800/40 rounded-xl p-3 border border-slate-200/80 dark:border-zinc-700/60">
+                <span>
+                  <strong className="font-semibold text-foreground">Impact Profile:</strong> Dead Stock / Working Capital Lockup
+                </span>
+                <span className="text-slate-300 dark:text-zinc-700 hidden sm:inline">•</span>
+                <span>
+                  <strong className="font-semibold text-foreground">Audit Period:</strong> 2026-09-10
+                </span>
+                <span className="text-slate-300 dark:text-zinc-700 hidden sm:inline">•</span>
+                <span>
+                  <strong className="font-semibold text-foreground">Scope:</strong> 3 Regional Branches · 4 Target SKUs ($5,000 Total)
+                </span>
+              </div>
+
+              {/* Data Table */}
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+                <table className="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-200 font-semibold">
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Product ID</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Product Name</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider">Branch Location</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Stock Level</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Holding Duration</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Locked Capital</th>
+                      <th className="px-4 py-3 text-[11px] uppercase tracking-wider text-right">Recommended Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/80 dark:divide-zinc-800 text-foreground/90">
+                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                      <td className="px-4 py-3 font-mono font-medium text-foreground">48291</td>
+                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
+                        HUMAN ALBUMIN 20%<br /><span className="text-xs text-muted-foreground">50ml IV Infusion</span>
+                      </td>
+                      <td className="px-4 py-3 text-foreground/80">Suburban Dispensary East</td>
+                      <td className="px-4 py-3 font-mono text-right">14 vials</td>
+                      <td className="px-4 py-3 font-mono text-right font-medium text-rose-600 dark:text-rose-400">194 days</td>
+                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$1,820.00</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-950/60 text-brand-blue px-2.5 py-0.5 text-xs font-medium">
+                          Transfer to ICU
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                      <td className="px-4 py-3 font-mono font-medium text-foreground">37565</td>
+                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
+                        A TO Z NS MULTI<br /><span className="text-xs text-muted-foreground">Therapeutic Tabs (30s)</span>
+                      </td>
+                      <td className="px-4 py-3 text-foreground/80">North Outpatient Clinic</td>
+                      <td className="px-4 py-3 font-mono text-right">120 packs</td>
+                      <td className="px-4 py-3 font-mono text-right font-medium text-rose-600 dark:text-rose-400">165 days</td>
+                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$1,450.00</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 text-xs font-medium">
+                          Bundled Clearance
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                      <td className="px-4 py-3 font-mono font-medium text-foreground">51024</td>
+                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
+                        CEFTRIAXONE 1G INJ<br /><span className="text-xs text-muted-foreground">Powder for Solution</span>
+                      </td>
+                      <td className="px-4 py-3 text-foreground/80">Westside Daycare Unit</td>
+                      <td className="px-4 py-3 font-mono text-right">65 vials</td>
+                      <td className="px-4 py-3 font-mono text-right font-medium text-rose-600 dark:text-rose-400">182 days</td>
+                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$980.00</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-block rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-2.5 py-0.5 text-xs font-medium">
+                          Vendor Buy-Back
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                      <td className="px-4 py-3 font-mono font-medium text-foreground">37714</td>
+                      <td className="px-4 py-3 font-medium text-foreground leading-snug">
+                        STERILE GAUZE 8PLY<br /><span className="text-xs text-muted-foreground">10x10cm Sponge (Pack)</span>
+                      </td>
+                      <td className="px-4 py-3 text-foreground/80">Trauma Satellite Dispensary</td>
+                      <td className="px-4 py-3 font-mono text-right">85 boxes</td>
+                      <td className="px-4 py-3 font-mono text-right font-medium text-amber-600 dark:text-amber-400">140 days</td>
+                      <td className="px-4 py-3 font-mono text-right font-semibold text-rose-600 dark:text-rose-400">$750.00</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-950/60 text-brand-blue px-2.5 py-0.5 text-xs font-medium">
+                          Transfer to Surgery
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-300 dark:border-zinc-700 bg-slate-50/90 dark:bg-zinc-800/80 font-semibold text-foreground">
+                      <td colSpan={5} className="px-4 py-3 text-xs uppercase tracking-wider text-muted-foreground">
+                        Total Stagnant Inventory (4 SKUs Across 3 Regional Branches)
+                      </td>
+                      <td className="px-4 py-3 font-mono text-right text-base text-rose-600 dark:text-rose-400 font-bold">
+                        $5,000.00
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                        100% Recoverable
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </section>
           </div>
         </main>
 
-        {/* RIGHT COLUMN: AI ASSISTANT ("AI Assistant", minimal layout) */}
-        <aside className="w-80 lg:w-96 shrink-0 border-l border-border/80 bg-surface flex flex-col justify-between hidden lg:flex">
-          {/* Assistant Header (Icon removed) */}
-          <div className="flex items-center justify-between border-b border-border/70 p-4">
-            <h3 className="text-base font-semibold text-foreground">AI Assistant</h3>
-          </div>
+        {/* RIGHT COLUMN: AI ASSISTANT (Fixed within viewport height, independent message scroll) */}
+        <aside className="w-80 xl:w-96 shrink-0 border-l border-border/80 bg-surface flex flex-col h-full min-h-0 hidden md:flex">
+          {/* Assistant Header */}
+          <div className="shrink-0 flex items-center justify-between border-b border-border/70 px-4 py-3 bg-surface">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold text-foreground">AI Assistant</h3>
+              {messages.length > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-brand-blue dark:bg-blue-950 font-medium">
+                  {messages.length} {messages.length === 1 ? "message" : "messages"}
+                </span>
+              )}
+            </div>
 
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((m) =>
-              m.sender === "user" ? (
-                <div key={m.id} className="flex justify-end">
-                  <div className="max-w-[85%] rounded-2xl bg-brand-blue px-4 py-3 text-base text-white leading-relaxed shadow-xs">
-                    {m.content}
-                  </div>
-                </div>
-              ) : (
-                <div key={m.id} className="flex justify-start">
-                  <div className="max-w-[95%] rounded-2xl bg-tile/70 border border-border/60 p-4 text-base leading-relaxed text-foreground/90 whitespace-pre-line shadow-2xs space-y-2.5">
-                    {m.content}
-                  </div>
-                </div>
-              )
+            {messages.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setMessages([])}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-tile transition cursor-pointer"
+                title="New chat (Return to default screen)"
+              >
+                <RotateCcw className="size-3.5" />
+                <span>New chat</span>
+              </button>
             )}
           </div>
 
-          {/* Chat Input Box */}
-          <div className="border-t border-border/70 p-3.5 bg-surface">
-            <form onSubmit={handleSendMessage} className="relative flex items-center">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask a question..."
-                className="w-full rounded-2xl border border-border/80 bg-surface pl-4 pr-12 py-3 text-base text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs"
+          {/* Main Area: Default View OR Active Chat Messages */}
+          {messages.length === 0 ? (
+            <div className="flex-1 min-h-0 overflow-y-auto flex items-center justify-center bg-surface">
+              <AIAssistantDefaultView
+                suggestions={currentAssistantConfig.suggestions}
+                onSendMessage={(prompt) => handleSendMessage(undefined, prompt)}
               />
-              <button
-                type="submit"
-                className="absolute right-2 grid size-9 place-items-center rounded-full bg-brand-blue text-white hover:opacity-90 transition cursor-pointer"
-                aria-label="Send message"
-              >
-                <Send className="size-4" />
-              </button>
-            </form>
-          </div>
+            </div>
+          ) : (
+            <>
+              {/* Chat Messages */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+                {messages.map((m) =>
+                  m.sender === "user" ? (
+                    <div key={m.id} className="flex justify-end">
+                      <div className="max-w-[85%] rounded-2xl bg-brand-blue px-4 py-3 text-base text-white leading-relaxed shadow-xs">
+                        {m.content}
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={m.id} className="flex justify-start">
+                      <div className="max-w-[95%] rounded-2xl bg-tile/70 border border-border/60 p-4 text-base leading-relaxed text-foreground/90 whitespace-pre-line shadow-2xs space-y-2.5">
+                        {m.content}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+
+              {/* Chat Input Box (Permanently fixed at bottom of viewport) */}
+              <div className="shrink-0 border-t border-border/70 p-3.5 bg-surface">
+                <form onSubmit={handleSendMessage} className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask a question..."
+                    className="w-full rounded-2xl border border-border/80 bg-surface pl-4 pr-12 py-3 text-base text-foreground outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 grid size-9 place-items-center rounded-full bg-brand-blue text-white hover:opacity-90 transition cursor-pointer"
+                    aria-label="Send message"
+                  >
+                    <Send className="size-4" />
+                  </button>
+                </form>
+              </div>
+            </>
+          )}
         </aside>
       </div>
 
@@ -812,10 +962,10 @@ function CaseDetailsPage() {
                   Executive Brief
                 </span>
                 <h3 className="text-xl font-bold text-foreground mt-0.5">
-                  Consolidated Anomaly & Growth Report
+                  Consolidated Dead Stock & Capital Recovery Report
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Report ID: CR-2026-09-04 · Generated Today at 05:57 AM
+                  Report ID: CR-2026-09-10 · Generated Today at 05:57 AM
                 </p>
               </div>
               <button
@@ -833,30 +983,30 @@ function CaseDetailsPage() {
                   1. Executive Summary
                 </span>
                 <p>
-                  Comprehensive cross-repository scan across Good Doc clinical feeds, outpatient scheduling records, and pharmacy warehouse receipts identified low sales conversion despite steady stock availability in outpatient surgical products.
+                  Comprehensive cross-branch audit across hospital dispensary locations identified $5,000 in unsold pharmaceutical stock sitting stagnant across regional outpatient branches, locking up critical working capital and consuming prime dispensary storage space.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-tile/50 border border-border/40 p-3.5">
                   <span className="text-xs text-muted-foreground font-medium block">
-                    Underperforming SKUs
+                    Stagnant Dead Stock
                   </span>
-                  <span className="text-lg font-bold text-foreground">2 Primary Items</span>
+                  <span className="text-lg font-bold text-rose-600 dark:text-rose-400">$5,000 USD</span>
                   <span className="text-xs text-muted-foreground block mt-0.5">
-                    A to Z NS + Tab & Soft Swab
+                    4 SKUs across 3 branches
                   </span>
                 </div>
 
                 <div className="rounded-2xl bg-tile/50 border border-border/40 p-3.5">
                   <span className="text-xs text-muted-foreground font-medium block">
-                    Potential Margin Delta
+                    Recoverable Working Capital
                   </span>
                   <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                    +€18,400 / yr
+                    +$5,000.00
                   </span>
                   <span className="text-xs text-muted-foreground block mt-0.5">
-                    Via promotional bundling
+                    Via transfers & returns
                   </span>
                 </div>
               </div>
@@ -866,9 +1016,9 @@ function CaseDetailsPage() {
                   2. Immediate Recommendations
                 </span>
                 <ul className="space-y-1.5 text-xs text-muted-foreground list-disc pl-4">
-                  <li>Deploy targeted packaging discounts at outpatient pharmacy counter.</li>
-                  <li>Reallocate prime eye-level shelf space for 'SOFT SWAB' in trauma intake.</li>
-                  <li>Verify insurance billing codes to ensure automatic secondary coverage.</li>
+                  <li>Transfer 14 vials of Human Albumin ($1,820) from Suburban Branch directly to Central Inpatient ICU.</li>
+                  <li>Return eligible Ceftriaxone injectable batches ($980) to primary distributor for 100% account credit.</li>
+                  <li>Bundle remaining vitamins and sterile gauze ($2,200) into outpatient discharge kits.</li>
                 </ul>
               </div>
             </div>

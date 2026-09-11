@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Menu,
   Home,
+  Briefcase,
   Server,
   Compass,
   FolderKanban,
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/explore")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
+  { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore", active: true },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
   { icon: Server, label: "Data Center", to: "/data-center" },
@@ -225,9 +227,6 @@ function ExplorePage() {
               <h1 className="text-2xl sm:text-[22px] font-semibold text-foreground">
                 Explore Insights
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Create case based on this Insights
-              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -266,9 +265,27 @@ function ExplorePage() {
                 onClick={() => handleOpenCreateForInsight(c.title, c.body)}
                 role="button"
                 tabIndex={0}
-                className={`group flex flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
+                className={`group relative overflow-hidden flex flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${c.tint}`}
               >
-                <div>
+                {/* Minimal Top-Side Light Background Pattern (3x3 Dot Grid matching OP cancellations card) */}
+                <svg
+                  className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15 transition-transform duration-300 group-hover:scale-110"
+                  viewBox="0 0 36 36"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle cx="6" cy="6" r="1.5" fill="currentColor" />
+                  <circle cx="18" cy="6" r="1.5" fill="currentColor" />
+                  <circle cx="30" cy="6" r="1.5" fill="currentColor" />
+                  <circle cx="6" cy="18" r="1.5" fill="currentColor" />
+                  <circle cx="18" cy="18" r="1.5" fill="currentColor" />
+                  <circle cx="30" cy="18" r="1.5" fill="currentColor" />
+                  <circle cx="6" cy="30" r="1.5" fill="currentColor" />
+                  <circle cx="18" cy="30" r="1.5" fill="currentColor" />
+                  <circle cx="30" cy="30" r="1.5" fill="currentColor" />
+                </svg>
+
+                <div className="relative z-10">
                   <span
                     className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
                   >
