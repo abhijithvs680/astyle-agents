@@ -495,6 +495,12 @@ function Index() {
 
         {/* Profile on right top end */}
         <div className="flex items-center gap-3">
+          <Link
+            to="/welcome"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-tile transition"
+          >
+            New user setup
+          </Link>
           <div className="text-right">
             <p className="text-sm font-medium leading-none text-foreground">Robert</p>
             <p className="text-xs text-muted-foreground mt-1">Chief Executive Officer</p>
