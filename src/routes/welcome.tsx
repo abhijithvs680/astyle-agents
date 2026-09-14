@@ -256,8 +256,9 @@ function WelcomePage() {
   });
   const [connectionTimestamp, setConnectionTimestamp] = useState<string>("");
 
-  // 5-step sequential progress state: 0 to 5
+  // Step progress state & phase for smooth vertical sequence
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [stepPhase, setStepPhase] = useState<"processing" | "success">("processing");
 
   // Supporting documents
   const [supportingFiles, setSupportingFiles] = useState<UploadedFile[]>([]);
@@ -275,59 +276,69 @@ function WelcomePage() {
     }
     setConnectingService(service);
     setCurrentStepIndex(0);
+    setStepPhase("processing");
     setViewMode("connecting");
   };
 
-  // Run the 4 sequential steps strictly when in connecting mode
+  // Run the 4 sequential steps smoothly, one at a time, with processing -> success -> slide to next
   useEffect(() => {
     if (viewMode !== "connecting" || !connectingService) {
       setCurrentStepIndex(0);
+      setStepPhase("processing");
       return;
     }
 
-    // Step durations: realistic loading times for subscription, org, agent config, and finalization
-    const stepDurations = [2800, 2600, 3200, 2400];
-    let step = 0;
+    let currentStep = 0;
     let timerId: NodeJS.Timeout;
     let active = true;
 
-    const advanceStep = () => {
+    // Step processing times: subscription, org, agent config, completing config
+    const processingDurations = [3600, 3400, 3800, 3200];
+    // Time spent displaying success state before smoothly sliding to next step
+    const successDurations = [2200, 2600, 2200, 2000];
+
+    const runStep = () => {
       if (!active) return;
+      setCurrentStepIndex(currentStep);
+      setStepPhase("processing");
+
+      const procTime = processingDurations[currentStep] ?? 2000;
       timerId = setTimeout(() => {
         if (!active) return;
-        step++;
-        setCurrentStepIndex(step);
+        // Step completed: show its Success result
+        setStepPhase("success");
 
-        if (step < CONNECTION_STEPS.length) {
-          advanceStep();
-        } else {
-          // All 4 steps completed!
-          const now = new Date();
-          const formatted = `${now.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })} at ${now.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          })}`;
-          setConnectionTimestamp(formatted);
-          setConnectedServices((prev) => ({
-            ...prev,
-            [connectingService.id]: true,
-          }));
-
-          // Automatically transition to the connected screen after brief pause to review all completed results
-          timerId = setTimeout(() => {
-            if (!active) return;
+        const succTime = successDurations[currentStep] ?? 1400;
+        timerId = setTimeout(() => {
+          if (!active) return;
+          if (currentStep < CONNECTION_STEPS.length - 1) {
+            // Smoothly scroll/slide to next step
+            currentStep++;
+            runStep();
+          } else {
+            // Final step complete!
+            const now = new Date();
+            const formatted = `${now.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })} at ${now.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })}`;
+            setConnectionTimestamp(formatted);
+            setConnectedServices((prev) => ({
+              ...prev,
+              [connectingService.id]: true,
+            }));
             setViewMode("connected");
-          }, 1200);
-        }
-      }, stepDurations[step] || 2500);
+          }
+        }, succTime);
+      }, procTime);
     };
 
-    advanceStep();
+    runStep();
 
     return () => {
       active = false;
@@ -339,6 +350,7 @@ function WelcomePage() {
     setViewMode("select");
     setConnectingService(null);
     setCurrentStepIndex(0);
+    setStepPhase("processing");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -375,19 +387,31 @@ function WelcomePage() {
     setSupportingFiles((prev) => prev.filter((f) => f.name !== name));
   };
 
-  // Progress percentage calculation: realistic progression for 4 steps
+  // Progress percentage calculation: realistic progression reflecting processing and completed steps
   const progressPercent = (() => {
+    if (stepPhase === "success") {
+      switch (currentStepIndex) {
+        case 0:
+          return 25;
+        case 1:
+          return 50;
+        case 2:
+          return 75;
+        case 3:
+          return 100;
+        default:
+          return 100;
+      }
+    }
     switch (currentStepIndex) {
       case 0:
-        return 25;
+        return 12;
       case 1:
-        return 50;
+        return 38;
       case 2:
-        return 75;
+        return 62;
       case 3:
-        return 92;
-      case 4:
-        return 100;
+        return 88;
       default:
         return 0;
     }
@@ -427,12 +451,14 @@ function WelcomePage() {
 
         {/* Profile on right */}
         <div className="flex items-center gap-3">
-          <Link
-            to="/"
-            className="inline-flex items-center rounded-full border border-sky-300/35 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition cursor-pointer mr-1"
-          >
-            Skip for now
-          </Link>
+          {viewMode !== "connecting" && (
+            <Link
+              to="/"
+              className="inline-flex items-center rounded-full border border-sky-300/35 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition cursor-pointer mr-1"
+            >
+              Skip for now
+            </Link>
+          )}
           <div className="text-right">
             <p className="text-sm font-medium leading-none text-white">Robert</p>
             <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
@@ -644,7 +670,7 @@ function WelcomePage() {
             </div>
 
             {/* Gradient Progress Bar */}
-            <div className="mt-8">
+            <div className="mt-6">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                 <span className="font-medium text-foreground">
                   Step {Math.min(currentStepIndex + 1, 4)} of 4 · {CONNECTION_STEPS[Math.min(currentStepIndex, 3)]?.title ?? ""}
@@ -653,114 +679,118 @@ function WelcomePage() {
                   {progressPercent}%
                 </span>
               </div>
-              <div className="h-2.5 w-full bg-tile rounded-full overflow-hidden p-0.5 border border-border/60">
+              <div className="h-2 w-full bg-tile rounded-full overflow-hidden p-0.5 border border-border/60">
                 <div
-                  className="h-full bg-gradient-to-r from-sky-400 via-blue-600 to-indigo-500 rounded-full transition-all duration-700 ease-out shadow-xs"
+                  className="h-full bg-gradient-to-r from-sky-400 via-blue-600 to-indigo-500 rounded-full transition-all duration-500 ease-out shadow-xs"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
             </div>
 
-            {/* 4 Sequential Steps with Clear Hierarchy & Actual Results */}
-            <div className="mt-6 space-y-3">
-              {CONNECTION_STEPS.map((step, idx) => {
-                const isCompleted = idx < currentStepIndex;
-                const isActive = idx === currentStepIndex && currentStepIndex < 4;
+            {/* Smooth Vertical Scrolling Sequence: Shows one step at a time as a compact card */}
+            <div className="mt-5 relative h-[116px] overflow-hidden rounded-2xl border border-border/70 bg-tile/35">
+              {/* Subtle top/bottom edge fade */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-3 bg-gradient-to-b from-tile/50 to-transparent z-10" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-tile/50 to-transparent z-10" />
 
-                return (
-                  <div
-                    key={step.title}
-                    className={`loader-step-box flex items-start gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-500 ease-in-out ${isActive
-                      ? "loader-step-active-bg shadow-xs opacity-100 scale-[1.01]"
-                      : isCompleted
-                        ? "bg-surface border border-border/40 opacity-95 scale-100"
-                        : "bg-surface border border-transparent opacity-60 scale-100"
+              {/* Vertical Sliding Track */}
+              <div
+                className="w-full transition-transform duration-600 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{ transform: `translateY(-${currentStepIndex * 116}px)` }}
+              >
+                {CONNECTION_STEPS.map((step, idx) => {
+                  const isPast = idx < currentStepIndex;
+                  const isCurrent = idx === currentStepIndex;
+                  const isStepSuccess = isPast || (isCurrent && stepPhase === "success");
+
+                  return (
+                    <div
+                      key={step.title}
+                      className={`h-[116px] w-full shrink-0 flex flex-col justify-center px-4 sm:px-6 transition-all duration-500 ease-out ${
+                        isCurrent
+                          ? "opacity-100 scale-100"
+                          : "opacity-20 scale-[0.98] pointer-events-none"
                       }`}
-                  >
-                    {/* Status Icon */}
-                    <div className="shrink-0 mt-0.5">
-                      {isCompleted ? (
-                        <span className="grid size-7 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                          <Check className="size-4 stroke-[2.5]" />
-                        </span>
-                      ) : isActive ? (
-                        <span className="grid size-7 place-items-center rounded-full bg-brand-blue/20 text-brand-blue shadow-2xs">
-                          <Loader2 className="size-4 animate-spin stroke-[2.5]" />
-                        </span>
-                      ) : (
-                        <span className="grid size-7 place-items-center rounded-full bg-tile text-muted-foreground/60 text-xs font-medium font-['Archivo']">
-                          {idx + 1}
-                        </span>
-                      )}
-                    </div>
+                    >
+                      {/* Top Row: Icon + Step Title + Status Badge */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {isStepSuccess ? (
+                            <span className="grid size-7 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0">
+                              <Check className="size-4 stroke-[2.5]" />
+                            </span>
+                          ) : (
+                            <span className="grid size-7 place-items-center rounded-full bg-brand-blue/20 text-brand-blue shadow-2xs shrink-0">
+                              <Loader2 className="size-4 animate-spin stroke-[2.5]" />
+                            </span>
+                          )}
 
-                    {/* Step Title & Result/Processing Detail */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`${isActive
-                            ? "text-sm font-semibold text-foreground"
-                            : isCompleted
-                              ? idx < 2
+                          <span
+                            className={`truncate ${
+                              isStepSuccess && idx < 2
                                 ? "text-xs font-medium text-muted-foreground"
-                                : "text-sm font-medium text-foreground"
-                              : "text-sm text-muted-foreground/70"
+                                : "text-sm sm:text-base font-semibold text-foreground"
                             }`}
-                        >
-                          {idx < 2 && isCompleted ? `Step ${idx + 1} · ${step.title}` : step.title}
-                        </span>
+                          >
+                            {idx < 2 && isStepSuccess ? `Step ${idx + 1} · ${step.title}` : step.title}
+                          </span>
+                        </div>
 
                         {/* Status Badge */}
                         <div className="shrink-0 text-xs">
-                          {isCompleted ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                          {isStepSuccess ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 animate-in fade-in duration-200">
                               Completed
                             </span>
-                          ) : isActive ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-brand-blue/15 px-2 py-0.5 text-[11px] font-semibold text-brand-blue animate-pulse">
-                              Processing…
-                            </span>
                           ) : (
-                            <span className="text-muted-foreground/40 font-normal text-[11px]">
-                              Waiting
+                            <span className="inline-flex items-center gap-1 rounded-full bg-brand-blue/15 px-2.5 py-0.5 text-[11px] font-semibold text-brand-blue animate-pulse">
+                              Processing…
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Display realistic loading state beneath the step while active */}
-                      {isActive && (
-                        <p className="mt-1 text-xs text-brand-blue/90 animate-pulse">
+                      {/* Bottom Area: Processing Detail OR Success Result */}
+                      {!isStepSuccess ? (
+                        <p className="mt-2 ml-10 text-xs text-brand-blue/90 animate-pulse font-normal truncate">
                           {step.processingText}
                         </p>
-                      )}
-
-                      {/* Minimal small white card with checkbox only for Steps 1 & 2 */}
-                      {isCompleted && idx < 2 && (
-                        <div className="mt-2 inline-flex items-center gap-2 rounded-xl border border-border/80 bg-surface px-3 py-1.5 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-200">
-                          <div className="size-4 shrink-0 rounded-[4px] border border-emerald-600 bg-emerald-600 text-white flex items-center justify-center">
-                            <Check className="size-2.5 stroke-[3]" />
-                          </div>
-                          {idx === 1 && (
-                            <img
-                              src="/baines-logo.png"
-                              alt="Baines Healthcare"
-                              className="h-4.5 w-auto object-contain shrink-0"
-                            />
+                      ) : (
+                        <>
+                          {idx < 2 ? (
+                            <div className="mt-2 ml-10 flex items-center">
+                              <div className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-surface px-3 py-1.5 shadow-2xs animate-in fade-in slide-in-from-bottom-1 duration-200">
+                                <div className="size-4 shrink-0 rounded-[4px] border border-emerald-600 bg-emerald-600 text-white flex items-center justify-center">
+                                  <Check className="size-2.5 stroke-[3]" />
+                                </div>
+                                {idx === 1 && (
+                                  <img
+                                    src="/baines-logo.png"
+                                    alt="Baines Healthcare"
+                                    className="h-4 w-auto object-contain shrink-0"
+                                  />
+                                )}
+                                <span className="text-xs sm:text-sm font-medium text-foreground">
+                                  {step.resultText}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="mt-2 ml-10 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-in fade-in duration-200">
+                              <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                              <span>{step.resultText}</span>
+                            </p>
                           )}
-                          <span className="text-xs sm:text-sm font-medium text-foreground">
-                            {step.resultText}
-                          </span>
-                        </div>
+                        </>
                       )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Minimal Footer with Relevant Spacing */}
-            <div className="mt-8 pt-5 border-t border-border/60 flex items-center justify-between">
+            <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleCancelConnection}
