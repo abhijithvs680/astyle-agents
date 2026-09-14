@@ -593,8 +593,17 @@ function CaseDetailsPage() {
   const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
   const [showIndexDropdown, setShowIndexDropdown] = useState<boolean>(false);
 
-  // Slide presentation and scroll progress state
+  // Slide presentation definitions, scrollspy, and scroll progress state
+  const slideDefs = [
+    { id: "summary", shortTitle: "Summary", fullTitle: "Executive Summary" },
+    { id: "insights", shortTitle: "Insights", fullTitle: "High-Level Insights" },
+    { id: "metrics", shortTitle: "Metrics", fullTitle: "Key Metrics" },
+    { id: "actions", shortTitle: "Actions", fullTitle: "Recommended Actions" },
+    { id: "telemetry", shortTitle: "Evidence", fullTitle: "Sample Data Records" },
+  ];
+
   const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [activeSlideId, setActiveSlideId] = useState<string>("summary");
   const [checkedActions, setCheckedActions] = useState<Record<number, boolean>>({});
   const [showAIAssistant, setShowAIAssistant] = useState<boolean>(true);
 
@@ -607,6 +616,28 @@ function CaseDetailsPage() {
     } else {
       setScrollProgress(0);
     }
+
+    // Scrollspy: update active slide based on scroll position
+    const containerTop = el.getBoundingClientRect().top;
+    let currentId = slideDefs[0]?.id ?? "summary";
+    for (const slide of slideDefs) {
+      const slideEl = document.getElementById(`slide-${slide.id}`);
+      if (slideEl) {
+        const rect = slideEl.getBoundingClientRect();
+        if (rect.top - containerTop <= 160) {
+          currentId = slide.id;
+        }
+      }
+    }
+    setActiveSlideId(currentId);
+  };
+
+  const scrollToSlide = (slideId: string) => {
+    const el = document.getElementById(`slide-${slideId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setActiveSlideId(slideId);
   };
 
   const toggleAction = (idx: number) => {
@@ -769,13 +800,6 @@ function CaseDetailsPage() {
   const currentTelemetry =
     caseSampleTelemetryData[selectedCase.id] ?? caseSampleTelemetryData["case-1"]!;
 
-  const slideDefs = [
-    { id: "summary", shortTitle: "Summary", fullTitle: "Executive Summary" },
-    { id: "insights", shortTitle: "Insights", fullTitle: "Root Drivers" },
-    { id: "metrics", shortTitle: "Metrics", fullTitle: "Key Metrics" },
-    { id: "actions", shortTitle: "Actions", fullTitle: "Action Plan" },
-    { id: "telemetry", shortTitle: "Telemetry", fullTitle: "Evidence Telemetry" },
-  ];
 
   const renderSlideCard = (slideIdx: number, anchorId?: string) => {
     switch (slideIdx) {
@@ -843,23 +867,40 @@ function CaseDetailsPage() {
 
               {/* Key Highlights Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                {currentSummary.metrics.map((m, mIdx) => (
-                  <div
-                    key={mIdx}
-                    className="rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-800/40 p-3.5 space-y-1"
-                  >
-                    <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      {m.label}
-                    </span>
-                    <span
-                      className={`text-base sm:text-lg font-mono font-bold ${
-                        m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
-                      }`}
+                {currentSummary.metrics.map((m, mIdx) => {
+                  const match = m.val.match(/^(.*?)\s*(\([+-]?\d+[^)]*\))$/);
+                  const mainVal = match ? match[1] : m.val;
+                  const changeVal = match ? match[2] : null;
+
+                  return (
+                    <div
+                      key={mIdx}
+                      className="rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-800/40 p-3.5 space-y-1"
                     >
-                      {m.val}
-                    </span>
-                  </div>
-                ))}
+                      <span className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        {m.label}
+                      </span>
+                      <div className="flex flex-wrap items-baseline gap-1">
+                        <span
+                          className={`text-base sm:text-lg font-['Archivo'] tabular-nums font-bold ${
+                            m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
+                          }`}
+                        >
+                          {mainVal}
+                        </span>
+                        {changeVal && (
+                          <span
+                            className={`text-xs font-['Archivo'] tabular-nums font-medium ${
+                              m.alert ? "text-rose-600/80 dark:text-rose-400/80" : "text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {changeVal}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </article>
@@ -1001,10 +1042,10 @@ function CaseDetailsPage() {
                     {currentMetrics.map((row, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
                         <td className="px-3.5 sm:px-4 py-3 text-sm sm:text-base font-medium text-foreground">{row.metric}</td>
-                        <td className="px-3.5 sm:px-4 py-3 font-mono text-sm sm:text-base font-bold text-foreground text-right">{row.current}</td>
-                        <td className="px-3.5 sm:px-4 py-3 font-mono text-sm sm:text-base text-muted-foreground text-right">{row.target}</td>
+                        <td className="px-3.5 sm:px-4 py-3 font-['Archivo'] tabular-nums text-sm sm:text-base font-bold text-foreground text-right">{row.current}</td>
+                        <td className="px-3.5 sm:px-4 py-3 font-['Archivo'] tabular-nums text-sm sm:text-base text-muted-foreground text-right">{row.target}</td>
                         <td className="px-3.5 sm:px-4 py-3 text-right">
-                          <span className="inline-flex items-center font-mono font-bold text-xs sm:text-sm px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                          <span className="inline-flex items-center font-['Archivo'] tabular-nums font-medium text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
                             {row.variance}
                           </span>
                         </td>
@@ -1171,7 +1212,7 @@ function CaseDetailsPage() {
                     <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Sampled Financial Exposure
                     </span>
-                    <span className="text-2xl sm:text-3xl font-mono font-bold text-rose-600 dark:text-rose-400">
+                    <span className="text-2xl sm:text-3xl font-['Archivo'] tabular-nums font-bold text-rose-600 dark:text-rose-400">
                       {currentTelemetry.totalExposure}
                     </span>
                     <span className="block text-xs text-muted-foreground pt-0.5">
@@ -1220,14 +1261,14 @@ function CaseDetailsPage() {
                   <tbody className="divide-y divide-slate-200/80 dark:divide-zinc-800">
                     {currentTelemetry.records.map((row, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                        <td className="px-3.5 py-2 font-mono text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">{row.branchId}</td>
+                        <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">{row.branchId}</td>
                         <td className="px-3.5 py-2 text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">{row.categoryItem}</td>
                         <td className="px-3.5 py-2 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
                             {row.issueDetected}
                           </span>
                         </td>
-                        <td className="px-3.5 py-2 font-mono text-right text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                        <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-right text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
                           {row.financialImpact}
                         </td>
                         <td className="px-3.5 py-2 text-xs sm:text-sm text-foreground/80">{row.driver}</td>
@@ -1239,7 +1280,7 @@ function CaseDetailsPage() {
                       <td colSpan={3} className="px-3.5 py-2 text-xs uppercase tracking-wider text-muted-foreground">
                         Total Sampled Immediate Financial Exposure
                       </td>
-                      <td className="px-3.5 py-2 font-mono text-right text-xs sm:text-sm text-rose-600 dark:text-rose-400 font-bold whitespace-nowrap">
+                      <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-right text-xs sm:text-sm text-rose-600 dark:text-rose-400 font-bold whitespace-nowrap">
                         {currentTelemetry.totalExposure}
                       </td>
                       <td className="px-3.5 py-2 text-xs text-muted-foreground">
@@ -1289,8 +1330,39 @@ function CaseDetailsPage() {
       {/* SECONDARY HEADER: Text Menu of actions with line separators & Scroll Progress Bar */}
       <section className="sticky top-14 z-30 bg-surface/95 backdrop-blur-md border-b border-border/70 shrink-0 shadow-2xs">
         <div className="px-4 sm:px-6 py-1.5 flex items-center justify-between gap-3 relative">
-          {/* Left Side: Case Action Text Menu with Line Separators (Enhanced Visibility) */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 overflow-visible relative py-0.5">
+          {/* Left Side: Interactive Section Scrollspy (Slides 1-5 with Active Tracking) */}
+          <nav aria-label="Slide section navigation" className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5 shrink-0">
+            {slideDefs.map((slide, idx) => {
+              const isActive = activeSlideId === slide.id;
+              return (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => scrollToSlide(slide.id)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs sm:text-sm font-medium font-[500] rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 font-semibold border border-blue-200/80 dark:border-blue-800/80 shadow-2xs"
+                      : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-tile"
+                  }`}
+                  title={`Jump to ${slide.fullTitle}`}
+                >
+                  <span
+                    className={`inline-flex items-center justify-center size-4 rounded-full text-[10px] font-['Archivo'] tabular-nums font-bold transition-colors ${
+                      isActive
+                        ? "bg-blue-600 text-white dark:bg-blue-500"
+                        : "bg-slate-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    }`}
+                  >
+                    {idx + 1}
+                  </span>
+                  <span>{slide.shortTitle}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Right Side: Case Action Buttons & Status (Moved to Right Side) */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 overflow-visible relative py-0.5 ml-auto">
             {/* 1. Case History Button */}
             <button
               type="button"
@@ -1390,7 +1462,7 @@ function CaseDetailsPage() {
               {showStatusDropdown && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute left-0 top-full mt-1.5 z-50 w-44 rounded-2xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+                  className="absolute right-0 top-full mt-1.5 z-50 w-44 rounded-2xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
                 >
                   <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-1">
                     Change Status
@@ -1446,7 +1518,7 @@ function CaseDetailsPage() {
               {showMoreMenu && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute left-0 top-full mt-1.5 z-40 w-52 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+                  className="absolute right-0 top-full mt-1.5 z-40 w-52 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
                 >
                   <button
                     type="button"
@@ -1483,71 +1555,70 @@ function CaseDetailsPage() {
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Right Side: Quick Access Index Dropdown */}
-          <div className="relative flex items-center gap-2 ml-auto shrink-0">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowIndexDropdown((prev) => !prev);
-              }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-surface hover:bg-tile text-xs font-medium font-[500] text-zinc-800 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer shadow-2xs group"
-              title="Quick Jump / Slide Index"
-              aria-label="Slide Index"
-            >
-              <ListFilter className="size-3 text-zinc-600 dark:text-zinc-400 group-hover:text-blue-600" />
-              <span>Index</span>
-              <ChevronDown
-                className={`size-3 text-zinc-500 transition-transform duration-150 ${
-                  showIndexDropdown ? "rotate-180" : ""
-                }`}
-              />
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 ml-0.5">
-                {Math.round(scrollProgress)}%
-              </span>
-            </button>
+            {/* Line separator */}
+            <div className="h-3.5 w-px bg-zinc-300 dark:bg-zinc-700 mx-0.5 sm:mx-1" />
 
-            {/* Quick Access Index Dropdown Menu */}
-            {showIndexDropdown && (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border border-border/90 bg-surface p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+            {/* 6. Quick Access Index Dropdown */}
+            <div className="relative inline-block">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowIndexDropdown((prev) => !prev);
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-surface hover:bg-tile text-xs font-medium font-[500] text-zinc-800 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer shadow-2xs group"
+                title="Quick Jump / Slide Index"
+                aria-label="Slide Index"
               >
-                <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 mb-1 flex items-center justify-between">
-                  <span>Case Index</span>
-                  <span className="text-[10px] font-normal lowercase text-muted-foreground">quick access</span>
-                </div>
+                <ListFilter className="size-3 text-zinc-600 dark:text-zinc-400 group-hover:text-blue-600" />
+                <span>Index</span>
+                <ChevronDown
+                  className={`size-3 text-zinc-500 transition-transform duration-150 ${
+                    showIndexDropdown ? "rotate-180" : ""
+                  }`}
+                />
+                <span className="text-[10px] font-['Archivo'] tabular-nums px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 ml-0.5">
+                  {Math.round(scrollProgress)}%
+                </span>
+              </button>
 
-                <div className="space-y-0.5">
-                  {slideDefs.map((slide, idx) => (
-                    <button
-                      key={slide.id}
-                      type="button"
-                      onClick={() => {
-                        const el = document.getElementById(`slide-${slide.id}`);
-                        if (el) {
-                          el.scrollIntoView({ behavior: "smooth", block: "start" });
-                        }
-                        setShowIndexDropdown(false);
-                      }}
-                      className="flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-xs font-medium text-foreground hover:bg-tile hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer text-left group"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono text-[11px] text-muted-foreground group-hover:text-blue-600 font-bold shrink-0">
-                          0{idx + 1}
+              {showIndexDropdown && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border border-border/90 bg-surface p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+                >
+                  <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 mb-1 flex items-center justify-between">
+                    <span>Case Index</span>
+                    <span className="text-[10px] font-normal lowercase text-muted-foreground">quick access</span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    {slideDefs.map((slide, idx) => (
+                      <button
+                        key={slide.id}
+                        type="button"
+                        onClick={() => {
+                          scrollToSlide(slide.id);
+                          setShowIndexDropdown(false);
+                        }}
+                        className="flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-xs font-medium text-foreground hover:bg-tile hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer text-left group"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-['Archivo'] tabular-nums text-[11px] text-muted-foreground group-hover:text-blue-600 font-bold shrink-0">
+                            0{idx + 1}
+                          </span>
+                          <span className="truncate font-semibold">{slide.fullTitle}</span>
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-muted-foreground shrink-0">
+                          {slide.shortTitle}
                         </span>
-                        <span className="truncate font-semibold">{slide.fullTitle}</span>
-                      </div>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-muted-foreground shrink-0">
-                        {slide.shortTitle}
-                      </span>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 

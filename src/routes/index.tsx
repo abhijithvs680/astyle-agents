@@ -26,8 +26,10 @@ import {
   Archive,
   MoreVertical,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 import { ScanningRadarIcon } from "../components/ScanningRadarIcon";
+import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,6 +58,7 @@ const railIcons = [
   { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: FileText, label: "Files", to: "/folders" },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
@@ -463,6 +466,7 @@ function Index() {
   const [casePrompt, setCasePrompt] = useState("");
   const [caseDescription, setCaseDescription] = useState("");
   const [caseExpiryDate, setCaseExpiryDate] = useState("Until I stop");
+  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
 
   // Ref and scrolling for top Explore cards carousel
   const exploreScrollRef = useRef<HTMLDivElement>(null);
@@ -505,7 +509,12 @@ function Index() {
       {/* Header with profile icon, name, and designation on right (Fixed on scroll) */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+          <button
+            type="button"
+            onClick={() => setIsMainMenuOpen(true)}
+            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
+            aria-label="Main menu"
+          >
             <Menu className="size-6 text-sky-100" />
           </button>
           <Link
@@ -1074,6 +1083,12 @@ function Index() {
           </div>
         </div>
       )}
+
+      {/* Main Navigation Drawer with Files & Add File capability */}
+      <MainMenuDrawer
+        isOpen={isMainMenuOpen}
+        onClose={() => setIsMainMenuOpen(false)}
+      />
     </div>
   );
 }

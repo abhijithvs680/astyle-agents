@@ -63,6 +63,7 @@
 
 @theme inline {
   --font-sans: "Archivo", system-ui, sans-serif;
+  --font-mono: "Archivo", system-ui, sans-serif;
   --color-surface: var(--surface);
   --color-surface-tint: var(--surface-tint);
   --color-tile: var(--tile);
@@ -193,6 +194,67 @@
 
 @media (prefers-reduced-motion: reduce) {
   .welcome-app-banner {
+    animation: none;
+  }
+  .loader-step-active-bg-0,
+  .loader-step-active-bg-1,
+  .loader-step-active-bg-2,
+  .loader-step-active-bg-3,
+  .loader-step-active-bg-4 {
+    animation: none;
+  }
+}
+
+/* Smooth transition rule for loader steps */
+.loader-step-box {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Unified Single Static Light Color for ALL Active Loader Steps (No animation / no color changing) */
+.loader-step-active-bg,
+.loader-step-active-bg-0,
+.loader-step-active-bg-1,
+.loader-step-active-bg-2,
+.loader-step-active-bg-3,
+.loader-step-active-bg-4 {
+  background-color: #f0f7ff;
+  border: 1px solid rgba(186, 230, 253, 0.65);
+  box-shadow: 0 2px 10px -2px rgba(186, 230, 253, 0.3);
+}
+
+.dark .loader-step-active-bg,
+.dark .loader-step-active-bg-0,
+.dark .loader-step-active-bg-1,
+.dark .loader-step-active-bg-2,
+.dark .loader-step-active-bg-3,
+.dark .loader-step-active-bg-4 {
+  background-color: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  box-shadow: 0 2px 10px -2px rgba(56, 189, 248, 0.12);
+}
+
+/* Continuous Auto-Scrolling Track for Data Set Boxes */
+@keyframes auto-scroll-track {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-50% - 7px));
+  }
+}
+
+.animate-auto-scroll {
+  display: flex;
+  width: max-content;
+  animation: auto-scroll-track 65s linear infinite;
+}
+
+.animate-auto-scroll:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-auto-scroll {
     animation: none;
   }
 }
