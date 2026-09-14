@@ -133,7 +133,7 @@ const CONNECTION_STEPS: ConnectionStepDef[] = [
   {
     title: "Identifying organization",
     processingText: "Locating organization associated with your account…",
-    resultText: "Baines Healthcare organization found",
+    resultText: "Connected organization as Baines Healthcare",
   },
   {
     title: "Configuring agent for your organization",
