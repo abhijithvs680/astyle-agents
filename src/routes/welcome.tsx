@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  Menu,
   ArrowRight,
   Check,
   CheckCircle2,
@@ -192,26 +193,39 @@ function WelcomePage() {
 
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border/60 bg-background/95 px-4 backdrop-blur-md sm:px-6">
+      {/* Header with profile icon, name, and designation on right (Identical to home page) */}
+      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <span className="grid size-8 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-xs font-semibold text-surface shadow-xs">
-            CX
-          </span>
-          <span
-            className="text-lg tracking-tight sm:text-xl"
-            style={{ fontFamily: "Syne, Archivo, sans-serif" }}
-          >
-            CXO
-          </span>
-        </div>
-        {step < 2 && (
+          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+            <Menu className="size-6 text-sky-100" />
+          </button>
           <Link
             to="/"
-            className="text-sm text-muted-foreground transition hover:text-foreground"
+            className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
+            title="CXO Home"
           >
-            Skip for now
+            CXO
           </Link>
-        )}
+        </div>
+
+        {/* Profile on right top end */}
+        <div className="flex items-center gap-3">
+          {step < 2 && (
+            <Link
+              to="/"
+              className="text-sm text-sky-200/70 hover:text-white transition mr-1"
+            >
+              Skip for now
+            </Link>
+          )}
+          <div className="text-right">
+            <p className="text-sm font-medium leading-none text-white">Robert</p>
+            <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
+          </div>
+          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-white shadow-xs">
+            R
+          </span>
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-3xl px-3 py-6 sm:px-6 sm:py-8">

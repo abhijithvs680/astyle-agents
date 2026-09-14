@@ -167,12 +167,16 @@ function ExplorePage() {
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header (Fixed on scroll) */}
-      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
-            <Menu className="size-6 text-muted-foreground" />
+          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+            <Menu className="size-6 text-sky-100" />
           </button>
-          <Link to="/" className="text-xl sm:text-[22px] font-semibold text-foreground">
+          <Link
+            to="/"
+            className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
+            title="CXO Home"
+          >
             CXO
           </Link>
         </div>
@@ -180,10 +184,10 @@ function ExplorePage() {
         {/* Profile on right */}
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-sm font-medium leading-none text-foreground">Robert</p>
-            <p className="text-xs text-muted-foreground mt-1">Chief Executive Officer</p>
+            <p className="text-sm font-medium leading-none text-white">Robert</p>
+            <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
           </div>
-          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-surface shadow-xs">
+          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-white shadow-xs">
             R
           </span>
         </div>
@@ -270,23 +274,23 @@ function ExplorePage() {
           </div>
 
           {/* Grid of Explore Insights Cards (Same structure and data as home page) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredInsights.map((c) => (
               <div
                 key={c.title}
                 onClick={() => handleOpenCreateForInsight(c.title, c.body)}
                 role="button"
                 tabIndex={0}
-                className={`group relative overflow-hidden flex flex-col justify-between rounded-3xl p-5 sm:p-6 cursor-pointer ${c.tint}`}
+                className={`group relative overflow-hidden flex flex-col justify-between rounded-2xl sm:rounded-[22px] p-3.5 sm:p-4 cursor-pointer ${c.tint}`}
               >
                 {/* Hover Gradient Overlay (Smoothly shifts gradient color on hover) */}
                 <div
-                  className={`pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${c.hoverGradient}`}
+                  className={`pointer-events-none absolute inset-0 rounded-2xl sm:rounded-[22px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${c.hoverGradient}`}
                 />
 
                 {/* Minimal Top-Side Light Background Pattern (3x3 Dot Grid matching OP cancellations card) */}
                 <svg
-                  className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15"
+                  className="pointer-events-none absolute top-2.5 right-2.5 size-7 text-black/15 dark:text-white/15"
                   viewBox="0 0 36 36"
                   fill="none"
                   aria-hidden="true"
@@ -304,29 +308,28 @@ function ExplorePage() {
 
                 <div className="relative z-10">
                   <span
-                    className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
+                    className={`grid size-7 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
                   >
                     {c.up ? (
-                      <TrendingUp className="size-4 text-white" />
+                      <TrendingUp className="size-3.5 text-white" />
                     ) : (
-                      <TrendingDown className="size-4 text-white" />
+                      <TrendingDown className="size-3.5 text-white" />
                     )}
                   </span>
-                  {/* Set title size to XL on all cards with explicit XL class */}
                   <h4
-                    className={`mt-4 text-xl XL leading-snug text-[#111827] ${c.titleWeight}`}
+                    className={`mt-2 text-[18px] leading-snug text-[#111827] ${c.titleWeight}`}
                   >
                     {c.title}
                   </h4>
-                  <p className={`mt-3 text-sm leading-relaxed ${c.bodyColor}`}>
+                  <p className={`mt-1 text-sm leading-relaxed line-clamp-2 ${c.bodyColor}`}>
                     {c.body}
                   </p>
                 </div>
 
                 {/* Prompt to create case with prefilled details */}
-                <div className="relative z-10 mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black transition-colors">
+                <div className="relative z-10 mt-2.5 pt-2 border-t border-black/10 flex items-center justify-between text-[11px] font-medium text-[#111827]/75 group-hover:text-black transition-colors">
                   <span>Create case</span>
-                  <Plus className="size-3.5" />
+                  <Plus className="size-3" />
                 </div>
               </div>
             ))}

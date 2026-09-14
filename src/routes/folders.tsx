@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   Home,
@@ -236,6 +236,7 @@ const pastelThemes = [
 ];
 
 function FoldersPage() {
+  const navigate = useNavigate();
   const [folders, setFolders] = useState<CaseFolder[]>(initialFolders);
   // Folder selected to display cases inside a modern popup
   const [selectedFolder, setSelectedFolder] = useState<CaseFolder | null>(null);
@@ -275,12 +276,16 @@ function FoldersPage() {
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header (Fixed on scroll) */}
-      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
-            <Menu className="size-6 text-muted-foreground" />
+          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+            <Menu className="size-6 text-sky-100" />
           </button>
-          <Link to="/" className="text-xl sm:text-[22px] font-semibold text-foreground">
+          <Link
+            to="/"
+            className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
+            title="CXO Home"
+          >
             CXO
           </Link>
         </div>
@@ -288,10 +293,10 @@ function FoldersPage() {
         {/* Profile on right */}
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-sm font-medium leading-none text-foreground">Robert</p>
-            <p className="text-xs text-muted-foreground mt-1">Chief Executive Officer</p>
+            <p className="text-sm font-medium leading-none text-white">Robert</p>
+            <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
           </div>
-          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-surface shadow-xs">
+          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-white shadow-xs">
             R
           </span>
         </div>
@@ -478,7 +483,16 @@ function FoldersPage() {
                 selectedFolder.cases.map((c) => (
                   <div
                     key={c.id}
-                    className="rounded-2xl bg-tile/40 hover:bg-tile/70 border border-border/60 p-4 sm:p-5 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs"
+                    onClick={() => navigate({ to: "/details" })}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate({ to: "/details" });
+                      }
+                    }}
+                    className="rounded-2xl bg-tile/40 hover:bg-tile/70 border border-border/60 hover:border-border p-4 sm:p-5 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs cursor-pointer group"
                   >
                     <div className="space-y-1.5 min-w-0">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -499,18 +513,17 @@ function FoldersPage() {
                           </span>
                         )}
                       </div>
-                      <h4 className="text-sm sm:text-base font-semibold text-foreground leading-snug">
+                      <h4 className="text-sm sm:text-base font-semibold text-foreground group-hover:text-brand-blue transition-colors leading-snug">
                         {c.title}
                       </h4>
                     </div>
 
-                    <Link
-                      to="/details"
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-surface border border-border px-3.5 py-2 text-xs font-medium text-brand-blue hover:bg-tile transition shrink-0 shadow-2xs"
+                    <span
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-surface border border-border px-3.5 py-2 text-xs font-medium text-brand-blue hover:bg-tile transition shrink-0 shadow-2xs group-hover:border-brand-blue/30"
                     >
                       <span>View Details</span>
-                      <ArrowRight className="size-3.5" />
-                    </Link>
+                      <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
                   </div>
                 ))
               ) : (

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   Home,
@@ -417,6 +417,7 @@ function MiniSparkline({
 }
 
 function Index() {
+  const navigate = useNavigate();
   const [mainTab, setMainTab] = useState<"investigations" | "insights">("investigations");
   const [timeFilter, setTimeFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [casesList, setCasesList] = useState(initialActiveCases);
@@ -502,27 +503,33 @@ function Index() {
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header with profile icon, name, and designation on right (Fixed on scroll) */}
-      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
-            <Menu className="size-6 text-muted-foreground" />
+          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+            <Menu className="size-6 text-sky-100" />
           </button>
-          <span className="text-xl sm:text-[22px]">CXO</span>
+          <Link
+            to="/"
+            className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
+            title="CXO Home"
+          >
+            CXO
+          </Link>
         </div>
 
         {/* Profile on right top end */}
         <div className="flex items-center gap-3">
           <Link
             to="/welcome"
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-tile transition"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/15 transition"
           >
             New user setup
           </Link>
           <div className="text-right">
-            <p className="text-sm font-medium leading-none text-foreground">Robert</p>
-            <p className="text-xs text-muted-foreground mt-1">Chief Executive Officer</p>
+            <p className="text-sm font-medium leading-none text-white">Robert</p>
+            <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
           </div>
-          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-surface shadow-xs">
+          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-white shadow-xs">
             R
           </span>
         </div>
@@ -588,17 +595,17 @@ function Index() {
           {/* TAB 1: INVESTIGATIONS VIEW */}
           {mainTab === "investigations" && (
             <div className="space-y-4">
-              <Panel>
-                <div className="mb-5 flex items-start justify-between gap-4">
+              <Panel className="p-3.5 sm:p-4">
+                <div className="mb-3 flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-[22px]">Explore Insights</h2>
+                    <h2 className="text-lg sm:text-xl font-medium text-foreground">Explore Insights</h2>
                   </div>
 
                   {/* Left & Right Arrow Navigation (Replacing scrollbar) */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => scrollExplore("left")}
-                      className="grid size-9 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
+                      className="grid size-8 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
                       aria-label="Previous cases"
                       title="Scroll Left"
                     >
@@ -606,26 +613,19 @@ function Index() {
                     </button>
                     <button
                       onClick={() => scrollExplore("right")}
-                      className="grid size-9 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
+                      className="grid size-8 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
                       aria-label="Next cases"
                       title="Scroll Right"
                     >
                       <ChevronRight className="size-4" />
                     </button>
-                    <Link
-                      to="/explore"
-                      className="hidden sm:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-brand-blue transition cursor-pointer ml-2"
-                    >
-                      Explore all
-                      <ArrowRight className="size-4" />
-                    </Link>
                   </div>
                 </div>
 
                 {/* Carousel with hidden scrollbar and smooth scroll */}
                 <div
                   ref={exploreScrollRef}
-                  className="flex gap-4 overflow-x-auto pb-2 scroll-smooth no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  className="flex gap-3.5 overflow-x-auto pb-1 scroll-smooth no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 >
                   {newCases.map((c, idx) => (
                     <div
@@ -637,16 +637,16 @@ function Index() {
                       }}
                       role="button"
                       tabIndex={0}
-                      className={`group relative overflow-hidden flex w-72 sm:w-[305px] shrink-0 flex-col justify-between rounded-3xl p-5 sm:p-6 cursor-pointer ${c.tint}`}
+                      className={`group relative overflow-hidden flex w-72 sm:w-[290px] shrink-0 flex-col justify-between rounded-2xl sm:rounded-[22px] p-3.5 sm:p-4 cursor-pointer ${c.tint}`}
                     >
                       {/* Hover Gradient Overlay (Smoothly shifts gradient color on hover) */}
                       <div
-                        className={`pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${c.hoverGradient}`}
+                        className={`pointer-events-none absolute inset-0 rounded-2xl sm:rounded-[22px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${c.hoverGradient}`}
                       />
 
                       {/* Minimal Top-Side Light Background Pattern (3x3 Dot Grid matching OP cancellations card) */}
                       <svg
-                        className="pointer-events-none absolute top-3.5 right-3.5 size-10 text-black/15 dark:text-white/15"
+                        className="pointer-events-none absolute top-2.5 right-2.5 size-7 text-black/15 dark:text-white/15"
                         viewBox="0 0 36 36"
                         fill="none"
                         aria-hidden="true"
@@ -665,29 +665,28 @@ function Index() {
                       {/* Foreground Content */}
                       <div className="relative z-10">
                         <span
-                          className={`grid size-8 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
+                          className={`grid size-7 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
                         >
                           {c.up ? (
-                            <TrendingUp className="size-4 text-white" />
+                            <TrendingUp className="size-3.5 text-white" />
                           ) : (
-                            <TrendingDown className="size-4 text-white" />
+                            <TrendingDown className="size-3.5 text-white" />
                           )}
                         </span>
-                        {/* Set title size to XL on all top 5 cards and explicit XL class */}
                         <h4
-                          className={`mt-4 text-xl XL leading-snug text-[#111827] ${c.titleWeight}`}
+                          className={`mt-2 text-[18px] leading-snug text-[#111827] ${c.titleWeight}`}
                         >
                           {c.title}
                         </h4>
-                        <p className={`mt-3 text-sm leading-relaxed ${c.bodyColor}`}>
+                        <p className={`mt-1 text-sm leading-relaxed line-clamp-2 ${c.bodyColor}`}>
                           {c.body}
                         </p>
                       </div>
 
                       {/* Prompt to create case with prefilled details */}
-                      <div className="relative z-10 mt-4 pt-3 border-t border-black/10 flex items-center justify-between text-xs font-medium text-[#111827]/75 group-hover:text-black transition-colors">
+                      <div className="relative z-10 mt-2.5 pt-2 border-t border-black/10 flex items-center justify-between text-[11px] font-medium text-[#111827]/75 group-hover:text-black transition-colors">
                         <span>Create case</span>
-                        <Plus className="size-3.5" />
+                        <Plus className="size-3" />
                       </div>
                     </div>
                   ))}
@@ -735,7 +734,19 @@ function Index() {
                   {displayedCases.map((c, i) => {
                     const isLive = c.isLive ?? (c.title === "Increasing Patient Wait Time" || c.title === "Q3 Revenue Drop & Margin Compression Analysis");
                     return (
-                      <div key={`${c.title}-${i}`} className="flex flex-col rounded-2xl bg-tile p-5 relative group">
+                      <div
+                        key={`${c.title}-${i}`}
+                        onClick={() => navigate({ to: "/details" })}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            navigate({ to: "/details" });
+                          }
+                        }}
+                        className="flex flex-col rounded-2xl bg-tile p-5 relative group cursor-pointer hover:shadow-md hover:border-border/80 border border-transparent transition-all duration-200"
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">{c.age || "\u00A0"}</span>
@@ -801,7 +812,7 @@ function Index() {
                             </div>
                           </div>
                         </div>
-                        <h4 className="mt-5 text-lg font-medium text-foreground">
+                        <h4 className="mt-5 text-lg font-medium text-foreground group-hover:text-brand-blue transition-colors">
                           {c.title}
                         </h4>
                         <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/75">
@@ -809,13 +820,12 @@ function Index() {
                         </p>
 
                         <div className="mt-5 flex items-center justify-between gap-2">
-                          <Link
-                            to="/details"
-                            className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-blue hover:bg-tile transition cursor-pointer"
+                          <span
+                            className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-blue hover:bg-tile transition cursor-pointer group-hover:border-brand-blue/30 shadow-2xs"
                           >
                             Case details
-                            <ArrowRight className="size-4" />
-                          </Link>
+                            <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform" />
+                          </span>
                         </div>
                       </div>
                     );
@@ -1093,8 +1103,8 @@ function Chip({
   );
 }
 
-function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Panel({ children, className = "p-5 sm:p-6" }: { children: React.ReactNode; className?: string }) {
   return (
-    <section className={`rounded-3xl bg-surface p-5 sm:p-6 ${className}`}>{children}</section>
+    <section className={`rounded-3xl bg-surface ${className}`}>{children}</section>
   );
 }

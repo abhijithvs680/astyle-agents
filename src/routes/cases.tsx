@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   Home,
@@ -216,6 +216,7 @@ const renderStatusBadge = (status: CaseRow["status"]) => {
 };
 
 function CasesPage() {
+  const navigate = useNavigate();
   const [cases, setCases] = useState<CaseRow[]>(initialCases);
   const [activeTab, setActiveTab] = useState<"active" | "archived" | "all">("active");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -284,12 +285,16 @@ function CasesPage() {
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header with profile icon, name, and designation on right (Fixed on scroll) */}
-      <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border/60 flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button className="rounded-full p-2 hover:bg-tile" aria-label="Main menu">
-            <Menu className="size-6 text-muted-foreground" />
+          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+            <Menu className="size-6 text-sky-100" />
           </button>
-          <Link to="/" className="text-xl sm:text-[22px] font-semibold text-foreground">
+          <Link
+            to="/"
+            className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
+            title="CXO Home"
+          >
             CXO
           </Link>
         </div>
@@ -297,10 +302,10 @@ function CasesPage() {
         {/* Profile on right top end */}
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-sm font-medium leading-none text-foreground">Robert</p>
-            <p className="text-xs text-muted-foreground mt-1">Chief Executive Officer</p>
+            <p className="text-sm font-medium leading-none text-white">Robert</p>
+            <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
           </div>
-          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-surface shadow-xs">
+          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-white shadow-xs">
             R
           </span>
         </div>
@@ -434,11 +439,12 @@ function CasesPage() {
                     return (
                       <tr
                         key={row.id}
-                        className={`hover:bg-tile/70 transition-colors group ${isSelected ? "bg-brand-blue/5" : ""
+                        onClick={() => navigate({ to: "/details" })}
+                        className={`hover:bg-tile/70 transition-colors group cursor-pointer ${isSelected ? "bg-brand-blue/5" : ""
                           }`}
                       >
                         {/* Checkbox */}
-                        <td className="px-4 py-4 text-center">
+                        <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -465,13 +471,12 @@ function CasesPage() {
                                 <ScanningRadarIcon size={16} />
                               </span>
                             )}
-                            <Link
-                              to="/details"
+                            <span
                               className="text-sm sm:text-base font-semibold text-foreground group-hover:text-brand-blue transition-colors hover:underline"
                               title={row.title}
                             >
                               {row.title}
-                            </Link>
+                            </span>
                           </div>
                           <span className="text-[11px] text-muted-foreground font-mono block mt-1">
                             ID: {row.id.toUpperCase()}
@@ -492,6 +497,7 @@ function CasesPage() {
                         <td className="px-6 py-4 text-center whitespace-nowrap">
                           <Link
                             to="/details"
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-brand-blue dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/50 px-3 py-1 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/80 transition-colors shadow-2xs"
                             title={`${row.newInsightsCount} insights detected by AI diagnostic engine`}
                           >
@@ -501,7 +507,7 @@ function CasesPage() {
                         </td>
 
                         {/* Actions */}
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <td className="px-6 py-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center gap-2">
                             <Link
                               to="/details"

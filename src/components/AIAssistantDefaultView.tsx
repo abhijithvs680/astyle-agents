@@ -82,17 +82,16 @@ export function AIAssistantDefaultView({
         </div>
 
         {/* Heading requested by user */}
-        <h2 className="text-xl sm:text-[22px] font-semibold text-foreground text-center mb-6 tracking-tight">
+        <h2 className="text-xl sm:text-[22px] text-foreground text-center mb-6 tracking-tight">
           What can I help you with?
         </h2>
 
         {/* Chat Box Container (Clean input area with send button only) */}
         <div
-          className={`w-full rounded-[22px] bg-white dark:bg-zinc-900 border transition-all duration-200 p-3.5 sm:p-4 shadow-xs ${
-            isFocused
+          className={`w-full rounded-[22px] bg-white dark:bg-zinc-900 border transition-all duration-200 p-3.5 sm:p-4 shadow-xs ${isFocused
               ? "border-blue-400 ring-2 ring-blue-100 dark:ring-blue-950 shadow-sm"
               : "border-[#bfdbfe] hover:border-blue-300 dark:border-blue-900/60"
-          }`}
+            }`}
         >
           <form onSubmit={handleSubmit} className="flex flex-col">
             <div className="relative w-full mb-3">
@@ -112,11 +111,10 @@ export function AIAssistantDefaultView({
               <button
                 type="submit"
                 disabled={!inputValue.trim()}
-                className={`grid size-7 sm:size-8 place-items-center rounded-full text-white transition-all cursor-pointer shadow-2xs ${
-                  inputValue.trim()
+                className={`grid size-7 sm:size-8 place-items-center rounded-full text-white transition-all cursor-pointer shadow-2xs ${inputValue.trim()
                     ? "bg-[#4a4744] hover:bg-[#33312f] dark:bg-zinc-200 dark:text-zinc-900 active:scale-95"
                     : "bg-[#716e6a] dark:bg-zinc-700 opacity-90 hover:opacity-100"
-                }`}
+                  }`}
                 aria-label="Send prompt"
               >
                 <ArrowUp className="size-4" strokeWidth={2.5} />
