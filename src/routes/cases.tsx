@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  Menu,
   Home,
   Briefcase,
   Compass,
@@ -14,8 +13,6 @@ import {
   Search,
   CheckCircle2,
 } from "lucide-react";
-import { ScanningRadarIcon } from "../components/ScanningRadarIcon";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/cases")({
   head: () => ({
@@ -198,7 +195,7 @@ const renderStatusBadge = (status: CaseRow["status"]) => {
           className="inline-flex items-center gap-1.5 rounded-full bg-[#f0f8ff] text-emerald-800 dark:text-emerald-900 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-medium shadow-2xs"
           title="Continuous monitoring — Auditing active"
         >
-          <ScanningRadarIcon size={14} />
+          <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
           Auditing
         </span>
       );
@@ -225,7 +222,6 @@ function CasesPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCaseIds, setSelectedCaseIds] = useState<string[]>([]);
   const [lastActionNotice, setLastActionNotice] = useState<string | null>(null);
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
 
   // Counts for tabs
   const activeCount = cases.filter((c) => !c.archived).length;
@@ -291,14 +287,6 @@ function CasesPage() {
       {/* Header with profile icon, name, and designation on right (Fixed on scroll) */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-            aria-label="Main menu"
-          >
-            <Menu className="size-6 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
@@ -472,14 +460,6 @@ function CasesPage() {
                                 Archived
                               </span>
                             )}
-                            {isLive && (
-                              <span
-                                title="Continuous monitoring — Auditing active"
-                                className="inline-flex items-center shrink-0"
-                              >
-                                <ScanningRadarIcon size={16} />
-                              </span>
-                            )}
                             <span
                               className="text-sm sm:text-base font-semibold text-foreground group-hover:text-brand-blue transition-colors hover:underline"
                               title={row.title}
@@ -573,11 +553,6 @@ function CasesPage() {
         </main>
       </div>
 
-      {/* Main Navigation Drawer with Files & Add File capability */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-      />
     </div>
   );
 }

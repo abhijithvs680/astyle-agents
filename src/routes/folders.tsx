@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  Menu,
   Home,
   Briefcase,
   Server,
@@ -15,9 +14,9 @@ import {
   MoreVertical,
   X,
   Check,
+  CheckCircle2,
   Clock,
 } from "lucide-react";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/folders")({
   head: () => ({
@@ -241,7 +240,6 @@ const pastelThemes = [
 function FoldersPage() {
   const navigate = useNavigate();
   const [folders, setFolders] = useState<CaseFolder[]>(initialFolders);
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
   // Folder selected to display cases inside a modern popup
   const [selectedFolder, setSelectedFolder] = useState<CaseFolder | null>(null);
 
@@ -282,14 +280,6 @@ function FoldersPage() {
       {/* Header (Fixed on scroll) */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-            aria-label="Main menu"
-          >
-            <Menu className="size-6 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
@@ -337,38 +327,48 @@ function FoldersPage() {
         </nav>
 
         {/* Main Content Area */}
-        <main className="flex-1 px-4 pt-4 pb-12 sm:px-6 sm:pt-6 space-y-6">
+        <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-8 sm:pt-8 w-full space-y-6">
           {/* Notification banner */}
           {notification && (
-            <div className="rounded-2xl bg-emerald-600 text-white text-xs sm:text-sm py-2 px-4 flex items-center justify-between shadow-xs animate-in fade-in">
-              <span className="flex items-center gap-2">
-                <Check className="size-4" />
-                {notification}
-              </span>
-              <button onClick={() => setNotification(null)} className="text-white/80 hover:text-white">
-                <X className="size-4" />
+            <div className="flex items-center justify-between rounded-xl bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 p-3 text-xs text-blue-900 dark:text-blue-200 shadow-2xs animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-brand-blue shrink-0" />
+                <span className="font-medium">{notification}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNotification(null)}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="size-3.5" />
               </button>
             </div>
           )}
 
-          {/* Page Title & Count (Matching attached reference: Folders 3) */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-foreground">
-                Folders
-              </h1>
-              <span className="rounded-full bg-tile border border-border/60 px-3 py-0.5 text-xs font-semibold text-foreground">
-                {folders.length}
-              </span>
+          {/* Header Banner & Action */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-foreground">
+                  Folders
+                </h1>
+                <span className="rounded-full bg-tile border border-border/60 px-3 py-0.5 text-xs font-semibold text-foreground">
+                  {folders.length}
+                </span>
+              </div>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+                Organize and manage case investigations by departmental clusters.
+              </p>
             </div>
 
             {/* Create New Folder Button */}
             <button
+              type="button"
               onClick={() => setIsNewFolderOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer self-start sm:self-auto"
             >
               <FolderPlus className="size-4" />
-              Create New Folder
+              <span>New Folder</span>
             </button>
           </div>
 
@@ -668,11 +668,6 @@ function FoldersPage() {
         </div>
       )}
 
-      {/* Main Navigation Drawer with Files & Add File capability */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-      />
     </div>
   );
 }

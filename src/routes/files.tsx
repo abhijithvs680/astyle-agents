@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Menu,
   Home,
   Briefcase,
   Compass,
@@ -26,7 +25,6 @@ import {
   Clock,
   HardDrive,
 } from "lucide-react";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/files")({
   head: () => ({
@@ -163,7 +161,6 @@ function FilesPage() {
     return INITIAL_WORKSPACE_FILES;
   });
 
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [notification, setNotification] = useState<string | null>(null);
@@ -283,14 +280,6 @@ function FilesPage() {
       {/* Header matching CXO app */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-            aria-label="Main menu"
-          >
-            <Menu className="size-6 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
@@ -349,16 +338,18 @@ function FilesPage() {
         </nav>
 
         {/* Main Content Area */}
-        <main className="min-w-0 flex-1 px-4 pt-6 pb-14 sm:px-8 sm:pt-8 w-full space-y-6 max-w-6xl">
+        <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-8 sm:pt-8 w-full space-y-6">
           {/* Header Banner & Upload Trigger */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1
-                className="text-2xl sm:text-[28px] font-semibold tracking-tight text-foreground"
-                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
-              >
-                Workspace Files
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-foreground">
+                  Workspace Files
+                </h1>
+                <span className="rounded-full bg-tile border border-border/60 px-3 py-0.5 text-xs font-semibold text-foreground">
+                  {files.length}
+                </span>
+              </div>
               <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                 Supplemental data sets, operational models, and audit files indexed for CXO intelligence.
               </p>
@@ -367,9 +358,9 @@ function FilesPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-surface hover:opacity-90 transition shadow-xs cursor-pointer self-start sm:self-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-surface hover:opacity-90 transition shadow-xs cursor-pointer self-start sm:self-auto"
             >
-              <Plus className="size-4 stroke-[2.5]" />
+              <Plus className="size-4" />
               <span>Upload Files</span>
             </button>
           </div>
@@ -650,39 +641,6 @@ function FilesPage() {
         </div>
       )}
 
-      {/* Main Navigation Drawer */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-        onFileAdded={(file) => {
-          const now = new Date();
-          const dateFormatted = `${now.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}, ${now.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          })}`;
-
-          const sizeStr =
-            file.size > 1024 * 1024
-              ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-              : `${Math.round(file.size / 1024)} KB`;
-
-          const newFile: WorkspaceFile = {
-            id: `f-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-            name: file.name,
-            size: sizeStr,
-            sizeBytes: file.size,
-            uploadedAt: dateFormatted,
-            type: file.name.split(".").pop()?.toLowerCase() || "file",
-            category: getCategoryFromFilename(file.name),
-          };
-          setFiles((prev) => [newFile, ...prev]);
-        }}
-      />
     </div>
   );
 }

@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  Menu,
   Home,
   Briefcase,
   Database,
@@ -24,12 +23,15 @@ import {
   Radio,
   Radar,
   Archive,
-  MoreVertical,
   ChevronDown,
   FileText,
+  Pill,
+  Receipt,
+  CheckCircle2,
+  Search,
+  Filter,
+  Check,
 } from "lucide-react";
-import { ScanningRadarIcon } from "../components/ScanningRadarIcon";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -62,57 +64,174 @@ const railIcons = [
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
-// Colors matched exactly to the attached reference image
-const newCases = [
+interface SuggestedCase {
+  id: string;
+  category: "Pharmacy" | "Billing" | "Operations" | "Clinical";
+  department: string;
+  title: string;
+  description: string;
+  impactMetric: string;
+  severity: "High" | "Medium" | "Low";
+  signal: string;
+}
+
+const suggestedCasesList: SuggestedCase[] = [
   {
-    up: true,
-    tint: "bg-gradient-to-br from-[#e8fbee] via-[#d8f6de] to-[#c2eed0]",
-    hoverGradient: "bg-gradient-to-br from-[#d4f6dc] via-[#bbf0c8] to-[#9ee5b0]",
-    iconTint: "bg-[#107f47]",
-    title: "3 Cross-sell opportunity identified",
-    titleWeight: "font-medium",
-    body: "Prescription attach rate analysis identified high-conversion ancillary lab and wellness packages.",
-    bodyColor: "text-[#264431]",
+    id: "sug-1",
+    category: "Pharmacy",
+    department: "Pharmacy & Inpatient Therapeutics",
+    title: "High-Cost Antimicrobial Formulary Variance",
+    description: "Off-formulary broad-spectrum antibiotic dispensing with severe margin disparity detected across surgical suites.",
+    impactMetric: "$48,000 potential savings",
+    severity: "High",
+    signal: "Detected 1 hr ago",
   },
   {
-    up: false,
-    tint: "bg-gradient-to-br from-[#faecfd] via-[#f4dbf8] to-[#e8c7f2]",
-    hoverGradient: "bg-gradient-to-br from-[#f6ddfc] via-[#eebeef] to-[#e3a4e4]",
-    iconTint: "bg-[#dc2626]",
-    title: "OP cancellations increased by 18%",
-    titleWeight: "font-medium",
-    body: "A sudden rise in appointment cancellations was detected in selected departments.",
-    bodyColor: "text-[#4c2f57]",
+    id: "sug-2",
+    category: "Pharmacy",
+    department: "Dispensary & Inventory",
+    title: "Chronic Medication Stockout & Reorder Gaps",
+    description: "Predictive inventory flags 14 vital cardiovascular medications nearing safety stock exhaustion before next shipment.",
+    impactMetric: "14 critical SKUs at risk",
+    severity: "Medium",
+    signal: "Detected 3 hrs ago",
   },
   {
-    up: false,
-    tint: "bg-gradient-to-br from-[#eaf4fe] via-[#d8ecfe] to-[#bfdffa]",
-    hoverGradient: "bg-gradient-to-br from-[#d7ebfd] via-[#bfdefc] to-[#9ecbf9]",
-    iconTint: "bg-[#dc2626]",
-    title: "Complaint volume increased by 16%",
-    titleWeight: "font-semibold",
-    body: "Patient complaints grew across front-desk and billing touchpoints this quarter.",
-    bodyColor: "text-[#284661]",
+    id: "sug-3",
+    category: "Pharmacy",
+    department: "Chemotherapy Compounding",
+    title: "Compounding Pharmacy Waste & Over-Dispensation",
+    description: "Excess reconstituted IV admixture batching identified, resulting in 22% discarded oncology infusions.",
+    impactMetric: "$34,200 monthly waste",
+    severity: "Medium",
+    signal: "Detected yesterday",
   },
   {
-    up: true,
-    tint: "bg-gradient-to-br from-[#e8fbee] via-[#d8f6de] to-[#c2eed0]",
-    hoverGradient: "bg-gradient-to-br from-[#d4f6dc] via-[#bbf0c8] to-[#9ee5b0]",
-    iconTint: "bg-[#107f47]",
-    title: "2 Discount leakage identified",
-    titleWeight: "font-medium",
-    body: "Unapproved concession overrides and compounding pharmacy discounts exceeded departmental margin thresholds.",
-    bodyColor: "text-[#264431]",
+    id: "sug-4",
+    category: "Billing",
+    department: "Revenue Cycle & Billing",
+    title: "Outpatient Laboratory Claim Unbundling Discrepancy",
+    description: "Unbundled panel billing detected in arterial blood gas and metabolic profiles triggering 18% claim denials.",
+    impactMetric: "€62,400 uncollected revenue",
+    severity: "High",
+    signal: "Detected 2 hrs ago",
   },
   {
-    up: false,
-    tint: "bg-gradient-to-br from-[#fff0e2] via-[#fedfc3] to-[#fbcfa8]",
-    hoverGradient: "bg-gradient-to-br from-[#ffe4cc] via-[#fecda4] to-[#fdb57d]",
-    iconTint: "bg-[#dc2626]",
-    title: "4 lab revenue anomalies found",
-    titleWeight: "font-medium",
-    body: "Differences were detected between ordered, completed, and billed laboratory services.",
-    bodyColor: "text-[#55361e]",
+    id: "sug-5",
+    category: "Billing",
+    department: "Virtual Care Operations",
+    title: "Telehealth Concession & Copay Waiver Audit",
+    description: "Unapproved front-desk copay override waivers identified in virtual psychiatric and internal medicine visits.",
+    impactMetric: "$19,500 margin concession",
+    severity: "Low",
+    signal: "Detected yesterday",
+  },
+  {
+    id: "sug-6",
+    category: "Billing",
+    department: "Emergency Billing Audit",
+    title: "Emergency Triage Coding Level Downcoding",
+    description: "Acuity Level 4 emergency interventions systematically billed as Level 2 due to documentation gaps in triage notes.",
+    impactMetric: "$85,000 reimbursement delta",
+    severity: "High",
+    signal: "Detected 5 hrs ago",
+  },
+  {
+    id: "sug-7",
+    category: "Operations",
+    department: "Surgical Suite Operations",
+    title: "Operating Room Morning Turnaround Delays",
+    description: "First-case morning starts delayed by average 26 minutes, leading to 2.4 hours cumulative idle surgical theater time daily.",
+    impactMetric: "14.2 lost theater hours/wk",
+    severity: "High",
+    signal: "Detected 4 hrs ago",
+  },
+  {
+    id: "sug-8",
+    category: "Operations",
+    department: "Radiology & Imaging",
+    title: "Diagnostic Imaging Scanner Utilization Slump",
+    description: "MRI 2 & CT Suite 3 show 38% unbooked slots between 1:00 PM and 4:30 PM despite a 12-day outpatient waitlist.",
+    impactMetric: "46 recoverable scan slots/wk",
+    severity: "Medium",
+    signal: "Detected 6 hrs ago",
+  },
+  {
+    id: "sug-9",
+    category: "Clinical",
+    department: "Inpatient Bed Flow",
+    title: "Post-Acute Inpatient Discharge Clearance Lag",
+    description: "Multidisciplinary social work and pharmacy discharge reviews delayed past 2 PM, inflating bed turnaround time.",
+    impactMetric: "1.6 days excess ALOS",
+    severity: "Medium",
+    signal: "Detected 2 days ago",
+  },
+  {
+    id: "sug-10",
+    category: "Clinical",
+    department: "Critical Care Step-Down",
+    title: "Unplanned 72-Hour ICU Readmission Spike",
+    description: "Step-down ward transfers exhibiting respiratory decompensation within 48 hours, prompting unplanned ICU return.",
+    impactMetric: "8 clinical escalations flagged",
+    severity: "High",
+    signal: "Detected 8 hrs ago",
+  },
+];
+
+const SUGGESTED_CATEGORIES = [
+  { id: "All", label: "All Categories" },
+  { id: "Pharmacy", label: "Pharmacy" },
+  { id: "Billing", label: "Billing" },
+  { id: "Operations", label: "Operations" },
+  { id: "Clinical", label: "Clinical" },
+] as const;
+
+export interface AIAgentOption {
+  id: string;
+  name: string;
+  category: "Pharmacy" | "Billing" | "Operations" | "Clinical";
+  role: string;
+  icon: React.ElementType;
+  color: string;
+  status: string;
+}
+
+export const AVAILABLE_AGENTS: AIAgentOption[] = [
+  {
+    id: "pharmacy",
+    name: "Pharmacy Intelligence Agent",
+    category: "Pharmacy",
+    role: "Formulary parity, drug procurement arbitrage & dosage margin tracking",
+    icon: Pill,
+    color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    status: "Active • Model v2.4",
+  },
+  {
+    id: "billing",
+    name: "Revenue & Billing Audit Agent",
+    category: "Billing",
+    role: "Claims reconciliation, code denials, unbilled procedures & payer anomalies",
+    icon: Receipt,
+    color: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+    status: "Active • Model v3.1",
+  },
+  {
+    id: "operations",
+    name: "Workflow & Operations Agent",
+    category: "Operations",
+    role: "OR scheduling bottlenecks, bed turnaround, radiology queues & staffing buffers",
+    icon: Activity,
+    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    status: "Active • Model v2.2",
+  },
+  {
+    id: "clinical",
+    name: "Clinical Quality & Safety Agent",
+    category: "Clinical",
+    role: "Inpatient protocol compliance, 72h readmission risks & diagnostic clearance lags",
+    icon: Stethoscope,
+    color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    status: "Active • Model v2.8",
   },
 ];
 
@@ -122,6 +241,7 @@ interface ActiveCaseItem {
   body: string;
   expiryDate?: string | undefined;
   isLive?: boolean | undefined;
+  agent?: string | undefined;
 }
 
 const initialActiveCases: ActiveCaseItem[] = [
@@ -421,11 +541,8 @@ function MiniSparkline({
 
 function Index() {
   const navigate = useNavigate();
-  const [mainTab, setMainTab] = useState<"investigations" | "insights">("investigations");
-  const [timeFilter, setTimeFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [casesList, setCasesList] = useState(initialActiveCases);
   const [archivedCaseTitles, setArchivedCaseTitles] = useState<string[]>([]);
-  const [openCaseMenu, setOpenCaseMenu] = useState<string | null>(null);
   const [lastArchivedNotice, setLastArchivedNotice] = useState<string | null>(null);
 
   const archiveCase = (title: string) => {
@@ -453,70 +570,103 @@ function Index() {
     );
   };
 
-  const displayedCases = casesList.filter((c) => !archivedCaseTitles.includes(c.title));
+  const [caseSearchQuery, setCaseSearchQuery] = useState("");
+
+  const displayedCases = useMemo(() => {
+    return casesList
+      .filter((c) => !archivedCaseTitles.includes(c.title))
+      .filter((c) => {
+        if (!caseSearchQuery.trim()) return true;
+        const q = caseSearchQuery.toLowerCase().trim();
+        return (
+          c.title.toLowerCase().includes(q) ||
+          c.body.toLowerCase().includes(q) ||
+          (c.agent && c.agent.toLowerCase().includes(q))
+        );
+      });
+  }, [casesList, archivedCaseTitles, caseSearchQuery]);
+
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
 
   useEffect(() => {
-    const handleOutsideClick = () => setOpenCaseMenu(null);
+    const handleOutsideClick = () => {
+      setIsCategoryFilterOpen(false);
+    };
     window.addEventListener("click", handleOutsideClick);
     return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
-  // Modern Modal state for Add Case
+  // Modern Modal state for Add Case & AI Agent Assignment
   const [isAddCaseOpen, setIsAddCaseOpen] = useState(false);
   const [casePrompt, setCasePrompt] = useState("");
   const [caseDescription, setCaseDescription] = useState("");
   const [caseExpiryDate, setCaseExpiryDate] = useState("Until I stop");
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("pharmacy");
 
-  // Ref and scrolling for top Explore cards carousel
-  const exploreScrollRef = useRef<HTMLDivElement>(null);
+  // Suggested cases category filter and toast notification
+  const [selectedSuggestedCategory, setSelectedSuggestedCategory] = useState<string>("All");
+  const [suggestedNotice, setSuggestedNotice] = useState<string | null>(null);
 
-  const scrollExplore = (direction: "left" | "right") => {
-    if (exploreScrollRef.current) {
-      exploreScrollRef.current.scrollBy({
-        left: direction === "left" ? -320 : 320,
-        behavior: "smooth",
-      });
+  const filteredSuggestedCases = useMemo(() => {
+    if (selectedSuggestedCategory === "All") return suggestedCasesList;
+    return suggestedCasesList.filter((c) => c.category === selectedSuggestedCategory);
+  }, [selectedSuggestedCategory]);
+
+  const handleOpenSuggestedModal = (sug: SuggestedCase) => {
+    setCasePrompt(sug.title);
+    setCaseDescription(sug.description);
+    const matchedAgent = AVAILABLE_AGENTS.find((a) => a.category === sug.category);
+    if (matchedAgent) {
+      setSelectedAgentId(matchedAgent.id);
     }
+    setIsAddCaseOpen(true);
+  };
+
+  const handleAdoptCase = (item: SuggestedCase) => {
+    const matchedAgent = AVAILABLE_AGENTS.find((a) => a.category === item.category);
+    const newCase: ActiveCaseItem = {
+      age: "Just now",
+      title: item.title,
+      body: `${item.description} (Estimated Impact: ${item.impactMetric})`,
+      isLive: true,
+      agent: matchedAgent?.name,
+    };
+    setCasesList([newCase, ...casesList]);
+    setSuggestedNotice(`Suggested case "${item.title}" added to active cases.`);
+    setTimeout(() => setSuggestedNotice(null), 4000);
   };
 
   const handleCreateCase = (e: React.FormEvent) => {
     e.preventDefault();
     if (!casePrompt.trim()) return;
 
+    const assignedAgent = AVAILABLE_AGENTS.find((a) => a.id === selectedAgentId);
+
     const newCase: ActiveCaseItem = {
       age: "Just now",
       title: casePrompt.trim(),
       body:
         caseDescription.trim() ||
-        "AI automated discovery scan initialized across clinical scheduling and billing repositories.",
+        `${assignedAgent?.name || "AI Agent"} automated discovery scan initialized across clinical scheduling and billing repositories.`,
       expiryDate: caseExpiryDate ? caseExpiryDate : undefined,
       isLive: caseExpiryDate === "Until I stop" || !caseExpiryDate,
+      agent: assignedAgent?.name,
     };
     setCasesList([newCase, ...casesList]);
+    setSuggestedNotice(`Case "${casePrompt.trim()}" activated with ${assignedAgent?.name || "AI Agent"}.`);
+    setTimeout(() => setSuggestedNotice(null), 4000);
     setCasePrompt("");
     setCaseDescription("");
     setCaseExpiryDate("Until I stop");
     setIsAddCaseOpen(false);
   };
 
-  const filteredCards = smallInsights.filter(
-    (c) => timeFilter === "all" || c.timeframe === timeFilter
-  );
 
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header with profile icon, name, and designation on right (Fixed on scroll) */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-            aria-label="Main menu"
-          >
-            <Menu className="size-6 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
@@ -569,437 +719,381 @@ function Index() {
           ))}
         </nav>
 
-        <main className="min-w-0 flex-1 px-3 pt-4 pb-12 sm:px-6 sm:pt-6">
-          {/* Main Tabs: Investigations & Insights + Top Actions */}
-          <div className="flex flex-wrap items-center gap-3 pb-4">
-            <Chip
-              icon={FolderKanban}
-              label="Investigations"
-              active={mainTab === "investigations"}
-              onClick={() => setMainTab("investigations")}
-            />
-            <Chip
-              icon={Sparkles}
-              label="My feed"
-              active={mainTab === "insights"}
-              onClick={() => setMainTab("insights")}
-            />
-
-            {/* Top Right: Add Case button with filled type */}
-            <div className="ml-auto flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setCasePrompt("");
-                  setCaseDescription("");
-                  setIsAddCaseOpen(true);
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
-              >
-                <Plus className="size-4" />
-                Add Case
-              </button>
-            </div>
-          </div>
-
-          {/* TAB 1: INVESTIGATIONS VIEW */}
-          {mainTab === "investigations" && (
-            <div className="space-y-4">
-              <Panel className="p-3.5 sm:p-4">
-                <div className="mb-3 flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-medium text-foreground">Explore Insights</h2>
-                  </div>
-
-                  {/* Left & Right Arrow Navigation (Replacing scrollbar) */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => scrollExplore("left")}
-                      className="grid size-8 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
-                      aria-label="Previous cases"
-                      title="Scroll Left"
-                    >
-                      <ChevronLeft className="size-4" />
-                    </button>
-                    <button
-                      onClick={() => scrollExplore("right")}
-                      className="grid size-8 place-items-center rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground hover:bg-tile transition shadow-xs cursor-pointer active:scale-95"
-                      aria-label="Next cases"
-                      title="Scroll Right"
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </div>
+        <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-8 sm:pt-8 w-full space-y-6">
+          <div className="space-y-6">
+            <Panel>
+              <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[22px] font-medium text-foreground">Cases</h2>
+                  <button
+                    onClick={() => {
+                      setCasePrompt("");
+                      setCaseDescription("");
+                      setSelectedAgentId("pharmacy");
+                      setIsAddCaseOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-tile cursor-pointer text-foreground transition shadow-2xs active:scale-95 shrink-0"
+                  >
+                    <Plus className="size-4 text-foreground" />
+                    <span>New Case</span>
+                  </button>
                 </div>
 
-                {/* Carousel with hidden scrollbar and smooth scroll */}
-                <div
-                  ref={exploreScrollRef}
-                  className="flex gap-3.5 overflow-x-auto pb-1 scroll-smooth no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                >
-                  {newCases.map((c, idx) => (
-                    <div
-                      key={c.title}
-                      onClick={() => {
-                        setCasePrompt(c.title);
-                        setCaseDescription(c.body);
-                        setIsAddCaseOpen(true);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      className={`group relative overflow-hidden flex w-72 sm:w-[290px] shrink-0 flex-col justify-between rounded-2xl sm:rounded-[22px] p-3.5 sm:p-4 cursor-pointer ${c.tint}`}
-                    >
-                      {/* Hover Gradient Overlay (Smoothly shifts gradient color on hover) */}
-                      <div
-                        className={`pointer-events-none absolute inset-0 rounded-2xl sm:rounded-[22px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${c.hoverGradient}`}
-                      />
-
-                      {/* Minimal Top-Side Light Background Pattern (3x3 Dot Grid matching OP cancellations card) */}
-                      <svg
-                        className="pointer-events-none absolute top-2.5 right-2.5 size-7 text-black/15 dark:text-white/15"
-                        viewBox="0 0 36 36"
-                        fill="none"
-                        aria-hidden="true"
+                {/* Search bar & Expand button */}
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                  <div className="relative flex-1 sm:w-64 max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={caseSearchQuery}
+                      onChange={(e) => setCaseSearchQuery(e.target.value)}
+                      placeholder="Search cases..."
+                      className="w-full rounded-xl border border-border/70 bg-tile/50 pl-8.5 pr-8 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-brand-blue transition-colors"
+                    />
+                    {caseSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setCaseSearchQuery("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5 rounded-full hover:bg-tile transition"
+                        aria-label="Clear search"
                       >
-                        <circle cx="6" cy="6" r="1.5" fill="currentColor" />
-                        <circle cx="18" cy="6" r="1.5" fill="currentColor" />
-                        <circle cx="30" cy="6" r="1.5" fill="currentColor" />
-                        <circle cx="6" cy="18" r="1.5" fill="currentColor" />
-                        <circle cx="18" cy="18" r="1.5" fill="currentColor" />
-                        <circle cx="30" cy="18" r="1.5" fill="currentColor" />
-                        <circle cx="6" cy="30" r="1.5" fill="currentColor" />
-                        <circle cx="18" cy="30" r="1.5" fill="currentColor" />
-                        <circle cx="30" cy="30" r="1.5" fill="currentColor" />
-                      </svg>
-
-                      {/* Foreground Content */}
-                      <div className="relative z-10">
-                        <span
-                          className={`grid size-7 place-items-center rounded-full text-white shadow-xs ${c.iconTint}`}
-                        >
-                          {c.up ? (
-                            <TrendingUp className="size-3.5 text-white" />
-                          ) : (
-                            <TrendingDown className="size-3.5 text-white" />
-                          )}
-                        </span>
-                        <h4
-                          className={`mt-2 text-[18px] leading-snug text-[#111827] ${c.titleWeight}`}
-                        >
-                          {c.title}
-                        </h4>
-                        <p className={`mt-1 text-sm leading-relaxed line-clamp-2 ${c.bodyColor}`}>
-                          {c.body}
-                        </p>
-                      </div>
-
-                      {/* Prompt to create case with prefilled details */}
-                      <div className="relative z-10 mt-2.5 pt-2 border-t border-black/10 flex items-center justify-between text-[11px] font-medium text-[#111827]/75 group-hover:text-black transition-colors">
-                        <span>Create case</span>
-                        <Plus className="size-3" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              <Panel>
-                <div className="mb-5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-[22px] font-medium text-foreground">Cases</h2>
-                    <button
-                      onClick={() => {
-                        setCasePrompt("");
-                        setCaseDescription("");
-                        setIsAddCaseOpen(true);
-                      }}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-tile cursor-pointer text-foreground transition shadow-2xs active:scale-95"
-                    >
-                      <Plus className="size-4 text-foreground" />
-                      <span>New Case</span>
-                    </button>
+                        <X className="size-3" />
+                      </button>
+                    )}
                   </div>
 
-                  <button aria-label="Expand" className="rounded-full p-1.5 hover:bg-tile text-muted-foreground hover:text-foreground transition cursor-pointer">
+                  <button aria-label="Expand" className="rounded-full p-1.5 hover:bg-tile text-muted-foreground hover:text-foreground transition cursor-pointer shrink-0">
                     <Expand className="size-4" />
-                  </button>
-                </div>
-
-                {lastArchivedNotice && (
-                  <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-foreground shadow-2xs animate-in fade-in">
-                    <div className="flex items-center gap-2">
-                      <Archive className="size-3.5 text-amber-600 dark:text-amber-400" />
-                      <span>Case <strong>"{lastArchivedNotice}"</strong> has been archived.</span>
-                    </div>
-                    <button
-                      onClick={() => restoreCase(lastArchivedNotice)}
-                      className="text-xs font-semibold text-brand-blue hover:underline cursor-pointer ml-3"
-                    >
-                      Undo
-                    </button>
-                  </div>
-                )}
-
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {displayedCases.map((c, i) => {
-                    const isLive = c.isLive ?? (c.title === "Increasing Patient Wait Time" || c.title === "Q3 Revenue Drop & Margin Compression Analysis");
-                    return (
-                      <div
-                        key={`${c.title}-${i}`}
-                        onClick={() => navigate({ to: "/details" })}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            navigate({ to: "/details" });
-                          }
-                        }}
-                        className="flex flex-col rounded-2xl bg-tile p-5 relative group cursor-pointer hover:shadow-md hover:border-border/80 border border-transparent transition-all duration-200"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{c.age || "\u00A0"}</span>
-                            {c.expiryDate && (
-                              <span className="inline-flex items-center gap-1 text-[11px] rounded-md px-1.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium border border-amber-500/20">
-                                Duration: {c.expiryDate}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 relative">
-                            {isLive && (
-                              <span
-                                className="inline-flex items-center gap-1.5 rounded-full bg-[#f0f8ff] px-2.5 py-0.5 text-emerald-800 dark:text-emerald-900 border border-emerald-500/30 text-[11px] font-medium shadow-2xs"
-                                title="Continuous monitoring — Auditing mode is active"
-                                aria-label="Continuous monitoring — Auditing mode is active"
-                              >
-                                <ScanningRadarIcon size={18} />
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-900">Auditing</span>
-                              </span>
-                            )}
-
-                            {/* Three dot action menu containing Archive and Auditing toggle */}
-                            <div className="relative">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenCaseMenu(openCaseMenu === c.title ? null : c.title);
-                                }}
-                                className="p-1 rounded-full hover:bg-surface border border-transparent hover:border-border/60 text-muted-foreground hover:text-foreground transition cursor-pointer"
-                                title="Case actions"
-                                aria-label="Case actions"
-                              >
-                                <MoreVertical className="size-4" />
-                              </button>
-
-                              {openCaseMenu === c.title && (
-                                <div
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-0 top-full mt-1 z-30 w-48 rounded-xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
-                                >
-                                  <button
-                                    onClick={() => {
-                                      toggleLiveMonitoring(c.title);
-                                      setOpenCaseMenu(null);
-                                    }}
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground hover:bg-tile hover:text-emerald-700 dark:hover:text-emerald-300 transition cursor-pointer"
-                                  >
-                                    <ScanningRadarIcon size={15} />
-                                    <span>{isLive ? "Pause Auditing" : "Enable Auditing"}</span>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      archiveCase(c.title);
-                                      setOpenCaseMenu(null);
-                                    }}
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium text-foreground hover:bg-tile hover:text-amber-700 dark:hover:text-amber-300 transition cursor-pointer"
-                                  >
-                                    <Archive className="size-3.5 text-amber-600 dark:text-amber-400" />
-                                    <span>Archive Case</span>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <h4 className="mt-5 text-lg font-medium text-foreground group-hover:text-brand-blue transition-colors">
-                          {c.title}
-                        </h4>
-                        <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/75">
-                          {c.body}
-                        </p>
-
-                        <div className="mt-5 flex items-center justify-between gap-2">
-                          <span
-                            className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-brand-blue hover:bg-tile transition cursor-pointer group-hover:border-brand-blue/30 shadow-2xs"
-                          >
-                            Case details
-                            <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform" />
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {displayedCases.length === 0 && (
-                  <div className="py-12 text-center rounded-2xl bg-surface border border-border/60 p-6 text-sm text-muted-foreground">
-                    No active cases found. You can create a case using the "New Case" button.
-                  </div>
-                )}
-
-                {displayedCases.length > 0 && (
-                  <div className="mt-8 text-center">
-                    <button className="text-lg text-foreground hover:text-brand-blue">
-                      Load more
-                    </button>
-                  </div>
-                )}
-              </Panel>
-            </div>
-          )}
-
-          {/* TAB 2: MINIMAL AUTOMATED RESULTS INSIGHTS */}
-          {mainTab === "insights" && (
-            <div className="w-full space-y-6">
-              {/* Header & Time Period Filters */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-xl sm:text-[22px] font-semibold text-foreground">
-                    Continuous Auditing
-                  </h2>
-                  <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
-                    Continuous comparative findings across previous runs and active cases.
-                  </p>
-                </div>
-
-                {/* Timeframe separation: Today, This Week, This Month */}
-                <div className="flex items-center gap-1 rounded-2xl bg-surface p-1 border border-border">
-                  <button
-                    onClick={() => setTimeFilter("all")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "all"
-                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    All ({smallInsights.length})
-                  </button>
-                  <button
-                    onClick={() => setTimeFilter("today")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "today"
-                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    Today ({smallInsights.filter((c) => c.timeframe === "today").length})
-                  </button>
-                  <button
-                    onClick={() => setTimeFilter("week")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "week"
-                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    This Week ({smallInsights.filter((c) => c.timeframe === "week").length})
-                  </button>
-                  <button
-                    onClick={() => setTimeFilter("month")}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition cursor-pointer ${timeFilter === "month"
-                      ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    This Month ({smallInsights.filter((c) => c.timeframe === "month").length})
                   </button>
                 </div>
               </div>
 
-              {/* Pinterest-like Masonry Columns - Cards without images have reduced height */}
-              <div className="columns-1 sm:columns-2 lg:columns-4 gap-4 sm:gap-5 w-full [column-fill:_balance]">
-                {filteredCards.map((card) => {
+              {lastArchivedNotice && (
+                <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-foreground shadow-2xs animate-in fade-in">
+                  <div className="flex items-center gap-2">
+                    <Archive className="size-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>Case <strong>"{lastArchivedNotice}"</strong> has been archived.</span>
+                  </div>
+                  <button
+                    onClick={() => restoreCase(lastArchivedNotice)}
+                    className="text-xs font-semibold text-brand-blue hover:underline cursor-pointer ml-3"
+                  >
+                    Undo
+                  </button>
+                </div>
+              )}
+
+              <div className="divide-y divide-border/60">
+                {displayedCases.map((c, i) => {
                   return (
-                    <div key={card.id} className="break-inside-avoid mb-4 sm:mb-5">
-                      <Link
-                        to="/details"
-                        className="group rounded-3xl bg-surface border border-border/70 p-4.5 sm:p-5 shadow-xs hover:border-foreground/30 hover:shadow-md transition-all duration-200 block cursor-pointer"
-                      >
-                        <div className="space-y-3">
-                          {/* Optional subtle medical image */}
-                          {card.image && (
-                            <div className="overflow-hidden rounded-2xl bg-tile aspect-[16/9] w-full border border-border/40">
-                              <img
-                                src={card.image}
-                                alt={card.headline}
-                                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            </div>
+                    <div
+                      key={`${c.title}-${i}`}
+                      onClick={() => navigate({ to: "/details" })}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate({ to: "/details" });
+                        }
+                      }}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 sm:py-5 px-1 sm:px-2 group cursor-pointer hover:bg-tile/25 rounded-xl transition-colors duration-200"
+                    >
+                      {/* Left: Metadata chips, Title, Description */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <span className="text-xs text-muted-foreground font-medium">{c.age || "\u00A0"}</span>
+                          {c.agent && (
+                            <span className="inline-flex items-center gap-1 text-[11px] rounded-full px-2.5 py-0.5 bg-brand-blue/10 text-brand-blue font-medium border border-brand-blue/20">
+                              <Sparkles className="size-3 shrink-0" />
+                              <span>{c.agent}</span>
+                            </span>
                           )}
-
-                          {/* Automated Comparative Statement */}
-                          <h3 className="text-lg sm:text-xl font-normal text-foreground leading-snug group-hover:text-brand-blue transition-colors">
-                            {card.headline}
-                          </h3>
-
-                          {/* Previous vs Current Comparison Strip */}
-                          <div className="rounded-2xl bg-tile/60 p-3 border border-border/40 space-y-1.5">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">Previous Run</span>
-                              <span className="font-medium text-foreground">{card.previous}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">Current status</span>
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                {card.current}
-                              </span>
-                            </div>
-                          </div>
+                          {c.expiryDate && (
+                            <span className="inline-flex items-center gap-1 text-[11px] rounded-full px-2.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium border border-amber-500/20">
+                              <span>Duration: {c.expiryDate}</span>
+                            </span>
+                          )}
                         </div>
 
-                        {/* Footer: Time Badge, Delta & Direct Click to Details */}
-                        <div className="mt-3.5 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="shrink-0 rounded-full bg-tile px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground border border-border/50">
-                              {card.timeLabel}
-                            </span>
-                            <span className="inline-block rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-0.5 text-[11px] font-medium">
-                              {card.delta}
-                            </span>
-                          </div>
-                          <span className="inline-flex items-center gap-1 font-medium text-brand-blue group-hover:underline shrink-0 ml-2">
-                            View details
-                            <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
-                          </span>
-                        </div>
-                      </Link>
+                        <h4
+                          className="text-xl sm:text-2xl font-light tracking-tight text-foreground group-hover:text-brand-blue transition-colors leading-snug"
+                          style={{ fontWeight: 300 }}
+                        >
+                          {c.title}
+                        </h4>
+
+                        <p className="mt-1.5 text-xs sm:text-sm text-foreground/75 leading-relaxed line-clamp-2">
+                          {c.body}
+                        </p>
+                      </div>
+
+                      {/* Right: Case Details Button */}
+                      <div className="flex items-center shrink-0 self-start sm:self-center">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-medium text-brand-blue group-hover:bg-brand-blue group-hover:text-white group-hover:border-transparent transition-all shadow-2xs whitespace-nowrap">
+                          <span>Case details</span>
+                          <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
               </div>
 
-              {filteredCards.length === 0 && (
-                <div className="py-12 text-center rounded-3xl bg-surface border border-border p-6 text-sm text-muted-foreground">
-                  No automated results match the selected time range ({timeFilter}).
+              {displayedCases.length === 0 && (
+                <div className="py-12 text-center rounded-2xl bg-surface border border-border/60 p-6 text-sm text-muted-foreground">
+                  {caseSearchQuery ? (
+                    <div>
+                      <p className="font-medium text-foreground">No cases matching "{caseSearchQuery}"</p>
+                      <p className="text-xs text-muted-foreground mt-1">Try adjusting your search query or clear the filter.</p>
+                      <button
+                        type="button"
+                        onClick={() => setCaseSearchQuery("")}
+                        className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-border bg-tile px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface transition cursor-pointer"
+                      >
+                        Clear search
+                      </button>
+                    </div>
+                  ) : (
+                    "No active cases found. You can create a case using the \"New Case\" button."
+                  )}
                 </div>
               )}
-            </div>
-          )}
+
+              {displayedCases.length > 0 && !caseSearchQuery && (
+                <div className="mt-8 text-center">
+                  <button className="text-lg text-foreground hover:text-brand-blue">
+                    Load more
+                  </button>
+                </div>
+              )}
+            </Panel>
+
+            {/* SUGGESTED CASES PANEL (Bottom after Cases) */}
+            <Panel className="p-5 sm:p-6 space-y-5">
+              {/* Header & Category Filters */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/50 pb-4">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="size-5 text-brand-blue" />
+                    <h2 className="text-xl sm:text-[22px] font-semibold text-foreground">
+                      Suggested Cases
+                    </h2>
+                    <span className="rounded-full bg-tile border border-border/60 px-2.5 py-0.5 text-xs font-semibold text-foreground">
+                      {filteredSuggestedCases.length}
+                    </span>
+                    {selectedSuggestedCategory !== "All" && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 border border-brand-blue/25 px-2.5 py-0.5 text-xs font-medium text-brand-blue animate-in fade-in">
+                        <span>{selectedSuggestedCategory}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSuggestedCategory("All")}
+                          className="hover:opacity-75 cursor-pointer p-0.5 rounded-full hover:bg-brand-blue/15 transition"
+                          title="Clear category filter"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* Category Filter Dropdown with Filter Icon */}
+                <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryFilterOpen((prev) => !prev)}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition cursor-pointer shadow-2xs ${selectedSuggestedCategory !== "All"
+                        ? "border-brand-blue/40 bg-brand-blue/5 text-brand-blue ring-1 ring-brand-blue/20"
+                        : "border-border/80 bg-surface text-foreground hover:bg-tile"
+                      }`}
+                    title="Filter suggested cases by category type"
+                    aria-label="Filter by category"
+                  >
+                    <Filter className="size-3.5 text-brand-blue" />
+                    <span>
+                      {selectedSuggestedCategory === "All" ? "Filter by Category" : selectedSuggestedCategory}
+                    </span>
+                    <ChevronDown
+                      className={`size-3.5 text-muted-foreground transition-transform duration-200 ${isCategoryFilterOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isCategoryFilterOpen && (
+                    <div className="absolute right-0 top-full mt-1.5 z-30 w-56 rounded-2xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+                      <div className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-1">
+                        Filter by Category
+                      </div>
+                      <div className="space-y-0.5">
+                        {SUGGESTED_CATEGORIES.map((cat) => {
+                          const count =
+                            cat.id === "All"
+                              ? suggestedCasesList.length
+                              : suggestedCasesList.filter((c) => c.category === cat.id).length;
+                          const isSelected = selectedSuggestedCategory === cat.id;
+
+                          const CatIcon =
+                            cat.id === "Pharmacy"
+                              ? Pill
+                              : cat.id === "Billing"
+                                ? Receipt
+                                : cat.id === "Operations"
+                                  ? Activity
+                                  : cat.id === "Clinical"
+                                    ? Stethoscope
+                                    : Sparkles;
+
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSuggestedCategory(cat.id);
+                                setIsCategoryFilterOpen(false);
+                              }}
+                              className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition cursor-pointer ${isSelected
+                                  ? "bg-tile text-brand-blue font-semibold"
+                                  : "text-foreground hover:bg-tile/60"
+                                }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <CatIcon
+                                  className={`size-3.5 ${isSelected ? "text-brand-blue" : "text-muted-foreground"
+                                    }`}
+                                />
+                                <span>{cat.label}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="rounded-full px-1.5 py-0.2 text-[10px] bg-border/60 text-muted-foreground">
+                                  {count}
+                                </span>
+                                {isSelected && <Check className="size-3.5 text-brand-blue" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Toast Notification if adopted */}
+              {suggestedNotice && (
+                <div className="flex items-center justify-between rounded-xl bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 p-3 text-xs text-blue-900 dark:text-blue-200 shadow-2xs animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="size-4 text-brand-blue shrink-0" />
+                    <span className="font-medium">{suggestedNotice}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSuggestedNotice(null)}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Minimal List View of Suggested Cases */}
+              <div className="overflow-hidden rounded-2xl border border-border/70 bg-surface divide-y divide-border/60">
+                {filteredSuggestedCases.map((sug) => {
+                  const CategoryIcon =
+                    sug.category === "Pharmacy"
+                      ? Pill
+                      : sug.category === "Billing"
+                        ? Receipt
+                        : sug.category === "Operations"
+                          ? Activity
+                          : Stethoscope;
+
+                  const catBadgeColor =
+                    sug.category === "Pharmacy"
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+                      : sug.category === "Billing"
+                        ? "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20"
+                        : sug.category === "Operations"
+                          ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
+                          : "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20";
+
+                  return (
+                    <div
+                      key={sug.id}
+                      className="flex items-center justify-between gap-3 p-3.5 sm:px-4 sm:py-3 hover:bg-tile/50 transition-colors group cursor-default"
+                    >
+                      {/* Left: Category Icon, Title & Department/Description */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`grid size-8 shrink-0 place-items-center rounded-xl border ${catBadgeColor}`}>
+                          <CategoryIcon className="size-4" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <span className="font-medium text-sm text-foreground truncate block group-hover:text-brand-blue transition-colors">
+                            {sug.title}
+                          </span>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            <span className="font-medium text-foreground/80">{sug.department}</span> • {sug.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Add button visible only while hovering */}
+                      <div className="flex items-center shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenSuggestedModal(sug)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-surface hover:opacity-90 transition cursor-pointer shadow-2xs whitespace-nowrap active:scale-95"
+                          title="Configure case with AI agent"
+                        >
+                          <Plus className="size-3.5" />
+                          <span>Add</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {filteredSuggestedCases.length === 0 && (
+                  <div className="p-8 text-center text-xs sm:text-sm text-muted-foreground">
+                    <p>No suggested cases found for category "{selectedSuggestedCategory}".</p>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSuggestedCategory("All")}
+                      className="mt-2 text-xs font-medium text-brand-blue hover:underline cursor-pointer"
+                    >
+                      Show all categories
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Panel>
+          </div>
 
 
         </main>
       </div>
 
-      {/* Modern Add Case Modal */}
+      {/* Modern Add Case Modal with AI Agents */}
       {isAddCaseOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setIsAddCaseOpen(false)}
         >
           <div
-            className="w-full max-w-lg rounded-3xl bg-surface p-6 sm:p-7 shadow-2xl border border-border/80 animate-in zoom-in-95 duration-200"
+            className="w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-3xl bg-surface p-6 sm:p-7 shadow-2xl border border-border/80 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header without icon and description paragraph */}
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-border/40 pb-4">
-              <h3 className="text-lg font-semibold text-foreground">Create New Case</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Configure AI Discovery Case</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Prefilled case details and autonomous AI agent execution
+                </p>
+              </div>
               <button
                 onClick={() => setIsAddCaseOpen(false)}
                 className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-tile transition cursor-pointer"
@@ -1030,12 +1124,70 @@ function Index() {
                   Description <span className="text-xs font-normal text-muted-foreground">(optional)</span>
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={caseDescription}
                   onChange={(e) => setCaseDescription(e.target.value)}
                   placeholder="Add context on departments, expected metrics, or historical baseline periods..."
-                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
+                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
                 />
+              </div>
+
+              {/* Assigned AI Agent Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-foreground">
+                    Assigned AI Agent <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-muted-foreground">
+                    Pre-selected for this domain
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {AVAILABLE_AGENTS.map((agent) => {
+                    const AgentIcon = agent.icon;
+                    const isSelected = selectedAgentId === agent.id;
+                    return (
+                      <div
+                        key={agent.id}
+                        onClick={() => setSelectedAgentId(agent.id)}
+                        className={`flex items-start gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${isSelected
+                            ? "border-brand-blue bg-brand-blue/5 dark:bg-brand-blue/10 ring-1 ring-brand-blue/30 shadow-xs"
+                            : "border-border/70 bg-tile/40 hover:bg-tile hover:border-border"
+                          }`}
+                      >
+                        <div className={`grid size-9 shrink-0 place-items-center rounded-xl border ${agent.color}`}>
+                          <AgentIcon className="size-4" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-foreground">
+                              {agent.name}
+                            </span>
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-border/60 text-muted-foreground">
+                              {agent.category}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                            {agent.role}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 pt-0.5">
+                          <div
+                            className={`size-4 rounded-full border flex items-center justify-center transition-colors ${isSelected
+                                ? "border-brand-blue bg-brand-blue text-white"
+                                : "border-border/80 bg-surface"
+                              }`}
+                          >
+                            {isSelected && <div className="size-1.5 rounded-full bg-white" />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
@@ -1049,7 +1201,7 @@ function Index() {
                   <select
                     value={caseExpiryDate}
                     onChange={(e) => setCaseExpiryDate(e.target.value)}
-                    className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer appearance-none pr-10"
+                    className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer appearance-none pr-10"
                   >
                     <option value="Until I stop">Until I stop</option>
                     <option value="10 days">10 days</option>
@@ -1073,10 +1225,10 @@ function Index() {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer active:scale-95"
                 >
                   <Sparkles className="size-4" />
-                  Start AI Discovery
+                  <span>Deploy Agent & Create Case</span>
                 </button>
               </div>
             </form>
@@ -1084,39 +1236,11 @@ function Index() {
         </div>
       )}
 
-      {/* Main Navigation Drawer with Files & Add File capability */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-      />
     </div>
   );
 }
 
-function Chip({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ElementType;
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition cursor-pointer ${active
-        ? "border-transparent bg-chip-active text-chip-active-foreground font-medium shadow-xs"
-        : "border-border bg-surface text-foreground hover:bg-tile"
-        }`}
-    >
-      <Icon className="size-4" />
-      {label}
-    </button>
-  );
-}
+
 
 function Panel({ children, className = "p-5 sm:p-6" }: { children: React.ReactNode; className?: string }) {
   return (

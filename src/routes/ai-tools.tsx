@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Menu,
   Home,
   Briefcase,
   Compass,
@@ -13,7 +12,6 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { AIAssistantDefaultView } from "../components/AIAssistantDefaultView";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/ai-tools")({
   head: () => ({
@@ -53,7 +51,6 @@ interface ChatMessage {
 function AIAssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState<string>("");
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
 
   const handleSendMessage = (e?: React.FormEvent, customPrompt?: string) => {
     if (e) e.preventDefault();
@@ -115,14 +112,6 @@ Ready to commit and deploy this schema definition to your active data center bra
       {/* Header matching CXO app */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-            aria-label="Main menu"
-          >
-            <Menu className="size-6 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
@@ -244,11 +233,6 @@ Ready to commit and deploy this schema definition to your active data center bra
         </main>
       </div>
 
-      {/* Main Navigation Drawer with Files & Add File capability */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-      />
     </div>
   );
 }

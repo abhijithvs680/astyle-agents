@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Menu,
   ArrowRight,
   BarChart3,
   Check,
@@ -23,7 +22,6 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -263,7 +261,6 @@ function WelcomePage() {
   // Supporting documents
   const [supportingFiles, setSupportingFiles] = useState<UploadedFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
 
   const connectedCount = Object.values(connectedServices).filter(Boolean).length;
 
@@ -432,14 +429,6 @@ function WelcomePage() {
       {/* Header */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-            aria-label="Main menu"
-          >
-            <Menu className="size-6 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
@@ -965,21 +954,6 @@ function WelcomePage() {
         )}
       </main>
 
-      {/* Main Navigation Drawer with Files & Add File capability */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-        onFileAdded={(file) => {
-          const sizeStr =
-            file.size > 1024 * 1024
-              ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-              : `${Math.round(file.size / 1024)} KB`;
-          setSupportingFiles((prev) => [
-            ...prev,
-            { name: file.name, size: sizeStr },
-          ]);
-        }}
-      />
     </div>
   );
 }

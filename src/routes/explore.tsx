@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Menu,
   Home,
   Briefcase,
   Server,
@@ -16,7 +15,6 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/explore")({
   head: () => ({
@@ -142,7 +140,6 @@ function ExplorePage() {
   const [caseDescription, setCaseDescription] = useState("");
   const [caseExpiryDate, setCaseExpiryDate] = useState("Until I stop");
   const [createdNotification, setCreatedNotification] = useState<string | null>(null);
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
 
   const filteredInsights = exploreCases.filter((item) => {
     return (
@@ -173,14 +170,6 @@ function ExplorePage() {
       {/* Header (Fixed on scroll) */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
-            aria-label="Main menu"
-          >
-            <Menu className="size-6 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
@@ -452,11 +441,6 @@ function ExplorePage() {
         </div>
       )}
 
-      {/* Main Navigation Drawer with Files & Add File capability */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-      />
     </div>
   );
 }

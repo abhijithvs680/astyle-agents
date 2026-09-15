@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  Menu,
   FileText,
   RotateCw,
   Send,
@@ -36,7 +35,6 @@ import {
 } from "lucide-react";
 import { AIAssistantDefaultView } from "../components/AIAssistantDefaultView";
 import { ScanningRadarIcon } from "../components/ScanningRadarIcon";
-import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/details")({
   head: () => ({
@@ -594,7 +592,6 @@ function CaseDetailsPage() {
   const [showStatusDropdown, setShowStatusDropdown] = useState<boolean>(false);
   const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
   const [showIndexDropdown, setShowIndexDropdown] = useState<boolean>(false);
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState<boolean>(false);
 
   // Slide presentation definitions, scrollspy, and scroll progress state
   const slideDefs = [
@@ -1308,14 +1305,6 @@ function CaseDetailsPage() {
       <header className="sticky top-0 z-40 h-14 shrink-0 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         {/* Left Side: Menu button, Back button, and project title */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <button
-            type="button"
-            onClick={() => setIsMainMenuOpen(true)}
-            className="rounded-full p-1.5 hover:bg-white/10 transition cursor-pointer shrink-0"
-            aria-label="Main menu"
-          >
-            <Menu className="size-5 text-sky-100" />
-          </button>
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 hover:bg-white/10 text-sky-100 hover:text-white transition cursor-pointer group shrink-0"
@@ -1986,11 +1975,6 @@ function CaseDetailsPage() {
         </div>
       )}
 
-      {/* Main Navigation Drawer with Files & Add File capability */}
-      <MainMenuDrawer
-        isOpen={isMainMenuOpen}
-        onClose={() => setIsMainMenuOpen(false)}
-      />
     </div>
   );
 }
