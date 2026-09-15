@@ -7,6 +7,7 @@ import {
   Server,
   Compass,
   FolderKanban,
+  FileText,
   Folder,
   FolderPlus,
   Plus,
@@ -16,6 +17,7 @@ import {
   Check,
   Clock,
 } from "lucide-react";
+import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/folders")({
   head: () => ({
@@ -35,6 +37,7 @@ const railIcons = [
   { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders", active: true },
+  { icon: FileText, label: "Files", to: "/files" },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
@@ -238,6 +241,7 @@ const pastelThemes = [
 function FoldersPage() {
   const navigate = useNavigate();
   const [folders, setFolders] = useState<CaseFolder[]>(initialFolders);
+  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
   // Folder selected to display cases inside a modern popup
   const [selectedFolder, setSelectedFolder] = useState<CaseFolder | null>(null);
 
@@ -278,7 +282,12 @@ function FoldersPage() {
       {/* Header (Fixed on scroll) */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+          <button
+            type="button"
+            onClick={() => setIsMainMenuOpen(true)}
+            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
+            aria-label="Main menu"
+          >
             <Menu className="size-6 text-sky-100" />
           </button>
           <Link
@@ -658,6 +667,12 @@ function FoldersPage() {
           </div>
         </div>
       )}
+
+      {/* Main Navigation Drawer with Files & Add File capability */}
+      <MainMenuDrawer
+        isOpen={isMainMenuOpen}
+        onClose={() => setIsMainMenuOpen(false)}
+      />
     </div>
   );
 }

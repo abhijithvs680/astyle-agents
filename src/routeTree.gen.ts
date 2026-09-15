@@ -16,6 +16,7 @@ import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as DataCenterRouteImport } from './routes/data-center'
 import { Route as DetailsRouteImport } from './routes/details'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as FilesRouteImport } from './routes/files'
 import { Route as FoldersRouteImport } from './routes/folders'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 
@@ -54,6 +55,11 @@ const ExploreRoute = ExploreRouteImport.update({
   path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FilesRoute = FilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FoldersRoute = FoldersRouteImport.update({
   id: '/folders',
   path: '/folders',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
+  '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
   '/welcome': typeof WelcomeRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
+  '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
   '/welcome': typeof WelcomeRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
+  '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
   '/welcome': typeof WelcomeRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/data-center'
     | '/details'
     | '/explore'
+    | '/files'
     | '/folders'
     | '/welcome'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/data-center'
     | '/details'
     | '/explore'
+    | '/files'
     | '/folders'
     | '/welcome'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/data-center'
     | '/details'
     | '/explore'
+    | '/files'
     | '/folders'
     | '/welcome'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   DataCenterRoute: typeof DataCenterRoute
   DetailsRoute: typeof DetailsRoute
   ExploreRoute: typeof ExploreRoute
+  FilesRoute: typeof FilesRoute
   FoldersRoute: typeof FoldersRoute
   WelcomeRoute: typeof WelcomeRoute
 }
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/files': {
+      id: '/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof FilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/folders': {
       id: '/folders'
       path: '/folders'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   DataCenterRoute: DataCenterRoute,
   DetailsRoute: DetailsRoute,
   ExploreRoute: ExploreRoute,
+  FilesRoute: FilesRoute,
   FoldersRoute: FoldersRoute,
   WelcomeRoute: WelcomeRoute,
 }

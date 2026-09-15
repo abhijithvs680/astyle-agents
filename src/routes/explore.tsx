@@ -7,6 +7,7 @@ import {
   Server,
   Compass,
   FolderKanban,
+  FileText,
   TrendingDown,
   TrendingUp,
   Plus,
@@ -15,6 +16,7 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
+import { MainMenuDrawer } from "../components/MainMenuDrawer";
 
 export const Route = createFileRoute("/explore")({
   head: () => ({
@@ -34,6 +36,7 @@ const railIcons = [
   { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore", active: true },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: FileText, label: "Files", to: "/files" },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
@@ -139,6 +142,7 @@ function ExplorePage() {
   const [caseDescription, setCaseDescription] = useState("");
   const [caseExpiryDate, setCaseExpiryDate] = useState("Until I stop");
   const [createdNotification, setCreatedNotification] = useState<string | null>(null);
+  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
 
   const filteredInsights = exploreCases.filter((item) => {
     return (
@@ -169,7 +173,12 @@ function ExplorePage() {
       {/* Header (Fixed on scroll) */}
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button className="rounded-full p-2 hover:bg-white/10 transition" aria-label="Main menu">
+          <button
+            type="button"
+            onClick={() => setIsMainMenuOpen(true)}
+            className="rounded-full p-2 hover:bg-white/10 transition cursor-pointer"
+            aria-label="Main menu"
+          >
             <Menu className="size-6 text-sky-100" />
           </button>
           <Link
@@ -442,6 +451,12 @@ function ExplorePage() {
           </div>
         </div>
       )}
+
+      {/* Main Navigation Drawer with Files & Add File capability */}
+      <MainMenuDrawer
+        isOpen={isMainMenuOpen}
+        onClose={() => setIsMainMenuOpen(false)}
+      />
     </div>
   );
 }

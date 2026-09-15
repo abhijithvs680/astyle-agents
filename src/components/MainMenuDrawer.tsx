@@ -55,9 +55,51 @@ interface MainMenuDrawerProps {
 }
 
 export function MainMenuDrawer({ isOpen, onClose, onFileAdded }: MainMenuDrawerProps) {
-  const [files, setFiles] = useState<WorkspaceFile[]>(DEFAULT_WORKSPACE_FILES);
+  const [files, setFiles] = useState<WorkspaceFile[]>(() => {
+    try {
+      const saved = typeof window !== "undefined" ? localStorage.getItem("cxo_workspace_files") : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_WORKSPACE_FILES;
+  });
   const [justUploadedName, setJustUploadedName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cxo_workspace_files", JSON.stringify(files));
+        window.dispatchEvent(new Event("cxo_files_changed"));
+      }
+    } catch {
+      // ignore
+    }
+  }, [files]);
+
+  React.useEffect(() => {
+    const handleSync = () => {
+      try {
+        const saved = typeof window !== "undefined" ? localStorage.getItem("cxo_workspace_files") : null;
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) setFiles(parsed);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener("cxo_files_changed", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("cxo_files_changed", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -190,7 +232,7 @@ export function MainMenuDrawer({ isOpen, onClose, onFileAdded }: MainMenuDrawerP
 
             {/* FILES OPTION IN THE MENU */}
             <Link
-              to="/folders"
+              to="/files"
               onClick={onClose}
               className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-foreground bg-tile/80 hover:bg-tile transition group border border-border/50"
             >
@@ -294,11 +336,11 @@ export function MainMenuDrawer({ isOpen, onClose, onFileAdded }: MainMenuDrawerP
             </div>
 
             <Link
-              to="/folders"
+              to="/files"
               onClick={onClose}
               className="flex items-center justify-between pt-1 text-[11px] font-medium text-brand-blue hover:underline"
             >
-              <span>View all files in Folders</span>
+              <span>View all files</span>
               <ArrowRight className="size-3" />
             </Link>
           </div>

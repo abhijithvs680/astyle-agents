@@ -58,7 +58,7 @@ const railIcons = [
   { icon: Briefcase, label: "Cases", to: "/cases" },
   { icon: Compass, label: "Explore", to: "/explore" },
   { icon: FolderKanban, label: "Folders", to: "/folders" },
-  { icon: FileText, label: "Files", to: "/folders" },
+  { icon: FileText, label: "Files", to: "/files" },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
 
