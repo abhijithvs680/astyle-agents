@@ -2,9 +2,7 @@ import { useState, useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Home,
-  Briefcase,
-  Compass,
-  FolderKanban,
+  Bot,
   FileText,
   Server,
   Sparkles,
@@ -17,11 +15,11 @@ import {
 export const Route = createFileRoute("/cases")({
   head: () => ({
     meta: [
-      { title: "All Cases — Clinical Analytics & Insights" },
+      { title: "All Agents — Clinical Analytics & Insights" },
       {
         name: "description",
         content:
-          "Compact tabular case registry showing active and archived clinical cases with detected insights.",
+          "Compact tabular agent registry showing active and archived clinical agents with detected insights.",
       },
     ],
   }),
@@ -30,9 +28,7 @@ export const Route = createFileRoute("/cases")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
-  { icon: Briefcase, label: "Cases", to: "/cases", active: true },
-  { icon: Compass, label: "Explore", to: "/explore" },
-  { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: Bot, label: "Agents", to: "/cases", active: true },
   { icon: FileText, label: "Files", to: "/files" },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
@@ -257,8 +253,8 @@ function CasesPage() {
           const status = newArchived ? "Archived" : "Active";
           setLastActionNotice(
             newArchived
-              ? `Case "${c.title}" moved to Archive.`
-              : `Case "${c.title}" restored to Active cases.`
+              ? `Agent "${c.title}" moved to Archive.`
+              : `Agent "${c.title}" restored to Active agents.`
           );
           setTimeout(() => setLastActionNotice(null), 4000);
           return { ...c, archived: newArchived, status };
@@ -337,9 +333,9 @@ function CasesPage() {
         <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-8 sm:pt-8 w-full space-y-6">
           {/* Page Title */}
           <div className="flex items-center gap-2">
-            <Briefcase className="size-6 text-brand-blue" />
+            <Bot className="size-6 text-brand-blue" />
             <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-foreground">
-              All Cases
+              All Agents
             </h1>
           </div>
 
@@ -366,7 +362,7 @@ function CasesPage() {
                       : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
-                  Active Cases ({activeCount})
+                  Active Agents ({activeCount})
                 </button>
                 <button
                   onClick={() => setActiveTab("archived")}
@@ -397,7 +393,7 @@ function CasesPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search cases..."
+                    placeholder="Search agents..."
                     className="w-full rounded-xl border border-border/70 bg-tile/50 pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-brand-blue"
                   />
                 </div>
@@ -418,10 +414,10 @@ function CasesPage() {
                         }
                         onChange={handleSelectAll}
                         className="rounded border-border text-brand-blue focus:ring-brand-blue cursor-pointer size-3.5"
-                        aria-label="Select all cases"
+                        aria-label="Select all agents"
                       />
                     </th>
-                    <th className="px-6 py-3.5 w-full min-w-[340px]">Case Name</th>
+                    <th className="px-6 py-3.5 w-full min-w-[340px]">Agent Name</th>
                     <th className="px-6 py-3.5 whitespace-nowrap">Status</th>
                     <th className="px-6 py-3.5 whitespace-nowrap">Updated</th>
                     <th className="px-6 py-3.5 text-center whitespace-nowrap">Insights</th>
@@ -508,8 +504,8 @@ function CasesPage() {
                             <button
                               onClick={() => handleToggleArchive(row.id)}
                               className="p-1.5 rounded-lg border border-border/60 hover:bg-tile text-muted-foreground hover:text-foreground transition cursor-pointer"
-                              title={row.archived ? "Restore to Active" : "Archive Case"}
-                              aria-label={row.archived ? "Restore Case" : "Archive Case"}
+                              title={row.archived ? "Restore to Active" : "Archive Agent"}
+                              aria-label={row.archived ? "Restore Agent" : "Archive Agent"}
                             >
                               {row.archived ? (
                                 <RotateCcw className="size-4 text-emerald-600" />
@@ -530,8 +526,8 @@ function CasesPage() {
             {filteredCases.length === 0 && (
               <div className="py-12 text-center text-xs sm:text-sm text-muted-foreground">
                 {activeTab === "archived"
-                  ? "No archived cases found."
-                  : "No cases match the selected filter or search query."}
+                  ? "No archived agents found."
+                  : "No agents match the selected filter or search query."}
               </div>
             )}
 
@@ -539,7 +535,7 @@ function CasesPage() {
             <div className="px-4 py-3 bg-slate-50/50 dark:bg-zinc-800/30 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
               <span>
                 Showing <strong>{filteredCases.length}</strong> of <strong>{cases.length}</strong>{" "}
-                cases
+                agents
               </span>
 
               <div className="flex items-center gap-2">

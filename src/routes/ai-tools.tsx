@@ -2,9 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Home,
-  Briefcase,
-  Compass,
-  FolderKanban,
+  Bot,
   FileText,
   Server,
   Sparkles,
@@ -34,9 +32,7 @@ export const Route = createFileRoute("/ai-tools")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
-  { icon: Briefcase, label: "Cases", to: "/cases" },
-  { icon: Compass, label: "Explore", to: "/explore" },
-  { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: Bot, label: "Agents", to: "/cases" },
   { icon: FileText, label: "Files", to: "/files" },
   { icon: Server, label: "Data Center", to: "/data-center" },
   { icon: Sparkles, label: "AI Assistant", to: "/ai-tools", active: true },

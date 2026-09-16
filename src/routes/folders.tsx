@@ -2,10 +2,8 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Home,
-  Briefcase,
+  Bot,
   Server,
-  Compass,
-  FolderKanban,
   FileText,
   Folder,
   FolderPlus,
@@ -33,9 +31,7 @@ export const Route = createFileRoute("/folders")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
-  { icon: Briefcase, label: "Cases", to: "/cases" },
-  { icon: Compass, label: "Explore", to: "/explore" },
-  { icon: FolderKanban, label: "Folders", to: "/folders", active: true },
+  { icon: Bot, label: "Agents", to: "/cases" },
   { icon: FileText, label: "Files", to: "/files" },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];

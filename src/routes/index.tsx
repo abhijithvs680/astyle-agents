@@ -2,10 +2,8 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Home,
-  Briefcase,
+  Bot,
   Database,
-  Compass,
-  FolderKanban,
   TrendingDown,
   TrendingUp,
   ArrowRight,
@@ -57,9 +55,7 @@ export const Route = createFileRoute("/")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/", active: true },
-  { icon: Briefcase, label: "Cases", to: "/cases" },
-  { icon: Compass, label: "Explore", to: "/explore" },
-  { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: Bot, label: "Agents", to: "/cases" },
   { icon: FileText, label: "Files", to: "/files" },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
@@ -724,7 +720,7 @@ function Index() {
             <Panel>
               <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-[22px] font-medium text-foreground">Cases</h2>
+                  <h2 className="text-xl font-medium text-foreground">Agents</h2>
                   <button
                     onClick={() => {
                       setCasePrompt("");
@@ -735,7 +731,7 @@ function Index() {
                     className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-tile cursor-pointer text-foreground transition shadow-2xs active:scale-95 shrink-0"
                   >
                     <Plus className="size-4 text-foreground" />
-                    <span>New Case</span>
+                    <span>New Agent</span>
                   </button>
                 </div>
 
@@ -747,7 +743,7 @@ function Index() {
                       type="text"
                       value={caseSearchQuery}
                       onChange={(e) => setCaseSearchQuery(e.target.value)}
-                      placeholder="Search cases..."
+                      placeholder="Search agents..."
                       className="w-full rounded-xl border border-border/70 bg-tile/50 pl-8.5 pr-8 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-brand-blue transition-colors"
                     />
                     {caseSearchQuery && (
@@ -817,7 +813,7 @@ function Index() {
                         </div>
 
                         <h4
-                          className="text-xl sm:text-2xl font-light tracking-tight text-foreground group-hover:text-brand-blue transition-colors leading-snug"
+                          className="text-xl font-light tracking-tight text-foreground group-hover:text-brand-blue transition-colors leading-snug"
                           style={{ fontWeight: 300 }}
                         >
                           {c.title}
@@ -828,10 +824,10 @@ function Index() {
                         </p>
                       </div>
 
-                      {/* Right: Case Details Button */}
+                      {/* Right: Agent Details Button */}
                       <div className="flex items-center shrink-0 self-start sm:self-center">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-medium text-brand-blue group-hover:bg-brand-blue group-hover:text-white group-hover:border-transparent transition-all shadow-2xs whitespace-nowrap">
-                          <span>Case details</span>
+                          <span>Agent details</span>
                           <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
                         </span>
                       </div>
@@ -844,7 +840,7 @@ function Index() {
                 <div className="py-12 text-center rounded-2xl bg-surface border border-border/60 p-6 text-sm text-muted-foreground">
                   {caseSearchQuery ? (
                     <div>
-                      <p className="font-medium text-foreground">No cases matching "{caseSearchQuery}"</p>
+                      <p className="font-medium text-foreground">No agents matching "{caseSearchQuery}"</p>
                       <p className="text-xs text-muted-foreground mt-1">Try adjusting your search query or clear the filter.</p>
                       <button
                         type="button"
@@ -855,7 +851,7 @@ function Index() {
                       </button>
                     </div>
                   ) : (
-                    "No active cases found. You can create a case using the \"New Case\" button."
+                    "No active agents found. You can create an agent using the \"New Agent\" button."
                   )}
                 </div>
               )}
@@ -1089,9 +1085,9 @@ function Index() {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-border/40 pb-4">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Configure AI Discovery Case</h3>
+                <h3 className="text-lg font-semibold text-foreground">Configure AI Discovery Agent</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Prefilled case details and autonomous AI agent execution
+                  Prefilled details and autonomous AI agent execution
                 </p>
               </div>
               <button
@@ -1228,7 +1224,7 @@ function Index() {
                   className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-surface shadow-xs hover:opacity-90 transition cursor-pointer active:scale-95"
                 >
                   <Sparkles className="size-4" />
-                  <span>Deploy Agent & Create Case</span>
+                  <span>Deploy Agent</span>
                 </button>
               </div>
             </form>

@@ -2,9 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Home,
-  Briefcase,
-  Compass,
-  FolderKanban,
+  Bot,
   FileText,
   Server,
   Sparkles,
@@ -109,9 +107,7 @@ const INITIAL_WORKSPACE_FILES: WorkspaceFile[] = [
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
-  { icon: Briefcase, label: "Cases", to: "/cases" },
-  { icon: Compass, label: "Explore", to: "/explore" },
-  { icon: FolderKanban, label: "Folders", to: "/folders" },
+  { icon: Bot, label: "Agents", to: "/cases" },
   { icon: FileText, label: "Files", to: "/files", active: true },
   { icon: Server, label: "Data Center", to: "/data-center" },
 ];
