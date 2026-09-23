@@ -28,7 +28,7 @@ export const Route = createFileRoute("/explore")({
   component: ExplorePage,
 });
 
-const railIcons = [
+const railIcons: { icon: typeof Home; label: string; to: string; active?: boolean }[] = [
   { icon: Home, label: "Home", to: "/" },
   { icon: Bot, label: "Agents", to: "/cases" },
   { icon: FileText, label: "Files", to: "/files" },

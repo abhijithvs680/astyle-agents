@@ -29,18 +29,20 @@ import {
   Search,
   Filter,
   Check,
+  Loader2,
 } from "lucide-react";
+import { CaseDetailsView } from "../components/CaseDetailsView";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CXO — Case Analytics & Insights Dashboard" },
+      { title: "Inbox for CXO — Case Analytics & Insights Dashboard" },
       {
         name: "description",
         content:
-          "CXO dashboard showing newly detected cases, active case analytics, and operational anomalies across departments.",
+          "Inbox for CXO showing newly detected cases, active case analytics, and operational anomalies across departments.",
       },
-      { property: "og:title", content: "CXO — Case Analytics Dashboard" },
+      { property: "og:title", content: "Inbox for CXO — Case Analytics Dashboard" },
       {
         property: "og:description",
         content:
@@ -567,10 +569,23 @@ function Index() {
   };
 
   const [caseSearchQuery, setCaseSearchQuery] = useState("");
+  const [selectedSuggestedCategory, setSelectedSuggestedCategory] = useState<string>("All");
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+  const [suggestedNotice, setSuggestedNotice] = useState<string | null>(null);
+  const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
 
   const displayedCases = useMemo(() => {
     return casesList
       .filter((c) => !archivedCaseTitles.includes(c.title))
+      .filter((c) => {
+        if (selectedSuggestedCategory === "All") return true;
+        const cat = selectedSuggestedCategory.toLowerCase();
+        return (
+          (c.agent && c.agent.toLowerCase().includes(cat)) ||
+          c.title.toLowerCase().includes(cat) ||
+          c.body.toLowerCase().includes(cat)
+        );
+      })
       .filter((c) => {
         if (!caseSearchQuery.trim()) return true;
         const q = caseSearchQuery.toLowerCase().trim();
@@ -580,9 +595,12 @@ function Index() {
           (c.agent && c.agent.toLowerCase().includes(q))
         );
       });
-  }, [casesList, archivedCaseTitles, caseSearchQuery]);
+  }, [casesList, archivedCaseTitles, caseSearchQuery, selectedSuggestedCategory]);
 
-  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+  const filteredSuggestedCases = useMemo(() => {
+    if (selectedSuggestedCategory === "All") return suggestedCasesList;
+    return suggestedCasesList.filter((c) => c.category === selectedSuggestedCategory);
+  }, [selectedSuggestedCategory]);
 
   useEffect(() => {
     const handleOutsideClick = () => {
@@ -599,15 +617,6 @@ function Index() {
   const [caseExpiryDate, setCaseExpiryDate] = useState("Until I stop");
   const [selectedAgentId, setSelectedAgentId] = useState<string>("pharmacy");
 
-  // Suggested cases category filter and toast notification
-  const [selectedSuggestedCategory, setSelectedSuggestedCategory] = useState<string>("All");
-  const [suggestedNotice, setSuggestedNotice] = useState<string | null>(null);
-
-  const filteredSuggestedCases = useMemo(() => {
-    if (selectedSuggestedCategory === "All") return suggestedCasesList;
-    return suggestedCasesList.filter((c) => c.category === selectedSuggestedCategory);
-  }, [selectedSuggestedCategory]);
-
   const handleOpenSuggestedModal = (sug: SuggestedCase) => {
     setCasePrompt(sug.title);
     setCaseDescription(sug.description);
@@ -617,6 +626,58 @@ function Index() {
     }
     setIsAddCaseOpen(true);
   };
+
+  // Outlook-style layout selection state - default is unselected (null) as requested
+  const [selectedCaseIndex, setSelectedCaseIndex] = useState<number>(-1);
+  const [selectedActiveCase, setSelectedActiveCase] = useState<ActiveCaseItem | null>(null);
+  const [mobileActiveView, setMobileActiveView] = useState<"list" | "detail">("list");
+  const [isCaseLoading, setIsCaseLoading] = useState<boolean>(false);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleSelectCase = (caseItem: ActiveCaseItem, index: number) => {
+    // If clicking the case currently displayed, avoid re-triggering loading
+    if (selectedActiveCase?.title === caseItem.title && !isCaseLoading) {
+      setMobileActiveView("detail");
+      return;
+    }
+
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+    }
+
+    setIsCaseLoading(true);
+    setSelectedActiveCase(caseItem);
+    setSelectedCaseIndex(index);
+    setMobileActiveView("detail");
+
+    // Snappy loading delay (320ms) as requested ("make a loading, then show the data, not too much loading time")
+    loadingTimerRef.current = setTimeout(() => {
+      setIsCaseLoading(false);
+      loadingTimerRef.current = null;
+    }, 320);
+  };
+
+  const mapTitleToCaseId = (title: string, index: number) => {
+    const t = title.toLowerCase();
+    if (t.includes("revenue") || t.includes("q3") || t.includes("margin")) return "case-1";
+    if (t.includes("patient") || t.includes("wait") || t.includes("volume") || t.includes("consultation")) return "case-2";
+    if (t.includes("cancellation") || t.includes("operating") || t.includes("turnaround") || t.includes("surgical")) return "case-3";
+    if (t.includes("laboratory") || t.includes("claim") || t.includes("billing") || t.includes("reconciliation")) return "case-4";
+    return `case-${((index >= 0 ? index : 0) % 4) + 1}`;
+  };
+
+  const currentCaseId = useMemo(() => {
+    if (!selectedActiveCase) return "case-1";
+    return mapTitleToCaseId(selectedActiveCase.title, selectedCaseIndex);
+  }, [selectedActiveCase, selectedCaseIndex]);
 
   const handleAdoptCase = (item: SuggestedCase) => {
     const matchedAgent = AVAILABLE_AGENTS.find((a) => a.category === item.category);
@@ -628,6 +689,7 @@ function Index() {
       agent: matchedAgent?.name,
     };
     setCasesList([newCase, ...casesList]);
+    handleSelectCase(newCase, 0);
     setSuggestedNotice(`Suggested case "${item.title}" added to active cases.`);
     setTimeout(() => setSuggestedNotice(null), 4000);
   };
@@ -649,6 +711,7 @@ function Index() {
       agent: assignedAgent?.name,
     };
     setCasesList([newCase, ...casesList]);
+    handleSelectCase(newCase, 0);
     setSuggestedNotice(`Case "${casePrompt.trim()}" activated with ${assignedAgent?.name || "AI Agent"}.`);
     setTimeout(() => setSuggestedNotice(null), 4000);
     setCasePrompt("");
@@ -657,51 +720,126 @@ function Index() {
     setIsAddCaseOpen(false);
   };
 
-
   return (
-    <div className="min-h-screen bg-surface-tint font-sans text-foreground">
-      {/* Header with profile icon, name, and designation on right (Fixed on scroll) */}
-      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-3">
+    <div className="h-screen bg-surface-tint font-sans text-foreground flex flex-col overflow-hidden">
+      {/* Header with profile icon, name, and designation on right */}
+      {/* Thinner top header with integrated Search and Filter */}
+      <header className="sticky top-0 z-40 h-12 shrink-0 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-3 sm:px-6 gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <Link
             to="/"
-            className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
-            title="CXO Home"
+            className="text-base sm:text-lg font-bold tracking-tight text-white hover:opacity-85 transition cursor-pointer flex items-center gap-2 whitespace-nowrap"
+            title="Inbox for CXO"
           >
-            CXO
+            <span>Inbox for CXO</span>
           </Link>
         </div>
 
-        {/* Profile on right top end */}
-        <div className="flex items-center gap-3">
-          <Link
-            to="/welcome"
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/15 transition"
-          >
-            New user setup
-          </Link>
-          <div className="text-right">
-            <p className="text-sm font-medium leading-none text-white">Robert</p>
-            <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
+        {/* Search & Filter centered on top in the header */}
+        <div className="flex-1 max-w-md sm:max-w-xl flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-sky-200/60 pointer-events-none" />
+            <input
+              type="text"
+              value={caseSearchQuery}
+              onChange={(e) => setCaseSearchQuery(e.target.value)}
+              placeholder="Search active agents by title, description..."
+              className="w-full h-8 rounded-lg border border-sky-400/20 bg-sky-950/50 pl-8.5 pr-8 text-xs sm:text-sm text-white placeholder:text-sky-200/50 focus:outline-none focus:ring-1 focus:ring-sky-400 focus:bg-sky-950/80 transition-all"
+            />
+            {caseSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setCaseSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sky-200/60 hover:text-white cursor-pointer p-0.5 rounded-full hover:bg-white/10 transition"
+                aria-label="Clear search"
+              >
+                <X className="size-3" />
+              </button>
+            )}
           </div>
-          <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-white shadow-xs">
+
+          {/* Category Filter Dropdown in Header */}
+          <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setIsCategoryFilterOpen((prev) => !prev)}
+              className={`h-8 inline-flex items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition cursor-pointer ${
+                selectedSuggestedCategory !== "All"
+                  ? "border-sky-400/50 bg-sky-500/25 text-white ring-1 ring-sky-400/30"
+                  : "border-sky-400/20 bg-sky-950/40 text-sky-200/80 hover:bg-sky-900/50 hover:text-white"
+              }`}
+              title="Filter category"
+            >
+              <Filter className="size-3.5 text-sky-300" />
+              <span className="hidden sm:inline">
+                {selectedSuggestedCategory === "All" ? "Filter" : selectedSuggestedCategory}
+              </span>
+              <ChevronDown
+                className={`size-3 text-sky-300/80 transition-transform duration-200 ${
+                  isCategoryFilterOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isCategoryFilterOpen && (
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-52 rounded-xl border border-border/90 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-1">
+                  Filter by Category
+                </div>
+                <div className="space-y-0.5">
+                  {SUGGESTED_CATEGORIES.map((cat) => {
+                    const isSelected = selectedSuggestedCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSuggestedCategory(cat.id);
+                          setIsCategoryFilterOpen(false);
+                        }}
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition cursor-pointer ${
+                          isSelected
+                            ? "bg-tile text-brand-blue font-semibold"
+                            : "text-foreground hover:bg-tile/60"
+                        }`}
+                      >
+                        <span>{cat.label}</span>
+                        {isSelected && <Check className="size-3 text-brand-blue" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Profile on right top end */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="text-right hidden sm:block">
+            <p className="text-xs font-medium leading-none text-white">Robert</p>
+            <p className="text-[10px] text-sky-200/70 mt-0.5">Chief Executive Officer</p>
+          </div>
+          <span className="grid size-7 sm:size-8 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-xs sm:text-sm font-medium text-white shadow-xs">
             R
           </span>
         </div>
       </header>
 
-      <div className="flex">
-        {/* Navigation Rail (Fixed while scrolling) */}
-        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex sticky top-16 h-[calc(100vh-4rem)] border-r border-border/40 overflow-visible">
+      {/* Main Dual-Pane Workspace */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Navigation Rail */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex border-r border-border dark:border-zinc-800 overflow-visible bg-surface z-10">
           {railIcons.map(({ icon: Icon, label, to, active }) => (
             <div key={label} className="relative group flex items-center justify-center">
               <Link
                 to={to}
                 aria-label={label}
-                className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${active
-                  ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-tile"
-                  }`}
+                className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
+                  active
+                    ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-tile"
+                }`}
               >
                 <Icon className="size-5" />
               </Link>
@@ -715,361 +853,296 @@ function Index() {
           ))}
         </nav>
 
-        <main className="min-w-0 flex-1 px-4 pt-6 pb-12 sm:px-8 sm:pt-8 w-full space-y-6">
-          <div className="space-y-6">
-            <Panel>
-              <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-medium text-foreground">Agents</h2>
-                  <button
-                    onClick={() => {
-                      setCasePrompt("");
-                      setCaseDescription("");
-                      setSelectedAgentId("pharmacy");
-                      setIsAddCaseOpen(true);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-tile cursor-pointer text-foreground transition shadow-2xs active:scale-95 shrink-0"
-                  >
-                    <Plus className="size-4 text-foreground" />
-                    <span>New Agent</span>
-                  </button>
-                </div>
-
-                {/* Search bar & Expand button */}
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="relative flex-1 sm:w-64 max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-                    <input
-                      type="text"
-                      value={caseSearchQuery}
-                      onChange={(e) => setCaseSearchQuery(e.target.value)}
-                      placeholder="Search agents..."
-                      className="w-full rounded-xl border border-border/70 bg-tile/50 pl-8.5 pr-8 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-brand-blue transition-colors"
-                    />
-                    {caseSearchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setCaseSearchQuery("")}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5 rounded-full hover:bg-tile transition"
-                        aria-label="Clear search"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    )}
-                  </div>
-
-                  <button aria-label="Expand" className="rounded-full p-1.5 hover:bg-tile text-muted-foreground hover:text-foreground transition cursor-pointer shrink-0">
-                    <Expand className="size-4" />
-                  </button>
-                </div>
-              </div>
-
-              {lastArchivedNotice && (
-                <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-foreground shadow-2xs animate-in fade-in">
-                  <div className="flex items-center gap-2">
-                    <Archive className="size-3.5 text-amber-600 dark:text-amber-400" />
-                    <span>Case <strong>"{lastArchivedNotice}"</strong> has been archived.</span>
-                  </div>
-                  <button
-                    onClick={() => restoreCase(lastArchivedNotice)}
-                    className="text-xs font-semibold text-brand-blue hover:underline cursor-pointer ml-3"
-                  >
-                    Undo
-                  </button>
-                </div>
-              )}
-
-              <div className="divide-y divide-border/60">
-                {displayedCases.map((c, i) => {
-                  return (
-                    <div
-                      key={`${c.title}-${i}`}
-                      onClick={() => navigate({ to: "/details" })}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          navigate({ to: "/details" });
-                        }
-                      }}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 sm:py-5 px-1 sm:px-2 group cursor-pointer hover:bg-tile/25 rounded-xl transition-colors duration-200"
+        {/* OUTLOOK SPLIT INTERFACE */}
+        <div className="flex-1 flex min-w-0 h-full overflow-hidden">
+          {/* LEFT COLUMN: OUTLOOK-STYLE CASE & AGENT LIST (Increased Font & Visible Separation Lines) */}
+          <aside
+            className={`w-full lg:w-[450px] xl:w-[490px] shrink-0 border-r-2 border-border dark:border-zinc-800 bg-surface flex flex-col h-full overflow-hidden ${
+              mobileActiveView === "detail" ? "hidden lg:flex" : "flex"
+            }`}
+          >
+            {/* Toast Notices if present */}
+            {(lastArchivedNotice || suggestedNotice) && (
+              <div className="p-3 border-b border-border/80 space-y-2 bg-surface">
+                {lastArchivedNotice && (
+                  <div className="flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-foreground animate-in fade-in">
+                    <div className="flex items-center gap-2 truncate">
+                      <Archive className="size-3.5 text-amber-600 shrink-0" />
+                      <span className="truncate">Archived "{lastArchivedNotice}"</span>
+                    </div>
+                    <button
+                      onClick={() => restoreCase(lastArchivedNotice)}
+                      className="text-xs font-semibold text-brand-blue hover:underline cursor-pointer shrink-0 ml-2"
                     >
-                      {/* Left: Metadata chips, Title, Description */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                          <span className="text-xs text-muted-foreground font-medium">{c.age || "\u00A0"}</span>
-                          {c.agent && (
-                            <span className="inline-flex items-center gap-1 text-[11px] rounded-full px-2.5 py-0.5 bg-brand-blue/10 text-brand-blue font-medium border border-brand-blue/20">
-                              <Sparkles className="size-3 shrink-0" />
-                              <span>{c.agent}</span>
-                            </span>
-                          )}
-                          {c.expiryDate && (
-                            <span className="inline-flex items-center gap-1 text-[11px] rounded-full px-2.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-medium border border-amber-500/20">
-                              <span>Duration: {c.expiryDate}</span>
-                            </span>
-                          )}
-                        </div>
-
-                        <h4
-                          className="text-xl font-light tracking-tight text-foreground group-hover:text-brand-blue transition-colors leading-snug"
-                          style={{ fontWeight: 300 }}
-                        >
-                          {c.title}
-                        </h4>
-
-                        <p className="mt-1.5 text-xs sm:text-sm text-foreground/75 leading-relaxed line-clamp-2">
-                          {c.body}
-                        </p>
-                      </div>
-
-                      {/* Right: Agent Details Button */}
-                      <div className="flex items-center shrink-0 self-start sm:self-center">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-1.5 text-xs font-medium text-brand-blue group-hover:bg-brand-blue group-hover:text-white group-hover:border-transparent transition-all shadow-2xs whitespace-nowrap">
-                          <span>Agent details</span>
-                          <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {displayedCases.length === 0 && (
-                <div className="py-12 text-center rounded-2xl bg-surface border border-border/60 p-6 text-sm text-muted-foreground">
-                  {caseSearchQuery ? (
-                    <div>
-                      <p className="font-medium text-foreground">No agents matching "{caseSearchQuery}"</p>
-                      <p className="text-xs text-muted-foreground mt-1">Try adjusting your search query or clear the filter.</p>
-                      <button
-                        type="button"
-                        onClick={() => setCaseSearchQuery("")}
-                        className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-border bg-tile px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface transition cursor-pointer"
-                      >
-                        Clear search
-                      </button>
-                    </div>
-                  ) : (
-                    "No active agents found. You can create an agent using the \"New Agent\" button."
-                  )}
-                </div>
-              )}
-
-              {displayedCases.length > 0 && !caseSearchQuery && (
-                <div className="mt-8 text-center">
-                  <button className="text-lg text-foreground hover:text-brand-blue">
-                    Load more
-                  </button>
-                </div>
-              )}
-            </Panel>
-
-            {/* SUGGESTED CASES PANEL (Bottom after Cases) */}
-            <Panel className="p-5 sm:p-6 space-y-5">
-              {/* Header & Category Filters */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/50 pb-4">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <Sparkles className="size-5 text-brand-blue" />
-                    <h2 className="text-xl sm:text-[22px] font-semibold text-foreground">
-                      Suggested Cases
-                    </h2>
-                    <span className="rounded-full bg-tile border border-border/60 px-2.5 py-0.5 text-xs font-semibold text-foreground">
-                      {filteredSuggestedCases.length}
-                    </span>
-                    {selectedSuggestedCategory !== "All" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 border border-brand-blue/25 px-2.5 py-0.5 text-xs font-medium text-brand-blue animate-in fade-in">
-                        <span>{selectedSuggestedCategory}</span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedSuggestedCategory("All")}
-                          className="hover:opacity-75 cursor-pointer p-0.5 rounded-full hover:bg-brand-blue/15 transition"
-                          title="Clear category filter"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </span>
-                    )}
+                      Undo
+                    </button>
                   </div>
+                )}
 
-                </div>
-
-                {/* Category Filter Dropdown with Filter Icon */}
-                <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={() => setIsCategoryFilterOpen((prev) => !prev)}
-                    className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition cursor-pointer shadow-2xs ${selectedSuggestedCategory !== "All"
-                        ? "border-brand-blue/40 bg-brand-blue/5 text-brand-blue ring-1 ring-brand-blue/20"
-                        : "border-border/80 bg-surface text-foreground hover:bg-tile"
-                      }`}
-                    title="Filter suggested cases by category type"
-                    aria-label="Filter by category"
-                  >
-                    <Filter className="size-3.5 text-brand-blue" />
-                    <span>
-                      {selectedSuggestedCategory === "All" ? "Filter by Category" : selectedSuggestedCategory}
-                    </span>
-                    <ChevronDown
-                      className={`size-3.5 text-muted-foreground transition-transform duration-200 ${isCategoryFilterOpen ? "rotate-180" : ""
-                        }`}
-                    />
-                  </button>
-
-                  {/* Dropdown Menu */}
-                  {isCategoryFilterOpen && (
-                    <div className="absolute right-0 top-full mt-1.5 z-30 w-56 rounded-2xl border border-border/80 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                      <div className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-1">
-                        Filter by Category
-                      </div>
-                      <div className="space-y-0.5">
-                        {SUGGESTED_CATEGORIES.map((cat) => {
-                          const count =
-                            cat.id === "All"
-                              ? suggestedCasesList.length
-                              : suggestedCasesList.filter((c) => c.category === cat.id).length;
-                          const isSelected = selectedSuggestedCategory === cat.id;
-
-                          const CatIcon =
-                            cat.id === "Pharmacy"
-                              ? Pill
-                              : cat.id === "Billing"
-                                ? Receipt
-                                : cat.id === "Operations"
-                                  ? Activity
-                                  : cat.id === "Clinical"
-                                    ? Stethoscope
-                                    : Sparkles;
-
-                          return (
-                            <button
-                              key={cat.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedSuggestedCategory(cat.id);
-                                setIsCategoryFilterOpen(false);
-                              }}
-                              className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition cursor-pointer ${isSelected
-                                  ? "bg-tile text-brand-blue font-semibold"
-                                  : "text-foreground hover:bg-tile/60"
-                                }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <CatIcon
-                                  className={`size-3.5 ${isSelected ? "text-brand-blue" : "text-muted-foreground"
-                                    }`}
-                                />
-                                <span>{cat.label}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="rounded-full px-1.5 py-0.2 text-[10px] bg-border/60 text-muted-foreground">
-                                  {count}
-                                </span>
-                                {isSelected && <Check className="size-3.5 text-brand-blue" />}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                {suggestedNotice && (
+                  <div className="flex items-center justify-between rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 p-2.5 text-xs text-blue-900 dark:text-blue-200 animate-in fade-in">
+                    <div className="flex items-center gap-2 truncate">
+                      <CheckCircle2 className="size-4 text-brand-blue shrink-0" />
+                      <span className="truncate font-medium">{suggestedNotice}</span>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Toast Notification if adopted */}
-              {suggestedNotice && (
-                <div className="flex items-center justify-between rounded-xl bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 p-3 text-xs text-blue-900 dark:text-blue-200 shadow-2xs animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4 text-brand-blue shrink-0" />
-                    <span className="font-medium">{suggestedNotice}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSuggestedNotice(null)}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                </div>
-              )}
-
-              {/* Minimal List View of Suggested Cases */}
-              <div className="overflow-hidden rounded-2xl border border-border/70 bg-surface divide-y divide-border/60">
-                {filteredSuggestedCases.map((sug) => {
-                  const CategoryIcon =
-                    sug.category === "Pharmacy"
-                      ? Pill
-                      : sug.category === "Billing"
-                        ? Receipt
-                        : sug.category === "Operations"
-                          ? Activity
-                          : Stethoscope;
-
-                  const catBadgeColor =
-                    sug.category === "Pharmacy"
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
-                      : sug.category === "Billing"
-                        ? "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20"
-                        : sug.category === "Operations"
-                          ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
-                          : "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20";
-
-                  return (
-                    <div
-                      key={sug.id}
-                      className="flex items-center justify-between gap-3 p-3.5 sm:px-4 sm:py-3 hover:bg-tile/50 transition-colors group cursor-default"
-                    >
-                      {/* Left: Category Icon, Title & Department/Description */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`grid size-8 shrink-0 place-items-center rounded-xl border ${catBadgeColor}`}>
-                          <CategoryIcon className="size-4" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <span className="font-medium text-sm text-foreground truncate block group-hover:text-brand-blue transition-colors">
-                            {sug.title}
-                          </span>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            <span className="font-medium text-foreground/80">{sug.department}</span> • {sug.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Right: Add button visible only while hovering */}
-                      <div className="flex items-center shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenSuggestedModal(sug)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-surface hover:opacity-90 transition cursor-pointer shadow-2xs whitespace-nowrap active:scale-95"
-                          title="Configure case with AI agent"
-                        >
-                          <Plus className="size-3.5" />
-                          <span>Add</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {filteredSuggestedCases.length === 0 && (
-                  <div className="p-8 text-center text-xs sm:text-sm text-muted-foreground">
-                    <p>No suggested cases found for category "{selectedSuggestedCategory}".</p>
                     <button
                       type="button"
-                      onClick={() => setSelectedSuggestedCategory("All")}
-                      className="mt-2 text-xs font-medium text-brand-blue hover:underline cursor-pointer"
+                      onClick={() => setSuggestedNotice(null)}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0 ml-2"
                     >
-                      Show all categories
+                      <X className="size-3.5" />
                     </button>
                   </div>
                 )}
               </div>
-            </Panel>
-          </div>
+            )}
 
+            {/* Scrollable Outlook List Items: Active Agents Only with Generous Spacing & Visible Dividers */}
+            <div className="flex-1 overflow-y-auto no-scrollbar divide-y-2 divide-border/80 dark:divide-zinc-800">
+              {displayedCases.map((c, i) => {
+                const isSelected = selectedActiveCase?.title === c.title;
 
-        </main>
+                return (
+                  <div
+                    key={`${c.title}-${i}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      handleSelectCase(c, i);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectCase(c, i);
+                      }
+                    }}
+                    className={`w-full text-left p-5 sm:p-5.5 transition-all cursor-pointer relative group border-l-4 border-b border-border/80 dark:border-zinc-800 ${
+                      isSelected
+                        ? "border-l-brand-blue bg-blue-50/80 dark:bg-blue-950/45 shadow-xs"
+                        : "border-l-transparent hover:bg-tile/75"
+                    }`}
+                  >
+                    {/* Top Line: Age / Timestamp + Agent Badge + Status Dot */}
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {c.isLive && (
+                          <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live Continuous Monitoring" />
+                        )}
+                        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                          {c.age}
+                        </span>
+                        {c.agent && (
+                          <span className="inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-0.5 bg-brand-blue/10 text-brand-blue font-medium border border-brand-blue/20 truncate">
+                            <Sparkles className="size-3 shrink-0" />
+                            <span className="truncate">{c.agent}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {c.expiryDate && (
+                        <span className="text-xs text-amber-700 dark:text-amber-300 font-medium px-2 py-0.5 rounded-md bg-amber-500/10 whitespace-nowrap">
+                          {c.expiryDate}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title on Left (Semi bold and a little bigger) */}
+                    <h4
+                      className={`text-lg sm:text-[18px] font-semibold leading-snug line-clamp-2 transition-colors ${
+                        isSelected
+                          ? "text-brand-blue"
+                          : "text-foreground group-hover:text-brand-blue"
+                      }`}
+                    >
+                      {c.title}
+                    </h4>
+
+                    {/* Part of Description on Left */}
+                    <p className="mt-2 text-sm text-foreground/75 leading-relaxed line-clamp-2 font-normal">
+                      {c.body}
+                    </p>
+                  </div>
+                );
+              })}
+
+              {displayedCases.length === 0 && (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  No active agents matching your search or category filter.
+                </div>
+              )}
+            </div>
+          </aside>
+
+          {/* RIGHT COLUMN: OUTLOOK-STYLE READING PANE (DEFAULT UNSELECTED VIEW + INLINE DETAILS WITH CHAT HIDDEN BY DEFAULT) */}
+          <section
+            className={`flex-1 min-w-0 h-full overflow-hidden flex flex-col bg-surface-tint ${
+              mobileActiveView === "list" ? "hidden lg:flex" : "flex"
+            }`}
+          >
+            {isCaseLoading ? (
+              <div className="flex-1 flex flex-col h-full bg-surface-tint overflow-hidden animate-in fade-in duration-150">
+                {/* Simulated Header Bar Skeleton */}
+                <div className="h-16 px-6 border-b border-border/80 dark:border-zinc-800 bg-surface flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-xl bg-muted/60 animate-pulse" />
+                    <div className="space-y-1.5">
+                      <div className="h-4 w-44 rounded-md bg-muted/70 animate-pulse" />
+                      <div className="h-2.5 w-24 rounded-md bg-muted/40 animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-24 rounded-xl bg-muted/50 animate-pulse" />
+                    <div className="size-8 rounded-xl bg-muted/40 animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Loading Content Area with Skeleton Cards */}
+                <div className="flex-1 overflow-y-auto no-scrollbar p-6 sm:p-8 space-y-6">
+                  {/* Snappy status indicator */}
+                  <div className="flex items-center justify-center pt-2 pb-1">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-surface border border-border/80 shadow-xs">
+                      <Loader2 className="size-4 text-brand-blue animate-spin" />
+                      <span className="text-xs sm:text-sm font-medium text-foreground">
+                        Loading case analysis & telemetry...
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Top Executive Card Skeleton */}
+                  <div className="rounded-3xl bg-surface border border-border/80 p-6 sm:p-7 space-y-4 animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="h-5 w-1/3 bg-muted/70 rounded-md" />
+                      <div className="h-6 w-20 bg-muted/50 rounded-full" />
+                    </div>
+                    <div className="space-y-2 pt-1">
+                      <div className="h-3.5 w-full bg-muted/50 rounded" />
+                      <div className="h-3.5 w-5/6 bg-muted/40 rounded" />
+                      <div className="h-3.5 w-4/6 bg-muted/40 rounded" />
+                    </div>
+                  </div>
+
+                  {/* Metric Cards Skeleton Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="rounded-2xl bg-surface border border-border/80 p-5 space-y-3 animate-pulse">
+                      <div className="h-3.5 w-2/5 bg-muted/60 rounded" />
+                      <div className="h-6 w-3/5 bg-muted/70 rounded" />
+                      <div className="h-2.5 w-4/5 bg-muted/40 rounded" />
+                    </div>
+                    <div className="rounded-2xl bg-surface border border-border/80 p-5 space-y-3 animate-pulse">
+                      <div className="h-3.5 w-2/5 bg-muted/60 rounded" />
+                      <div className="h-6 w-3/5 bg-muted/70 rounded" />
+                      <div className="h-2.5 w-4/5 bg-muted/40 rounded" />
+                    </div>
+                    <div className="rounded-2xl bg-surface border border-border/80 p-5 space-y-3 animate-pulse">
+                      <div className="h-3.5 w-2/5 bg-muted/60 rounded" />
+                      <div className="h-6 w-3/5 bg-muted/70 rounded" />
+                      <div className="h-2.5 w-4/5 bg-muted/40 rounded" />
+                    </div>
+                  </div>
+
+                  {/* Action Items Skeleton */}
+                  <div className="rounded-3xl bg-surface border border-border/80 p-6 space-y-3 animate-pulse">
+                    <div className="h-4 w-1/4 bg-muted/70 rounded-md" />
+                    <div className="space-y-2 pt-2">
+                      <div className="h-10 w-full rounded-xl bg-muted/40" />
+                      <div className="h-10 w-full rounded-xl bg-muted/30" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : selectedActiveCase ? (
+              <CaseDetailsView
+                selectedCaseId={currentCaseId}
+                customCase={selectedActiveCase}
+                onBack={() => setMobileActiveView("list")}
+                initialShowChat={false}
+              />
+            ) : (
+              /* DEFAULT EMPTY STATE WHEN NO ITEM IS SELECTED */
+              <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 text-center bg-surface-tint overflow-y-auto no-scrollbar">
+                <div className="max-w-2xl mx-auto space-y-6 my-auto w-full">
+                  <div className="mx-auto size-16 rounded-2xl bg-brand-blue/10 border border-brand-blue/20 grid place-items-center text-brand-blue shadow-sm">
+                    <Bot className="size-8" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight font-light" style={{ fontWeight: 300 }}>
+                      Select an Agent to View Analysis
+                    </h3>
+                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-md mx-auto">
+                      Choose any active agent from the left pane to view its executive summary, root cause telemetry, key financial metrics, and recommended actions.
+                    </p>
+                  </div>
+
+                  {/* Low priority suggestions button */}
+                  <div className="pt-2 flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsSuggestionsVisible((prev) => !prev)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border/90 bg-surface px-5 py-2.5 text-sm font-medium text-foreground shadow-2xs hover:bg-tile transition cursor-pointer active:scale-95"
+                    >
+                      <Sparkles className="size-4 text-brand-blue" />
+                      <span>{isSuggestionsVisible ? "Hide Suggestions" : "Show Suggestions"}</span>
+                    </button>
+                  </div>
+
+                  {/* Collapsible Low-Priority Suggestions Section */}
+                  {isSuggestionsVisible && (
+                    <div className="mt-6 pt-6 border-t border-border/80 text-left space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground">Suggested Agent Opportunities</h4>
+                          <p className="text-xs text-muted-foreground">Autonomous discovery signals available to activate</p>
+                        </div>
+                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-tile text-muted-foreground border border-border/60">
+                          {suggestedCasesList.length} suggestions
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1 no-scrollbar">
+                        {suggestedCasesList.map((sug) => (
+                          <div
+                            key={sug.id}
+                            className="p-4 rounded-2xl bg-surface border border-border/80 shadow-xs hover:border-brand-blue/40 transition flex flex-col justify-between"
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[11px] font-semibold text-brand-blue uppercase tracking-wider">
+                                  {sug.department}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground">{sug.signal}</span>
+                              </div>
+                              <h5 className="text-sm font-semibold text-foreground line-clamp-2">
+                                {sug.title}
+                              </h5>
+                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-normal">
+                                {sug.description}
+                              </p>
+                            </div>
+
+                            <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between">
+                              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                                {sug.impactMetric}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleAdoptCase(sug)}
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue hover:underline cursor-pointer"
+                              >
+                                <Plus className="size-3.5" />
+                                <span>Activate</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
 
       {/* Modern Add Case Modal with AI Agents */}
@@ -1147,10 +1220,11 @@ function Index() {
                       <div
                         key={agent.id}
                         onClick={() => setSelectedAgentId(agent.id)}
-                        className={`flex items-start gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${isSelected
+                        className={`flex items-start gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${
+                          isSelected
                             ? "border-brand-blue bg-brand-blue/5 dark:bg-brand-blue/10 ring-1 ring-brand-blue/30 shadow-xs"
                             : "border-border/70 bg-tile/40 hover:bg-tile hover:border-border"
-                          }`}
+                        }`}
                       >
                         <div className={`grid size-9 shrink-0 place-items-center rounded-xl border ${agent.color}`}>
                           <AgentIcon className="size-4" />
@@ -1172,10 +1246,11 @@ function Index() {
 
                         <div className="shrink-0 pt-0.5">
                           <div
-                            className={`size-4 rounded-full border flex items-center justify-center transition-colors ${isSelected
+                            className={`size-4 rounded-full border flex items-center justify-center transition-colors ${
+                              isSelected
                                 ? "border-brand-blue bg-brand-blue text-white"
                                 : "border-border/80 bg-surface"
-                              }`}
+                            }`}
                           >
                             {isSelected && <div className="size-1.5 rounded-full bg-white" />}
                           </div>
@@ -1231,7 +1306,6 @@ function Index() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

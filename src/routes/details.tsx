@@ -605,7 +605,7 @@ function CaseDetailsPage() {
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [activeSlideId, setActiveSlideId] = useState<string>("summary");
   const [checkedActions, setCheckedActions] = useState<Record<number, boolean>>({});
-  const [showAIAssistant, setShowAIAssistant] = useState<boolean>(true);
+  const [showAIAssistant, setShowAIAssistant] = useState<boolean>(false);
 
   const handleMainScroll = (e: React.UIEvent<HTMLElement>) => {
     const el = e.currentTarget;
