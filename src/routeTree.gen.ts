@@ -11,13 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiToolsRouteImport } from './routes/ai-tools'
+import { Route as AskAiRouteImport } from './routes/ask-ai'
 import { Route as CasesRouteImport } from './routes/cases'
+import { Route as ChartsRouteImport } from './routes/charts'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as DataCenterRouteImport } from './routes/data-center'
 import { Route as DetailsRouteImport } from './routes/details'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FilesRouteImport } from './routes/files'
 import { Route as FoldersRouteImport } from './routes/folders'
+import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,9 +33,19 @@ const AiToolsRoute = AiToolsRouteImport.update({
   path: '/ai-tools',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AskAiRoute = AskAiRouteImport.update({
+  id: '/ask-ai',
+  path: '/ask-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CasesRoute = CasesRouteImport.update({
   id: '/cases',
   path: '/cases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChartsRoute = ChartsRouteImport.update({
+  id: '/charts',
+  path: '/charts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnectRoute = ConnectRouteImport.update({
@@ -65,6 +78,11 @@ const FoldersRoute = FoldersRouteImport.update({
   path: '/folders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
@@ -74,38 +92,47 @@ const WelcomeRoute = WelcomeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
+  '/ask-ai': typeof AskAiRoute
   '/cases': typeof CasesRoute
+  '/charts': typeof ChartsRoute
   '/connect': typeof ConnectRoute
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
   '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
+  '/inbox': typeof InboxRoute
   '/welcome': typeof WelcomeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
+  '/ask-ai': typeof AskAiRoute
   '/cases': typeof CasesRoute
+  '/charts': typeof ChartsRoute
   '/connect': typeof ConnectRoute
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
   '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
+  '/inbox': typeof InboxRoute
   '/welcome': typeof WelcomeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
+  '/ask-ai': typeof AskAiRoute
   '/cases': typeof CasesRoute
+  '/charts': typeof ChartsRoute
   '/connect': typeof ConnectRoute
   '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
   '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
+  '/inbox': typeof InboxRoute
   '/welcome': typeof WelcomeRoute
 }
 export interface FileRouteTypes {
@@ -113,50 +140,62 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/ai-tools'
+    | '/ask-ai'
     | '/cases'
+    | '/charts'
     | '/connect'
     | '/data-center'
     | '/details'
     | '/explore'
     | '/files'
     | '/folders'
+    | '/inbox'
     | '/welcome'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/ai-tools'
+    | '/ask-ai'
     | '/cases'
+    | '/charts'
     | '/connect'
     | '/data-center'
     | '/details'
     | '/explore'
     | '/files'
     | '/folders'
+    | '/inbox'
     | '/welcome'
   id:
     | '__root__'
     | '/'
     | '/ai-tools'
+    | '/ask-ai'
     | '/cases'
+    | '/charts'
     | '/connect'
     | '/data-center'
     | '/details'
     | '/explore'
     | '/files'
     | '/folders'
+    | '/inbox'
     | '/welcome'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AiToolsRoute: typeof AiToolsRoute
+  AskAiRoute: typeof AskAiRoute
   CasesRoute: typeof CasesRoute
+  ChartsRoute: typeof ChartsRoute
   ConnectRoute: typeof ConnectRoute
   DataCenterRoute: typeof DataCenterRoute
   DetailsRoute: typeof DetailsRoute
   ExploreRoute: typeof ExploreRoute
   FilesRoute: typeof FilesRoute
   FoldersRoute: typeof FoldersRoute
+  InboxRoute: typeof InboxRoute
   WelcomeRoute: typeof WelcomeRoute
 }
 
@@ -176,11 +215,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ask-ai': {
+      id: '/ask-ai'
+      path: '/ask-ai'
+      fullPath: '/ask-ai'
+      preLoaderRoute: typeof AskAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cases': {
       id: '/cases'
       path: '/cases'
       fullPath: '/cases'
       preLoaderRoute: typeof CasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/charts': {
+      id: '/charts'
+      path: '/charts'
+      fullPath: '/charts'
+      preLoaderRoute: typeof ChartsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/connect': {
@@ -225,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FoldersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/welcome': {
       id: '/welcome'
       path: '/welcome'
@@ -238,13 +298,16 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiToolsRoute: AiToolsRoute,
+  AskAiRoute: AskAiRoute,
   CasesRoute: CasesRoute,
+  ChartsRoute: ChartsRoute,
   ConnectRoute: ConnectRoute,
   DataCenterRoute: DataCenterRoute,
   DetailsRoute: DetailsRoute,
   ExploreRoute: ExploreRoute,
   FilesRoute: FilesRoute,
   FoldersRoute: FoldersRoute,
+  InboxRoute: InboxRoute,
   WelcomeRoute: WelcomeRoute,
 }
 export const routeTree = rootRouteImport

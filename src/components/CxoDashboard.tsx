@@ -1,0 +1,3556 @@
+import { useState, useRef, useEffect, useMemo, Fragment } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+  Inbox,
+  Home,
+  Bot,
+  FileText,
+  Server,
+  Sparkles,
+  Archive,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Search,
+  Filter,
+  Check,
+  Loader2,
+  Mic,
+  MessageSquare,
+  X,
+  TrendingDown,
+  TrendingUp,
+  Activity,
+  DollarSign,
+  Package,
+  Layers,
+  ShoppingBag,
+  ArrowRight,
+  ArrowLeft,
+  Copy,
+  ThumbsUp,
+  ThumbsDown,
+  Plus,
+  ExternalLink,
+  Database,
+  Send,
+  User,
+  Table2,
+  FileSpreadsheet,
+  Download,
+  ShieldCheck,
+  BarChart3,
+} from "lucide-react";
+import {
+  CaseDetailsView,
+  caseSummaries,
+  caseSampleTelemetryData,
+  caseMethodologyTexts,
+  type SampleDataRecord,
+  type CaseSummaryConfig,
+  type CaseMethodologyText,
+} from "./CaseDetailsView";
+import { ReportPipelineDiagram } from "./ReportPipelineDiagram";
+
+const railIcons = [
+  { icon: Inbox, label: "Inbox", to: "/inbox" },
+  { icon: Bot, label: "Agents", to: "/cases" },
+  { icon: FileText, label: "Files", to: "/files" },
+  { icon: Server, label: "Data Center", to: "/data-center" },
+  { icon: BarChart3, label: "Charts", to: "/charts" },
+];
+
+export interface ActiveCaseItem {
+  age: string;
+  title: string;
+  body: string;
+  expiryDate?: string | undefined;
+  isLive?: boolean | undefined;
+  agent?: string | undefined;
+  newFindingsCount?: number | undefined;
+}
+
+export interface AnalyzedCaseData {
+  query: string;
+  matchedCaseId: string;
+  caseItem: ActiveCaseItem;
+  kpiAnswer: string;
+  summary: CaseSummaryConfig;
+  telemetry: {
+    records: SampleDataRecord[];
+    totalExposure: string;
+    coverage: string;
+  };
+  timestamp: string;
+}
+
+export interface CxoProductRow {
+  product: string;
+  inventory: string;
+  age: string;
+  salesTrend: string;
+}
+
+export interface CxoDriverRow {
+  label: string;
+  value: string;
+}
+
+export interface CxoInsightItem {
+  number: string;
+  headline: string;
+  detail: string;
+}
+
+export interface CxoEvidenceDataset {
+  id: string;
+  name: string;
+  badge: string;
+  period: string;
+  totalSum: string;
+  recordCount: string;
+  sourceSystem: string;
+  citationId: string;
+  description: string;
+  columns: string[];
+  rows: Record<string, string>[];
+}
+
+export interface CxoHowAnswerFound {
+  summary: string;
+  analysis: string;
+  findings: string[];
+  evidenceDatasets: CxoEvidenceDataset[];
+  dataSources?: string[];
+  methodology?: string;
+}
+
+export interface CxoFindingChartBar {
+  label: string;
+  value: number;
+  formattedValue: string;
+  subtext?: string;
+  color?: string;
+  isWarning?: boolean;
+}
+
+export interface CxoFindingChart {
+  title: string;
+  subtitle: string;
+  badge: string;
+  type: "distribution" | "benchmark" | "comparison" | "share";
+  bars: CxoFindingChartBar[];
+  secondaryBreakdown?: {
+    label: string;
+    value: string;
+    percentage: number;
+    color: string;
+  }[];
+  benchmarkLabel?: string;
+  benchmarkValue?: number;
+  takeaway: string;
+}
+
+export interface CxoStructuredAnswer {
+  reportTitle: string;
+  reportDate: string;
+  basedOnData?: string;
+  kpiStats: { value: string; label: string }[];
+  keyFinding: string;
+  findingChart?: CxoFindingChart;
+  topProducts: CxoProductRow[];
+  drivers: CxoDriverRow[];
+  insights: CxoInsightItem[];
+  businessImpact: string;
+  focusAreas: string[];
+  howAnswerFound?: CxoHowAnswerFound;
+}
+
+export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
+  "case-1": {
+    reportTitle: "Products creating the highest inventory exposure",
+    reportDate: "15 May 2008",
+    basedOnData: "based on the data form 19 may 08 to 21 march 24",
+    kpiStats: [
+      { value: "1.85 CR", label: "Inventory Exposure" },
+      { value: "42", label: "Products" },
+      { value: "11.5 L", label: "Top 10 Products" },
+      { value: "90 Days", label: "Avg. Inventory Age" },
+    ],
+    keyFinding:
+      "₹18.4 Cr of inventory is tied up across 42 products (1.85 CR total exposure).\nThe top 10 products account for ₹11.2 Cr (11.5 L units) of the exposure, with an average inventory age of 90 days.",
+    findingChart: {
+      title: "Inventory Exposure Concentration",
+      subtitle: "Top products by locked capital and sales velocity decline",
+      badge: "61% in Top 10",
+      type: "distribution",
+      bars: [
+        { label: "Men's Denim Jacket", value: 2.8, formattedValue: "₹2.8 Cr", subtext: "124 days avg age · ↓ 42% sales", color: "bg-[#0e7490]" },
+        { label: "Women's Kurti", value: 2.1, formattedValue: "₹2.1 Cr", subtext: "109 days avg age · ↓ 35% sales", color: "bg-[#0891b2]" },
+        { label: "Slim Fit Shirt", value: 1.7, formattedValue: "₹1.7 Cr", subtext: "96 days avg age · ↓ 28% sales", color: "bg-[#0284c7]" },
+        { label: "Casual Trousers", value: 1.4, formattedValue: "₹1.4 Cr", subtext: "91 days avg age · ↓ 24% sales", color: "bg-[#38bdf8]" },
+        { label: "Printed T-shirt", value: 1.2, formattedValue: "₹1.2 Cr", subtext: "86 days avg age · ↓ 19% sales", color: "bg-[#7dd3fc]" },
+      ],
+      takeaway: "Top 10 items lock up ₹11.2 Cr (61%) of total exposure with an average age exceeding 87 days.",
+    },
+    topProducts: [
+      { product: "Men's Denim Jacket", inventory: "₹2.8 Cr", age: "124 days", salesTrend: "↓ 42%" },
+      { product: "Women's Kurti", inventory: "₹2.1 Cr", age: "109 days", salesTrend: "↓ 35%" },
+      { product: "Slim Fit Shirt", inventory: "₹1.7 Cr", age: "96 days", salesTrend: "↓ 28%" },
+      { product: "Casual Trousers", inventory: "₹1.4 Cr", age: "91 days", salesTrend: "↓ 24%" },
+      { product: "Printed T-shirt", inventory: "₹1.2 Cr", age: "86 days", salesTrend: "↓ 19%" },
+    ],
+    drivers: [
+      { label: "Slow-moving inventory", value: "₹10.5 Cr" },
+      { label: "Aging inventory", value: "₹4.5 Cr" },
+      { label: "Declining sales", value: "₹2.1 Cr" },
+      { label: "Seasonal surplus", value: "₹0.9 Cr" },
+    ],
+    insights: [
+      {
+        number: "01",
+        headline: "Exposure is concentrated",
+        detail: "Top 10 products represent 61% of total exposure.",
+      },
+      {
+        number: "02",
+        headline: "Aging is increasing",
+        detail: "27 products have exceeded their normal inventory age.",
+      },
+      {
+        number: "03",
+        headline: "Sales velocity is weakening",
+        detail: "15 high-value products show sustained sales decline.",
+      },
+    ],
+    businessImpact:
+      "₹18.4 Cr of working capital is tied up in below-normal moving products, increasing the risk of further aging and markdown pressure.",
+    focusAreas: [
+      "Review top 10 high-exposure products",
+      "Investigate declining sales velocity",
+      "Evaluate pricing, promotions and assortment",
+    ],
+    howAnswerFound: {
+      summary:
+        "We checked stock counts and sales bills across 42 stores and warehouses, comparing how long items sit on shelves against how fast they sell.",
+      analysis:
+        "Analyzed 90 days of daily store billing invoices and customer return receipts across 42 retail locations and regional warehouses (Period: June 25 – September 23, 2026). We calculated total gross sales, deducted return items, and cross-referenced unit velocity against inventory age ledgers to compute net exposure sums.",
+      findings: [
+        "Gross Store Sales analyzed: ₹48.20 Cr across 42 locations over the 90-day period.",
+        "Customer Returns & Sizing deductions: ₹0.50 Cr across 1,840 return receipts.",
+        "Inventory Aging Sum: ₹18.40 Cr tied up in 42 products exceeding the 60-day turnover benchmark.",
+        "Top 10 exposure products account for ₹11.20 Cr (61%) of total tied-up capital.",
+      ],
+      evidenceDatasets: [
+        {
+          id: "c1-sales-ledger",
+          name: "Sales Invoices Ledger (90 Days)",
+          badge: "Sales Table",
+          period: "Jun 25 – Sep 23, 2026",
+          totalSum: "₹48.20 Cr",
+          recordCount: "24,190 Invoices",
+          sourceSystem: "Store POS & ERP Invoicing Feed",
+          citationId: "CIT-2026-SLS-42",
+          description: "All store and digital invoices used to compute revenue velocity and sales run-rates.",
+          columns: ["Invoice #", "Date", "Store / Region", "Product", "Units Sold", "Net Amount", "Sales Trend"],
+          rows: [
+            { "Invoice #": "INV-2026-8841", "Date": "23 Sep 2026", "Store / Region": "Delhi Flagship (DL-01)", "Product": "Men's Denim Jacket", "Units Sold": "4", "Net Amount": "₹15,996", "Sales Trend": "Slow (-42%)" },
+            { "Invoice #": "INV-2026-8820", "Date": "23 Sep 2026", "Store / Region": "Mumbai Phoenix (MH-04)", "Product": "Women's Kurti", "Units Sold": "6", "Net Amount": "₹11,994", "Sales Trend": "Slow (-35%)" },
+            { "Invoice #": "INV-2026-8794", "Date": "22 Sep 2026", "Store / Region": "Bengaluru Indiranagar", "Product": "Slim Fit Shirt", "Units Sold": "8", "Net Amount": "₹15,192", "Sales Trend": "Sluggish (-28%)" },
+            { "Invoice #": "INV-2026-8750", "Date": "22 Sep 2026", "Store / Region": "Hyderabad Banjara", "Product": "Casual Trousers", "Units Sold": "5", "Net Amount": "₹11,495", "Sales Trend": "Lagging (-24%)" },
+            { "Invoice #": "INV-2026-8692", "Date": "21 Sep 2026", "Store / Region": "Kolkata Park St", "Product": "Printed T-shirt", "Units Sold": "12", "Net Amount": "₹11,988", "Sales Trend": "Lagging (-19%)" },
+            { "Invoice #": "INV-2026-8610", "Date": "20 Sep 2026", "Store / Region": "Pune Viman Nagar", "Product": "Linen Casual Shirt", "Units Sold": "28", "Net Amount": "₹69,972", "Sales Trend": "Fast (+32%)" },
+            { "Invoice #": "INV-2026-8540", "Date": "19 Sep 2026", "Store / Region": "Chennai Express", "Product": "Chino Shorts", "Units Sold": "18", "Net Amount": "₹26,982", "Sales Trend": "Normal (+4%)" },
+            { "Invoice #": "INV-2026-8492", "Date": "19 Sep 2026", "Store / Region": "Ahmedabad Alpha", "Product": "Relaxed Utility Cargo", "Units Sold": "3", "Net Amount": "₹8,997", "Sales Trend": "Slow (-31%)" },
+            { "Invoice #": "INV-2026-8430", "Date": "18 Sep 2026", "Store / Region": "Jaipur World Trade", "Product": "Heavyweight Wool Overcoat", "Units Sold": "2", "Net Amount": "₹15,998", "Sales Trend": "Stagnant (-48%)" },
+            { "Invoice #": "INV-2026-8380", "Date": "18 Sep 2026", "Store / Region": "Chandigarh Elante", "Product": "Merino Knit Polo", "Units Sold": "7", "Net Amount": "₹19,593", "Sales Trend": "Sluggish (-16%)" },
+            { "Invoice #": "INV-2026-8312", "Date": "17 Sep 2026", "Store / Region": "Lucknow Phoenix", "Product": "Vintage Straight Denim", "Units Sold": "14", "Net Amount": "₹41,986", "Sales Trend": "Stable (+8%)" },
+            { "Invoice #": "INV-2026-8270", "Date": "17 Sep 2026", "Store / Region": "Kochi Lulu Mall", "Product": "Band-Collar Linen Shirt", "Units Sold": "32", "Net Amount": "₹79,968", "Sales Trend": "Surging (+88%)" },
+            { "Invoice #": "INV-2026-8215", "Date": "16 Sep 2026", "Store / Region": "Indore Treasure", "Product": "Quilted Puffer Vest", "Units Sold": "4", "Net Amount": "₹11,996", "Sales Trend": "Lagging (-22%)" },
+            { "Invoice #": "INV-2026-8170", "Date": "16 Sep 2026", "Store / Region": "Surat VR Mall", "Product": "Tailored Stretch Chino", "Units Sold": "19", "Net Amount": "₹43,681", "Sales Trend": "Healthy (+11%)" },
+            { "Invoice #": "INV-2026-8104", "Date": "15 Sep 2026", "Store / Region": "Delhi Saket (DL-02)", "Product": "Silk Blend Resort Shirt", "Units Sold": "22", "Net Amount": "₹87,978", "Sales Trend": "Fast (+74%)" },
+            { "Invoice #": "INV-2026-8051", "Date": "15 Sep 2026", "Store / Region": "Mumbai Palladium", "Product": "Oversized Fleece Hoodie", "Units Sold": "5", "Net Amount": "₹12,495", "Sales Trend": "Slow (-17%)" },
+            { "Invoice #": "INV-2026-7992", "Date": "14 Sep 2026", "Store / Region": "Bengaluru Koramangala", "Product": "Ribbed Modal Tank Top", "Units Sold": "38", "Net Amount": "₹37,962", "Sales Trend": "Stable (+15%)" },
+            { "Invoice #": "INV-2026-7935", "Date": "14 Sep 2026", "Store / Region": "Noida DLF Mall", "Product": "Classic Bomber Jacket", "Units Sold": "3", "Net Amount": "₹11,997", "Sales Trend": "Stagnant (-33%)" },
+            { "Invoice #": "INV-2026-7880", "Date": "13 Sep 2026", "Store / Region": "Gurugram Ambience", "Product": "Corduroy Overshirt", "Units Sold": "6", "Net Amount": "₹17,994", "Sales Trend": "Slow (-12%)" },
+            { "Invoice #": "INV-2026-7822", "Date": "13 Sep 2026", "Store / Region": "Nagpur Empress", "Product": "Lightweight Windbreaker", "Units Sold": "15", "Net Amount": "₹44,985", "Sales Trend": "Normal (+6%)" },
+            { "Invoice #": "INV-2026-7760", "Date": "12 Sep 2026", "Store / Region": "Bhopal DB City", "Product": "Premium Leather Belt", "Units Sold": "24", "Net Amount": "₹35,976", "Sales Trend": "Strong (+19%)" },
+            { "Invoice #": "INV-2026-7710", "Date": "12 Sep 2026", "Store / Region": "Patna City Centre", "Product": "Striped Poplin Shirt", "Units Sold": "16", "Net Amount": "₹39,984", "Sales Trend": "Healthy (+10%)" },
+            { "Invoice #": "INV-2026-7654", "Date": "11 Sep 2026", "Store / Region": "Guwahati City Square", "Product": "Double-Breasted Trench", "Units Sold": "1", "Net Amount": "₹7,999", "Sales Trend": "Frozen (-52%)" },
+            { "Invoice #": "INV-2026-7601", "Date": "11 Sep 2026", "Store / Region": "Vadodara Inorbit", "Product": "Cable-Knit Cardigan", "Units Sold": "4", "Net Amount": "₹9,996", "Sales Trend": "Slow (-27%)" },
+            { "Invoice #": "INV-2026-7540", "Date": "10 Sep 2026", "Store / Region": "Online D2C Webstore", "Product": "Canvas Chore Jacket", "Units Sold": "11", "Net Amount": "₹38,489", "Sales Trend": "Healthy (+9%)" },
+          ],
+        },
+        {
+          id: "c1-returns-ledger",
+          name: "Customer Returns & Sizing Ledger",
+          badge: "Returns Table",
+          period: "Jun 25 – Sep 23, 2026",
+          totalSum: "₹6.80 Cr",
+          recordCount: "1,840 Records",
+          sourceSystem: "Customer Support & Returns Portal",
+          citationId: "CIT-2026-RET-18",
+          description: "Customer return logs categorized by reason codes, fit feedback, and refunded sums.",
+          columns: ["Return ID", "Return Date", "Channel", "Product", "Size", "Return Reason", "Refund Amount"],
+          rows: [
+            { "Return ID": "RET-2026-1044", "Return Date": "23 Sep 2026", "Channel": "Online App", "Product": "Men's Denim Jacket", "Size": "L", "Return Reason": "Sleeve length too long", "Refund Amount": "₹3,999" },
+            { "Return ID": "RET-2026-1021", "Return Date": "22 Sep 2026", "Channel": "Delhi Flagship", "Product": "Women's Kurti", "Size": "M", "Return Reason": "Tight shoulder fit", "Refund Amount": "₹1,999" },
+            { "Return ID": "RET-2026-0988", "Return Date": "21 Sep 2026", "Channel": "Bengaluru Indiranagar", "Product": "Casual Trousers", "Size": "34", "Return Reason": "Waist runs tight", "Refund Amount": "₹2,299" },
+            { "Return ID": "RET-2026-0952", "Return Date": "20 Sep 2026", "Channel": "Mumbai Phoenix", "Product": "Slim Fit Shirt", "Size": "40", "Return Reason": "Collar fit uncomfortable", "Refund Amount": "₹1,899" },
+            { "Return ID": "RET-2026-0911", "Return Date": "19 Sep 2026", "Channel": "Online App", "Product": "Printed T-shirt", "Size": "XL", "Return Reason": "Fabric print mismatch", "Refund Amount": "₹999" },
+          ],
+        },
+        {
+          id: "c1-inventory-ledger",
+          name: "Warehouse Inventory Age & Exposure Ledger",
+          badge: "Inventory Table",
+          period: "As of Sep 23, 2026",
+          totalSum: "₹18.40 Cr",
+          recordCount: "42 Products",
+          sourceSystem: "Warehouse WMS & Stock Balances",
+          citationId: "CIT-2026-INV-87",
+          description: "Inventory age distribution and exposure valuation across central and regional hubs.",
+          columns: ["Product Name", "Units in Stock", "Avg Age", "Unit Cost", "Total Exposure", "Risk Level"],
+          rows: [
+            { "Product Name": "Men's Denim Jacket", "Units in Stock": "7,000 pcs", "Avg Age": "124 days", "Unit Cost": "₹4,000", "Total Exposure": "₹2.80 Cr", "Risk Level": "High Risk" },
+            { "Product Name": "Women's Kurti", "Units in Stock": "10,500 pcs", "Avg Age": "109 days", "Unit Cost": "₹2,000", "Total Exposure": "₹2.10 Cr", "Risk Level": "High Risk" },
+            { "Product Name": "Slim Fit Shirt", "Units in Stock": "8,950 pcs", "Avg Age": "96 days", "Unit Cost": "₹1,900", "Total Exposure": "₹1.70 Cr", "Risk Level": "Moderate Risk" },
+            { "Product Name": "Casual Trousers", "Units in Stock": "6,080 pcs", "Avg Age": "91 days", "Unit Cost": "₹2,300", "Total Exposure": "₹1.40 Cr", "Risk Level": "Moderate Risk" },
+            { "Product Name": "Printed T-shirt", "Units in Stock": "12,000 pcs", "Avg Age": "86 days", "Unit Cost": "₹1,000", "Total Exposure": "₹1.20 Cr", "Risk Level": "Moderate Risk" },
+            { "Product Name": "Relaxed Fit Utility Cargo", "Units in Stock": "4,200 pcs", "Avg Age": "82 days", "Unit Cost": "₹2,740", "Total Exposure": "₹1.15 Cr", "Risk Level": "High Risk" },
+            { "Product Name": "Heavyweight Wool Overcoat", "Units in Stock": "2,450 pcs", "Avg Age": "118 days", "Unit Cost": "₹4,000", "Total Exposure": "₹98.0 L", "Risk Level": "High Risk" },
+            { "Product Name": "Fine Gauge Merino Knit Polo", "Units in Stock": "3,100 pcs", "Avg Age": "74 days", "Unit Cost": "₹2,740", "Total Exposure": "₹85.0 L", "Risk Level": "Moderate Risk" },
+            { "Product Name": "Vintage Wash Straight Jeans", "Units in Stock": "2,600 pcs", "Avg Age": "65 days", "Unit Cost": "₹3,000", "Total Exposure": "₹78.0 L", "Risk Level": "Watching" },
+            { "Product Name": "French Linen Band-Collar Shirt", "Units in Stock": "1,850 pcs", "Avg Age": "18 days", "Unit Cost": "₹3,510", "Total Exposure": "₹65.0 L", "Risk Level": "Stockout Risk" },
+            { "Product Name": "Quilted Puffer Vest", "Units in Stock": "1,930 pcs", "Avg Age": "94 days", "Unit Cost": "₹3,000", "Total Exposure": "₹58.0 L", "Risk Level": "High Risk" },
+            { "Product Name": "Tailored Stretch Chino Pants", "Units in Stock": "2,400 pcs", "Avg Age": "58 days", "Unit Cost": "₹2,250", "Total Exposure": "₹54.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Silk Blend Resort Shirt", "Units in Stock": "1,220 pcs", "Avg Age": "22 days", "Unit Cost": "₹4,010", "Total Exposure": "₹49.0 L", "Risk Level": "Stockout Risk" },
+            { "Product Name": "Oversized Fleece Hoodie", "Units in Stock": "1,800 pcs", "Avg Age": "88 days", "Unit Cost": "₹2,500", "Total Exposure": "₹45.0 L", "Risk Level": "Moderate Risk" },
+            { "Product Name": "Ribbed Modal Tank Top", "Units in Stock": "4,200 pcs", "Avg Age": "45 days", "Unit Cost": "₹1,000", "Total Exposure": "₹42.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Classic Bomber Jacket", "Units in Stock": "1,150 pcs", "Avg Age": "105 days", "Unit Cost": "₹3,390", "Total Exposure": "₹39.0 L", "Risk Level": "High Risk" },
+            { "Product Name": "Stretch Cotton Bermuda Shorts", "Units in Stock": "2,000 pcs", "Avg Age": "92 days", "Unit Cost": "₹1,800", "Total Exposure": "₹36.0 L", "Risk Level": "Moderate Risk" },
+            { "Product Name": "Corduroy Overshirt", "Units in Stock": "1,100 pcs", "Avg Age": "68 days", "Unit Cost": "₹3,000", "Total Exposure": "₹33.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Lightweight Windbreaker", "Units in Stock": "1,000 pcs", "Avg Age": "62 days", "Unit Cost": "₹3,000", "Total Exposure": "₹30.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Premium Leather Dress Belt", "Units in Stock": "1,860 pcs", "Avg Age": "55 days", "Unit Cost": "₹1,500", "Total Exposure": "₹28.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Striped Poplin Work Shirt", "Units in Stock": "1,040 pcs", "Avg Age": "48 days", "Unit Cost": "₹2,500", "Total Exposure": "₹26.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Double-Breasted Trench Coat", "Units in Stock": "600 pcs", "Avg Age": "112 days", "Unit Cost": "₹4,000", "Total Exposure": "₹24.0 L", "Risk Level": "High Risk" },
+            { "Product Name": "Cable-Knit Wool Cardigan", "Units in Stock": "880 pcs", "Avg Age": "95 days", "Unit Cost": "₹2,500", "Total Exposure": "₹22.0 L", "Risk Level": "Moderate Risk" },
+            { "Product Name": "Athleisure Jogger Pants", "Units in Stock": "1,250 pcs", "Avg Age": "42 days", "Unit Cost": "₹1,600", "Total Exposure": "₹20.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Canvas Chore Jacket", "Units in Stock": "514 pcs", "Avg Age": "76 days", "Unit Cost": "₹3,500", "Total Exposure": "₹18.0 L", "Risk Level": "Watching" },
+            { "Product Name": "Chambray Casual Button-Down", "Units in Stock": "620 pcs", "Avg Age": "51 days", "Unit Cost": "₹2,400", "Total Exposure": "₹14.9 L", "Risk Level": "Watching" },
+            { "Product Name": "Waxed Cotton Field Parka", "Units in Stock": "310 pcs", "Avg Age": "116 days", "Unit Cost": "₹4,200", "Total Exposure": "₹13.0 L", "Risk Level": "High Risk" },
+            { "Product Name": "Relaxed Linen Drawstring Trouser", "Units in Stock": "480 pcs", "Avg Age": "24 days", "Unit Cost": "₹2,500", "Total Exposure": "₹12.0 L", "Risk Level": "Stockout Risk" },
+            { "Product Name": "Brushed Flannel Plaid Shirt", "Units in Stock": "440 pcs", "Avg Age": "72 days", "Unit Cost": "₹2,200", "Total Exposure": "₹9.7 L", "Risk Level": "Watching" },
+            { "Product Name": "Pima Cotton Crew Undershirt (3-Pack)", "Units in Stock": "650 pcs", "Avg Age": "30 days", "Unit Cost": "₹1,400", "Total Exposure": "₹9.1 L", "Risk Level": "Optimal" },
+          ],
+        },
+      ],
+      dataSources: [
+        "Store stock counts from 42 retail shops",
+        "Daily customer sales bills from the last 90 days",
+        "Warehouse storage logs showing how old each item is",
+        "Normal sales targets for this season",
+      ],
+      methodology:
+        "We flagged clothes that have been in stock for over 60 days with sales falling by more than 15%. We then added up the money tied up in these items.",
+    },
+  },
+  "case-2": {
+    reportTitle: "New launch results: What is selling and what is not",
+    reportDate: "September 2026",
+    kpiStats: [
+      { value: "84.2%", label: "Linen Sales Rate" },
+      { value: "28.0%", label: "Cargo Pants Sales Rate" },
+      { value: "₹6.4 Cr", label: "New Launch Sales" },
+      { value: "3.2x", label: "Sales Gap" },
+    ],
+    keyFinding:
+      "New Linen shirts are selling very fast (84% sold in 18 days).\nCargo pants are selling very slowly (only 28% sold) due to waist fitting issues.\nDigital ad spending is currently misallocated to slow-moving pants.",
+    findingChart: {
+      title: "Launch Sell-Through Velocity vs Benchmark",
+      subtitle: "Actual 18-day sell-through compared against 55% category target",
+      badge: "3.2x Velocity Gap",
+      type: "benchmark",
+      benchmarkLabel: "Target Benchmark",
+      benchmarkValue: 55,
+      bars: [
+        { label: "Band-Collar Linen Shirt", value: 84.2, formattedValue: "84.2%", subtext: "Exceeds target by +29.2% (Viral)", color: "bg-emerald-600" },
+        { label: "French Linen Over-Shirt", value: 78.0, formattedValue: "78.0%", subtext: "Exceeds target by +23.0% (Strong)", color: "bg-emerald-500" },
+        { label: "High-Rise Utility Cargo", value: 28.0, formattedValue: "28.0%", subtext: "Lags target by -27.0% (Fit issues)", color: "bg-rose-500", isWarning: true },
+        { label: "Cropped Cargo Trouser", value: 22.0, formattedValue: "22.0%", subtext: "Lags target by -33.0% (Returns)", color: "bg-rose-600", isWarning: true },
+      ],
+      takeaway: "Linen styles sold 3.2x faster than Cargo pants, which suffered high return rates from waist fitting issues.",
+    },
+    topProducts: [
+      { product: "Band-Collar Linen Shirt", inventory: "₹2.2 Cr", age: "18 days", salesTrend: "↑ 84%" },
+      { product: "French Linen Over-Shirt", inventory: "₹1.8 Cr", age: "18 days", salesTrend: "↑ 78%" },
+      { product: "High-Rise Utility Cargo", inventory: "₹1.4 Cr", age: "18 days", salesTrend: "↓ 28%" },
+      { product: "Cropped Cargo Trouser", inventory: "₹0.9 Cr", age: "18 days", salesTrend: "↓ 22%" },
+    ],
+    drivers: [
+      { label: "High customer demand for Linen", value: "₹3.8 Cr" },
+      { label: "Fitting issues causing Cargo returns", value: "₹1.4 Cr" },
+      { label: "Ad budget spent on slow items", value: "₹0.8 Cr" },
+      { label: "Popular sizes ran out too early", value: "₹0.4 Cr" },
+    ],
+    insights: [
+      {
+        number: "01",
+        headline: "Linen is a hit, Cargo is struggling",
+        detail: "Linen shirts sold 3 times faster than expected, while Cargo pants faced sizing complaints.",
+      },
+      {
+        number: "02",
+        headline: "High return rate on Cargo pants",
+        detail: "About 1 in every 3 buyers returned the cargo pants due to waist fitting problems.",
+      },
+      {
+        number: "03",
+        headline: "Ads are running for the wrong items",
+        detail: "Most of our ad budget was spent promoting items that customers are not buying.",
+      },
+    ],
+    businessImpact:
+      "Too much money is stuck in slow-selling pants, while our best-selling linen shirts are about to run out of stock.",
+    focusAreas: [
+      "Move ad budget from Cargo pants to Linen shirts",
+      "Fix the waist sizing on future Cargo pant batches",
+      "Show customers how to style and fit high-rise pants",
+    ],
+    howAnswerFound: {
+      summary:
+        "We tracked sales from the first 18 days of the launch, checking store bills, online orders, and customer return reasons.",
+      analysis:
+        "Analyzed the first 18 days of launch sales invoices (₹6.40 Cr total) and return records across physical stores and online channels (September 5 – 23, 2026). We calculated product sell-through rates against launch allocation targets and correlated customer return tags with digital ad spending.",
+      findings: [
+        "Launch Sales analyzed: ₹6.40 Cr generated across 4 launch categories in 18 days.",
+        "Linen shirts achieved an 84.2% sell-through rate, outperforming launch targets by 3.2x.",
+        "Cargo pants recorded ₹1.40 Cr in customer returns with a 34% return rate caused by waist-fit issues.",
+        "Digital ad spend of ₹0.80 Cr was heavily directed at low-converting cargo silhouettes instead of high-demand linen.",
+      ],
+      evidenceDatasets: [
+        {
+          id: "c2-launch-sales",
+          name: "New Launch Sales Invoices (First 18 Days)",
+          badge: "Sales Table",
+          period: "Sep 5 – Sep 23, 2026",
+          totalSum: "₹6.40 Cr",
+          recordCount: "8,920 Invoices",
+          sourceSystem: "Omnichannel Launch Sales Feed",
+          citationId: "CIT-2026-LNCH-SLS",
+          description: "All sales receipts for newly launched fall silhouettes across online and offline stores.",
+          columns: ["Order ID", "Date", "Channel", "Style Name", "Units Sold", "Amount", "Sell-Through Rate"],
+          rows: [
+            { "Order ID": "ORD-LN-0192", "Date": "23 Sep 2026", "Channel": "Online Store", "Style Name": "Band-Collar Linen Shirt (Sky)", "Units Sold": "2", "Amount": "₹4,998", "Sell-Through Rate": "84.2% (Viral)" },
+            { "Order ID": "ORD-LN-0185", "Date": "23 Sep 2026", "Channel": "Mumbai Flagship", "Style Name": "French Linen Over-Shirt (Sand)", "Units Sold": "3", "Amount": "₹8,397", "Sell-Through Rate": "78.0% (Strong)" },
+            { "Order ID": "ORD-LN-0171", "Date": "22 Sep 2026", "Channel": "Bengaluru Store", "Style Name": "High-Rise Utility Cargo (Olive)", "Units Sold": "1", "Amount": "₹2,999", "Sell-Through Rate": "28.0% (Lagging)" },
+            { "Order ID": "ORD-LN-0164", "Date": "22 Sep 2026", "Channel": "Online App", "Style Name": "Cropped Cargo Trouser (Black)", "Units Sold": "1", "Amount": "₹2,799", "Sell-Through Rate": "22.0% (Lagging)" },
+            { "Order ID": "ORD-LN-0150", "Date": "21 Sep 2026", "Channel": "Delhi Flagship", "Style Name": "Band-Collar Linen Shirt (White)", "Units Sold": "4", "Amount": "₹9,996", "Sell-Through Rate": "86.5% (Stockout Risk)" },
+            { "Order ID": "ORD-LN-0142", "Date": "21 Sep 2026", "Channel": "Hyderabad Store", "Style Name": "French Linen Over-Shirt (Olive)", "Units Sold": "2", "Amount": "₹5,598", "Sell-Through Rate": "76.4% (Strong)" },
+            { "Order ID": "ORD-LN-0136", "Date": "20 Sep 2026", "Channel": "Online Store", "Style Name": "Band-Collar Linen Shirt (Navy)", "Units Sold": "5", "Amount": "₹12,495", "Sell-Through Rate": "89.0% (Stockout Risk)" },
+            { "Order ID": "ORD-LN-0129", "Date": "20 Sep 2026", "Channel": "Pune Store", "Style Name": "High-Rise Utility Cargo (Khaki)", "Units Sold": "1", "Amount": "₹2,999", "Sell-Through Rate": "26.5% (Lagging)" },
+            { "Order ID": "ORD-LN-0118", "Date": "19 Sep 2026", "Channel": "Chennai Store", "Style Name": "Relaxed Linen Pants (Ecru)", "Units Sold": "3", "Amount": "₹8,997", "Sell-Through Rate": "81.2% (Strong)" },
+            { "Order ID": "ORD-LN-0105", "Date": "19 Sep 2026", "Channel": "Online App", "Style Name": "Cropped Cargo Trouser (Olive)", "Units Sold": "1", "Amount": "₹2,799", "Sell-Through Rate": "24.0% (Lagging)" },
+            { "Order ID": "ORD-LN-0094", "Date": "18 Sep 2026", "Channel": "Kolkata Store", "Style Name": "French Linen Over-Shirt (Charcoal)", "Units Sold": "3", "Amount": "₹8,397", "Sell-Through Rate": "74.8% (Strong)" },
+            { "Order ID": "ORD-LN-0082", "Date": "18 Sep 2026", "Channel": "Online Store", "Style Name": "Band-Collar Linen Shirt (Stripe)", "Units Sold": "4", "Amount": "₹10,796", "Sell-Through Rate": "92.4% (Viral)" },
+            { "Order ID": "ORD-LN-0071", "Date": "17 Sep 2026", "Channel": "Ahmedabad Store", "Style Name": "High-Rise Utility Cargo (Black)", "Units Sold": "2", "Amount": "₹5,998", "Sell-Through Rate": "29.1% (Lagging)" },
+            { "Order ID": "ORD-LN-0060", "Date": "17 Sep 2026", "Channel": "Jaipur Store", "Style Name": "Relaxed Linen Shorts (Navy)", "Units Sold": "6", "Amount": "₹11,994", "Sell-Through Rate": "83.0% (Strong)" },
+            { "Order ID": "ORD-LN-0049", "Date": "16 Sep 2026", "Channel": "Chandigarh Store", "Style Name": "Cropped Cargo Trouser (Tan)", "Units Sold": "1", "Amount": "₹2,799", "Sell-Through Rate": "21.5% (Lagging)" },
+          ],
+        },
+        {
+          id: "c2-launch-returns",
+          name: "Launch Returns & Fit Complaints Log",
+          badge: "Returns Table",
+          period: "Sep 5 – Sep 23, 2026",
+          totalSum: "₹1.40 Cr",
+          recordCount: "940 Return Slips",
+          sourceSystem: "Customer Feedback & Returns Log",
+          citationId: "CIT-2026-LNCH-RET",
+          description: "Granular return audit logs highlighting customer feedback reasons for launch merchandise.",
+          columns: ["Return ID", "Date", "Product Style", "Size", "Customer Complaint", "Refund Amount", "Action"],
+          rows: [
+            { "Return ID": "RET-CRG-044", "Date": "23 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "30", "Customer Complaint": "Waist runs 1.5 inches too tight", "Refund Amount": "₹2,999", "Action": "Fit Grading Audit" },
+            { "Return ID": "RET-CRG-039", "Date": "22 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "32", "Customer Complaint": "Inseam length uneven", "Refund Amount": "₹2,799", "Action": "QC Pattern Check" },
+            { "Return ID": "RET-CRG-031", "Date": "21 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "28", "Customer Complaint": "Hip-to-waist ratio uncomfortable", "Refund Amount": "₹2,999", "Action": "Fit Grading Audit" },
+            { "Return ID": "RET-CRG-025", "Date": "20 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "34", "Customer Complaint": "Button snap defective", "Refund Amount": "₹2,999", "Action": "Hardware Replacement" },
+            { "Return ID": "RET-CRG-021", "Date": "20 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "30", "Customer Complaint": "Pocket placement too low", "Refund Amount": "₹2,799", "Action": "Design Review" },
+            { "Return ID": "RET-CRG-018", "Date": "19 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "32", "Customer Complaint": "Waist band stiff, no stretch", "Refund Amount": "₹2,999", "Action": "Fabric Blend Revision" },
+            { "Return ID": "RET-CRG-014", "Date": "18 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "36", "Customer Complaint": "Tight around thigh area", "Refund Amount": "₹2,799", "Action": "Fit Grading Audit" },
+            { "Return ID": "RET-CRG-009", "Date": "17 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "30", "Customer Complaint": "Length 2 inches longer than spec", "Refund Amount": "₹2,999", "Action": "QC Inseam Tolerance" },
+            { "Return ID": "RET-CRG-004", "Date": "16 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "28", "Customer Complaint": "Fly zipper sticks", "Refund Amount": "₹2,799", "Action": "Hardware Supplier Review" },
+            { "Return ID": "RET-LNN-002", "Date": "16 Sep 2026", "Product Style": "Band-Collar Linen Shirt", "Size": "XL", "Customer Complaint": "Ordered wrong size (wanted L)", "Refund Amount": "₹2,499", "Action": "Exchange Processed" },
+          ],
+        },
+        {
+          id: "c2-marketing-ad-spend",
+          name: "Digital Ad Campaign & Spend Log",
+          badge: "Marketing Table",
+          period: "Sep 5 – Sep 23, 2026",
+          totalSum: "₹0.80 Cr",
+          recordCount: "24 Campaigns",
+          sourceSystem: "Ad Engine Analytics Feed",
+          citationId: "CIT-2026-MKTG-SPD",
+          description: "Ad spend distribution by category showing misallocated budget towards slow-moving pants.",
+          columns: ["Campaign ID", "Target Product", "Ad Spend", "Impressions", "Purchases", "ROAS", "Recommendation"],
+          rows: [
+            { "Campaign ID": "CMP-META-CARGO-01", "Target Product": "High-Rise Utility Cargo", "Ad Spend": "₹38,00,000", "Impressions": "4.2M", "Purchases": "420", "ROAS": "0.9x", "Recommendation": "Pause Campaign" },
+            { "Campaign ID": "CMP-META-LINEN-02", "Target Product": "Band-Collar Linen Shirt", "Ad Spend": "₹18,00,000", "Impressions": "2.1M", "Purchases": "1,980", "ROAS": "4.8x", "Recommendation": "Scale +250%" },
+            { "Campaign ID": "CMP-GOOGLE-CRG-03", "Target Product": "Cropped Cargo Trouser", "Ad Spend": "₹16,00,000", "Impressions": "1.8M", "Purchases": "190", "ROAS": "0.7x", "Recommendation": "Reallocate Budget" },
+            { "Campaign ID": "CMP-INFLUENCER-04", "Target Product": "French Linen Over-Shirt", "Ad Spend": "₹8,00,000", "Impressions": "1.4M", "Purchases": "840", "ROAS": "3.9x", "Recommendation": "Expand Partnerships" },
+          ],
+        },
+      ],
+      dataSources: [
+        "Store and website sales numbers for new items",
+        "Customer feedback and return reasons for wrong fits",
+        "Online ad spending logs for each style",
+      ],
+      methodology:
+        "We compared actual sales against our sales goals to find out which new styles are popular and which are being returned.",
+    },
+  },
+  "case-3": {
+    reportTitle: "Jeans sales share and factory reliance risk",
+    reportDate: "September 2026",
+    kpiStats: [
+      { value: "42.6%", label: "Share of Total Sales" },
+      { value: "78.5%", label: "Cloth from 1 Factory" },
+      { value: "₹12.8 Cr", label: "Monthly Jeans Sales" },
+      { value: "64.0%", label: "Repeat Buyers" },
+    ],
+    keyFinding:
+      "Our main jeans styles bring in 43% of all sales (₹12.8 Cr per month) with high repeat buyers.\nNearly 80% of our denim fabric comes from just one spinning mill in Coimbatore.\nZero backup certified mills create a severe supply disruption vulnerability.",
+    findingChart: {
+      title: "Revenue Dominance vs Single-Mill Risk",
+      subtitle: "Jeans portfolio contribution alongside Coimbatore mill allocation",
+      badge: "78.5% Mill Reliance",
+      type: "share",
+      secondaryBreakdown: [
+        { label: "Coimbatore Mill", value: "78.5%", percentage: 78.5, color: "bg-rose-500" },
+        { label: "Other Suppliers", value: "21.5%", percentage: 21.5, color: "bg-emerald-500" },
+      ],
+      bars: [
+        { label: "Denim Share of Apparel Sales", value: 42.6, formattedValue: "42.6%", subtext: "₹12.8 Cr/mo revenue contribution", color: "bg-[#0e7490]" },
+        { label: "Coimbatore Mill Sourcing Share", value: 78.5, formattedValue: "78.5%", subtext: "Safe diversification limit is 40.0%", color: "bg-rose-500", isWarning: true },
+        { label: "Repeat Denim Shoppers", value: 64.0, formattedValue: "64.0%", subtext: "Strong customer loyalty and cross-sell", color: "bg-emerald-600" },
+      ],
+      takeaway: "Jeans account for 43% of company sales but 78.5% of fabric comes from one mill with a 45-day turnaround.",
+    },
+    topProducts: [
+      { product: "Slim Stretch Denim (Indigo)", inventory: "₹3.8 Cr", age: "45 days", salesTrend: "↑ 18%" },
+      { product: "Relaxed Vintage Denim (Light)", inventory: "₹3.1 Cr", age: "52 days", salesTrend: "↑ 14%" },
+      { product: "Classic Straight Leg Denim", inventory: "₹2.2 Cr", age: "60 days", salesTrend: "→ 2%" },
+      { product: "High-Rise Tapered Denim", inventory: "₹1.7 Cr", age: "58 days", salesTrend: "↑ 8%" },
+    ],
+    drivers: [
+      { label: "Relying on one fabric mill", value: "₹8.5 Cr" },
+      { label: "Strong customer love for our jeans", value: "₹3.2 Cr" },
+      { label: "Lack of backup suppliers", value: "₹0.8 Cr" },
+      { label: "Low extra cloth in reserve", value: "₹0.3 Cr" },
+    ],
+    insights: [
+      {
+        number: "01",
+        headline: "Jeans drive our business",
+        detail: "Jeans are our biggest money-maker and bring back the most customers.",
+      },
+      {
+        number: "02",
+        headline: "Big risk if the factory stops",
+        detail: "If the single supplier in Coimbatore pauses work, ₹8.5 Cr in sales is at risk.",
+      },
+      {
+        number: "03",
+        headline: "Jeans buyers also buy other clothes",
+        detail: "Shoppers who buy our jeans are the most likely to buy shirts and jackets too.",
+      },
+    ],
+    businessImpact:
+      "If our main cloth supplier has any delay, nearly half of our company revenue will take a severe hit within 3 weeks.",
+    focusAreas: [
+      "Find and approve a backup denim cloth mill",
+      "Keep a 45-day emergency reserve of denim fabric in stock",
+      "Sign a 1-year steady supply deal with our top mill",
+    ],
+    howAnswerFound: {
+      summary:
+        "We looked at where we buy our cloth and checked which products generate the most repeat sales.",
+      analysis:
+        "Analyzed monthly sales invoices totaling ₹12.80 Cr across all denim lines alongside fabric procurement purchase orders totaling ₹8.50 Cr over the past 90 days. We calculated factory allocation shares and cross-referenced mill delivery lead times to evaluate single-point supply vulnerabilities.",
+      findings: [
+        "Monthly Jeans Revenue analyzed: ₹12.80 Cr across 4 core denim lines, accounting for 42.6% of overall apparel sales.",
+        "Fabric Procurement POs analyzed: ₹8.50 Cr total fabric spend over the last 90 days.",
+        "Mill Dependency: 78.5% of all denim yardage comes from a single spinning mill in Coimbatore.",
+        "Lead-time vulnerability: Average mill lead time is 45 days, with zero alternate mills currently certified for production.",
+      ],
+      evidenceDatasets: [
+        {
+          id: "c3-denim-sales",
+          name: "Denim Sales Invoices & Repeat Purchases",
+          badge: "Sales Table",
+          period: "Aug 24 – Sep 23, 2026",
+          totalSum: "₹12.80 Cr / Mo",
+          recordCount: "18,400 Invoices",
+          sourceSystem: "Core POS & Customer Loyalty Feed",
+          citationId: "CIT-2026-DNM-SLS",
+          description: "Monthly customer purchases across all 4 key denim styles and repeat customer buyer shares.",
+          columns: ["Invoice #", "Date", "Denim Style", "Fit", "Units", "Revenue", "Buyer Type"],
+          rows: [
+            { "Invoice #": "INV-DNM-9011", "Date": "23 Sep 2026", "Denim Style": "Slim Stretch Denim", "Fit": "Dark Indigo", "Units": "2", "Revenue": "₹5,998", "Buyer Type": "Repeat Buyer (3rd time)" },
+            { "Invoice #": "INV-DNM-8984", "Date": "22 Sep 2026", "Denim Style": "Relaxed Vintage Denim", "Fit": "Light Wash", "Units": "1", "Revenue": "₹3,499", "Buyer Type": "Repeat Buyer (2nd time)" },
+            { "Invoice #": "INV-DNM-8950", "Date": "22 Sep 2026", "Denim Style": "Classic Straight Leg Denim", "Fit": "Raw Rinse", "Units": "1", "Revenue": "₹2,999", "Buyer Type": "New Buyer" },
+            { "Invoice #": "INV-DNM-8912", "Date": "21 Sep 2026", "Denim Style": "High-Rise Tapered Denim", "Fit": "Washed Blue", "Units": "2", "Revenue": "₹6,398", "Buyer Type": "Repeat Buyer (4th time)" },
+          ],
+        },
+        {
+          id: "c3-mill-procurement",
+          name: "Fabric Purchase Orders & Mill Allocation",
+          badge: "Procurement Table",
+          period: "Last 90 Days",
+          totalSum: "₹8.50 Cr Fabric POs",
+          recordCount: "36 Purchase Orders",
+          sourceSystem: "ERP Sourcing & Mill Allocation DB",
+          citationId: "CIT-2026-SPLY-PO",
+          description: "Fabric yardage orders showing severe dependency on Coimbatore Mill.",
+          columns: ["PO Number", "Issue Date", "Supplier Mill", "Fabric Type", "Meters Ordered", "PO Value", "Allocation %"],
+          rows: [
+            { "PO Number": "PO-TEX-2026-081", "Issue Date": "15 Sep 2026", "Supplier Mill": "Coimbatore Spinning Mill", "Fabric Type": "12oz Ring-Spun Stretch Denim", "Meters Ordered": "80,000 m", "PO Value": "₹3,40,00,000", "Allocation %": "78.5% (Dominant)" },
+            { "PO Number": "PO-TEX-2026-074", "Issue Date": "28 Aug 2026", "Supplier Mill": "Coimbatore Spinning Mill", "Fabric Type": "11oz Vintage Light Indigo", "Meters Ordered": "65,000 m", "PO Value": "₹2,80,00,000", "Allocation %": "78.5% (Dominant)" },
+            { "PO Number": "PO-TEX-2026-068", "Issue Date": "10 Aug 2026", "Supplier Mill": "Ahmedabad Textiles Ltd", "Fabric Type": "10oz Raw Twill Pocketing", "Meters Ordered": "25,000 m", "PO Value": "₹95,00,000", "Allocation %": "14.2% (Secondary)" },
+            { "PO Number": "PO-TEX-2026-059", "Issue Date": "22 Jul 2026", "Supplier Mill": "Surat Specialty Weaves", "Fabric Type": "Poly-Cotton Trim & Threads", "Meters Ordered": "18,000 m", "PO Value": "₹65,00,000", "Allocation %": "7.3% (Tertiary)" },
+          ],
+        },
+        {
+          id: "c3-mill-lead-time",
+          name: "Supplier Lead Time & Buffer Stock Log",
+          badge: "Supplier Table",
+          period: "As of Sep 2026",
+          totalSum: "45 Days Lead Time",
+          recordCount: "12 Delivery Runs",
+          sourceSystem: "Inbound Supply Chain Records",
+          citationId: "CIT-2026-SPLY-LDT",
+          description: "Mill manufacturing turnaround and reserve stock levels against safety buffer thresholds.",
+          columns: ["Mill Name", "Location", "Avg Lead Time", "Monthly Capacity", "Current Buffer Days", "Status"],
+          rows: [
+            { "Mill Name": "Coimbatore Spinning Mill", "Location": "Coimbatore, Tamil Nadu", "Avg Lead Time": "45 Days", "Monthly Capacity": "140,000 meters", "Current Buffer Days": "12 Days (Deficit)", "Status": "Critical Single Source" },
+            { "Mill Name": "Ahmedabad Textiles Ltd", "Location": "Ahmedabad, Gujarat", "Avg Lead Time": "30 Days", "Monthly Capacity": "50,000 meters", "Current Buffer Days": "35 Days (Healthy)", "Status": "Secondary Trim Only" },
+            { "Mill Name": "Surat Specialty Weaves", "Location": "Surat, Gujarat", "Avg Lead Time": "24 Days", "Monthly Capacity": "30,000 meters", "Current Buffer Days": "40 Days (Healthy)", "Status": "Accessories Only" },
+          ],
+        },
+      ],
+      dataSources: [
+        "Supplier and cloth mill purchase orders",
+        "Customer repeat purchase records over the past 90 days",
+        "Fabric delivery lead times and emergency stock counts",
+      ],
+      methodology:
+        "We matched our top-selling jeans against our fabric suppliers to see how dependent we are on a single mill.",
+    },
+  },
+  "case-4": {
+    reportTitle: "Old season products losing sales and next steps",
+    reportDate: "September 2026",
+    kpiStats: [
+      { value: "-35.4%", label: "Monthly Sales Drop" },
+      { value: "8,420", label: "Unsold Pieces" },
+      { value: "₹4.8 Cr", label: "Stuck Money" },
+      { value: "61.2%", label: "Very Small or Big Sizes" },
+    ],
+    keyFinding:
+      "Warm winter polo shirts and thermal tops dropped 35% in sales this month.\n8,420 unsold pieces remain trapped across warehouse and store shelves.\n61% of trapped inventory is concentrated in extreme sizes (XS and XXL).",
+    findingChart: {
+      title: "Unsold Units Trapped by Size Run",
+      subtitle: "8,420 unsold winter pieces heavily skewed toward extreme sizes",
+      badge: "61.2% Extreme Sizes",
+      type: "distribution",
+      secondaryBreakdown: [
+        { label: "Extreme Sizes (XS & XXL)", value: "5,150 pcs (61.2%)", percentage: 61.2, color: "bg-amber-500" },
+        { label: "Core Sizes (S, M, L, XL)", value: "3,270 pcs (38.8%)", percentage: 38.8, color: "bg-[#0e7490]" },
+      ],
+      bars: [
+        { label: "Merino Wool Knit Polo", value: 38, formattedValue: "↓ 38%", subtext: "₹1.8 Cr stuck · 115 days old", color: "bg-rose-500", isWarning: true },
+        { label: "Thermal Waffle Henley", value: 33, formattedValue: "↓ 33%", subtext: "₹1.4 Cr stuck · 98 days old", color: "bg-rose-500", isWarning: true },
+        { label: "Ribbed Crewneck Knit", value: 29, formattedValue: "↓ 29%", subtext: "₹0.9 Cr stuck · 92 days old", color: "bg-amber-500", isWarning: true },
+        { label: "Fine Gauge Cardigan", value: 21, formattedValue: "↓ 21%", subtext: "₹0.7 Cr stuck · 84 days old", color: "bg-amber-500", isWarning: true },
+      ],
+      takeaway: "Winter knitwear sales dropped 35% MoM, leaving 8,420 units primarily trapped in hard-to-sell XS and XXL sizes.",
+    },
+    topProducts: [
+      { product: "Merino Wool Knit Polo", inventory: "₹1.8 Cr", age: "115 days", salesTrend: "↓ 38%" },
+      { product: "Thermal Waffle Henley", inventory: "₹1.4 Cr", age: "98 days", salesTrend: "↓ 33%" },
+      { product: "Ribbed Crewneck Knit", inventory: "₹0.9 Cr", age: "92 days", salesTrend: "↓ 29%" },
+      { product: "Fine Gauge Cardigan", inventory: "₹0.7 Cr", age: "84 days", salesTrend: "↓ 21%" },
+    ],
+    drivers: [
+      { label: "Weather warming up (winter ended)", value: "₹2.6 Cr" },
+      { label: "Leftover extreme sizes (XS/XXL)", value: "₹1.4 Cr" },
+      { label: "Unplanned discounts by store managers", value: "₹0.6 Cr" },
+      { label: "Colors from last season", value: "₹0.2 Cr" },
+    ],
+    insights: [
+      {
+        number: "01",
+        headline: "Season has changed",
+        detail: "Shoppers want light summer shirts now instead of heavy winter tops.",
+      },
+      {
+        number: "02",
+        headline: "Only extreme sizes left",
+        detail: "Most leftover clothes are in very small or very large sizes that sell slowly.",
+      },
+      {
+        number: "03",
+        headline: "Prices are dropping",
+        detail: "Stores gave random discounts, lowering the money made on each item by 30%.",
+      },
+    ],
+    businessImpact:
+      "Old winter clothes are taking up valuable shelf space that should hold fresh, fast-selling summer items.",
+    focusAreas: [
+      "Start a clear 25% then 40% clearance sale across all stores",
+      "Move XS and XXL sizes to our website where more buyers search",
+      "Stop ordering slow winter colors for the next season",
+    ],
+    howAnswerFound: {
+      summary:
+        "We looked at weekly sales trends across all sizes to see which winter clothes stopped selling as weather warmed up.",
+      analysis:
+        "Analyzed 8 weeks of store sales receipts (₹4.80 Cr trapped inventory) and size-level stock ledgers across 8,420 unsold winter pieces. We calculated week-over-week velocity drop-offs and quantified markdown loss rates across size distributions.",
+      findings: [
+        "Unsold Inventory analyzed: ₹4.80 Cr across 8,420 pieces of winter knitwear and outerwear.",
+        "Weekly Sales Contraction: Sales fell by 35.4% month-over-month as seasonal weather warmed.",
+        "Size Skew: 61.2% of remaining unsold garments are concentrated in extreme sizes (XS and XXL).",
+        "Markdown Leakage: ₹0.60 Cr lost through inconsistent store-level discount promotions.",
+      ],
+      evidenceDatasets: [
+        {
+          id: "c4-winter-sales",
+          name: "Winter Category Weekly Sales Trend",
+          badge: "Sales Table",
+          period: "Aug 1 – Sep 23, 2026",
+          totalSum: "₹4.80 Cr Stuck Stock",
+          recordCount: "8 Weeks",
+          sourceSystem: "Weekly POS Audits & Category Analytics",
+          citationId: "CIT-2026-WNTR-SLS",
+          description: "Week-by-week drop in knitwear sales demonstrating end-of-season lifecycle contraction.",
+          columns: ["Week Ending", "Category", "Units Sold", "Gross Revenue", "WoW Trend", "Avg Discount"],
+          rows: [
+            { "Week Ending": "23 Sep 2026", "Category": "Merino Wool Knitwear", "Units Sold": "142 pcs", "Gross Revenue": "₹4,26,000", "WoW Trend": "↓ 38.2%", "Avg Discount": "18.5%" },
+            { "Week Ending": "16 Sep 2026", "Category": "Merino Wool Knitwear", "Units Sold": "230 pcs", "Gross Revenue": "₹6,90,00,00", "WoW Trend": "↓ 29.4%", "Avg Discount": "15.0%" },
+            { "Week Ending": "09 Sep 2026", "Category": "Thermal Henleys & Fleeces", "Units Sold": "326 pcs", "Gross Revenue": "₹9,78,000", "WoW Trend": "↓ 21.0%", "Avg Discount": "10.0%" },
+            { "Week Ending": "02 Sep 2026", "Category": "Winter Outerwear", "Units Sold": "410 pcs", "Gross Revenue": "₹16,40,000", "WoW Trend": "↓ 18.5%", "Avg Discount": "5.0%" },
+          ],
+        },
+        {
+          id: "c4-unsold-sizes",
+          name: "Unsold Stock by Size Run & SKU",
+          badge: "Inventory Table",
+          period: "As of Sep 23, 2026",
+          totalSum: "8,420 Unsold Units",
+          recordCount: "16 SKU Size Runs",
+          sourceSystem: "WMS Inventory Breakdown",
+          citationId: "CIT-2026-SIZE-RUN",
+          description: "Garment size distribution audit revealing high concentration in slow-moving XS and XXL.",
+          columns: ["SKU Code", "Product Name", "Size", "Units Remaining", "Holding Cost", "Size Run %"],
+          rows: [
+            { "SKU Code": "SKU-POLO-XS", "Product Name": "Merino Knit Polo (Rust)", "Size": "XS", "Units Remaining": "2,480 pcs", "Holding Cost": "₹44,64,000", "Size Run %": "29.4%" },
+            { "SKU Code": "SKU-POLO-XXL", "Product Name": "Merino Knit Polo (Rust)", "Size": "XXL", "Units Remaining": "2,670 pcs", "Holding Cost": "₹48,06,000", "Size Run %": "31.8%" },
+            { "SKU Code": "SKU-HEN-XS", "Product Name": "Thermal Waffle Henley", "Size": "XS", "Units Remaining": "1,450 pcs", "Holding Cost": "₹26,10,000", "Size Run %": "17.2%" },
+            { "SKU Code": "SKU-CRD-XXL", "Product Name": "Fine Gauge Cardigan", "Size": "XXL", "Units Remaining": "1,820 pcs", "Holding Cost": "₹36,40,000", "Size Run %": "21.6%" },
+          ],
+        },
+        {
+          id: "c4-markdown-ledger",
+          name: "Store Clearance & Markdown Ledger",
+          badge: "Markdowns Table",
+          period: "Aug 15 – Sep 23, 2026",
+          totalSum: "₹0.60 Cr Discounted",
+          recordCount: "420 Markdown Events",
+          sourceSystem: "Store Pricing & Discount Log",
+          citationId: "CIT-2026-MKDN-LOG",
+          description: "Unplanned store-level discount promotions resulting in margin dilution without clearing volume.",
+          columns: ["Markdown ID", "Store Name", "Product", "Original Price", "Clearance Price", "Discount %", "Margin Impact"],
+          rows: [
+            { "Markdown ID": "MKD-0419", "Store Name": "Delhi Connaught", "Product": "Merino Knit Polo", "Original Price": "₹2,999", "Clearance Price": "₹2,099", "Discount %": "30%", "Margin Impact": "-₹900 / unit" },
+            { "Markdown ID": "MKD-0412", "Store Name": "Mumbai Bandra", "Product": "Thermal Waffle Henley", "Original Price": "₹2,499", "Clearance Price": "₹1,749", "Discount %": "30%", "Margin Impact": "-₹750 / unit" },
+            { "Markdown ID": "MKD-0398", "Store Name": "Bengaluru Koramangala", "Product": "Fine Gauge Cardigan", "Original Price": "₹3,499", "Clearance Price": "₹2,449", "Discount %": "30%", "Margin Impact": "-₹1,050 / unit" },
+          ],
+        },
+      ],
+      dataSources: [
+        "Store inventory by size from Extra Small to Double Extra Large",
+        "Weekly store discount and sale price records",
+        "Sales speed comparisons between light and heavy clothes",
+      ],
+      methodology:
+        "We tracked which products had sales drop week after week and checked what sizes were left unsold.",
+    },
+  },
+  "case-5": {
+    reportTitle: "Out-of-stock items causing the biggest lost sales",
+    reportDate: "September 2026",
+    kpiStats: [
+      { value: "₹8.6 Cr", label: "Lost Sales" },
+      { value: "71.2%", label: "Common Sizes in Stock" },
+      { value: "4,120", label: "Failed Searches" },
+      { value: "88.0%", label: "Shoppers Who Left" },
+    ],
+    keyFinding:
+      "Running out of Medium and Large sizes in Rain Jackets and White Oxford Shirts cost ₹8.6 Cr in lost sales.\n88% of shoppers who encountered out-of-stock sizes left without buying anything.\n4,120 high-intent customer search sessions failed directly due to core size breaks.",
+    findingChart: {
+      title: "Lost Revenue & Stockout Velocity Drop",
+      subtitle: "High-intent customer demand unfulfilled due to size M & L stockouts",
+      badge: "88% Exit Rate",
+      type: "comparison",
+      bars: [
+        { label: "Waterproof Commuter Parka", value: 100, formattedValue: "↓ 100%", subtext: "Complete stockout in sizes M & L", color: "bg-rose-600", isWarning: true },
+        { label: "Classic White Oxford Shirt", value: 65, formattedValue: "↓ 65%", subtext: "Core size M stockout at flagships", color: "bg-rose-500", isWarning: true },
+        { label: "Performance Rain Shell", value: 50, formattedValue: "↓ 50%", subtext: "Size L stockout across online doors", color: "bg-amber-500", isWarning: true },
+        { label: "Tailored Travel Chino", value: 40, formattedValue: "↓ 40%", subtext: "Size 32 waist broken size run", color: "bg-amber-500", isWarning: true },
+      ],
+      takeaway: "Sizes M & L ran out in downtown flagships causing ₹8.6 Cr in lost sales while 420 surplus units sat idle in suburbs.",
+    },
+    topProducts: [
+      { product: "Waterproof Commuter Parka", inventory: "₹0.0 Cr", age: "0 in stock", salesTrend: "↓ 100%" },
+      { product: "Classic White Oxford Shirt", inventory: "₹0.2 Cr", age: "Sizes M/L out", salesTrend: "↓ 65%" },
+      { product: "Tailored Travel Chino", inventory: "₹0.4 Cr", age: "Size 32 out", salesTrend: "↓ 40%" },
+      { product: "Performance Rain Shell", inventory: "₹0.1 Cr", age: "Size L out", salesTrend: "↓ 50%" },
+    ],
+    drivers: [
+      { label: "Shipping delays from overseas (+15 days)", value: "₹4.4 Cr" },
+      { label: "Underestimating demand for Medium/Large", value: "₹2.6 Cr" },
+      { label: "Some stores have too much, others have none", value: "₹1.2 Cr" },
+      { label: "No automatic transfer between nearby stores", value: "₹0.4 Cr" },
+    ],
+    insights: [
+      {
+        number: "01",
+        headline: "Common sizes ran out",
+        detail: "Sizes Medium and Large make up 78% of demand but were often out of stock.",
+      },
+      {
+        number: "02",
+        headline: "Shoppers bought from competitors",
+        detail: "Over 4,100 online shoppers searched for these sizes, saw they were gone, and left.",
+      },
+      {
+        number: "03",
+        headline: "Suburban stores have extra stock",
+        detail: "Nearby suburban stores have 420 extra pieces of the exact sizes that downtown stores need.",
+      },
+    ],
+    businessImpact:
+      "Shoppers who were ready to buy walked away empty-handed and bought from other brands instead.",
+    focusAreas: [
+      "Move 650 extra pieces from suburban stores to busy downtown shops",
+      "Air-ship 2,000 emergency restock pieces to the main warehouse",
+      "Order more Medium and Large sizes instead of equal amounts of every size",
+    ],
+    howAnswerFound: {
+      summary:
+        "We counted online searches for sold-out items and store requests for sizes that were missing.",
+      analysis:
+        "Analyzed 30 days of online out-of-stock search queries (4,120 failed search hits) and physical store missed-sale logs. We multiplied unfulfilled visits by the category conversion rate and average order value to calculate total uncaptured revenue of ₹8.60 Cr.",
+      findings: [
+        "Estimated Lost Sales: ₹8.60 Cr in uncaptured revenue due to stockouts in Medium and Large sizes.",
+        "Failed High-Intent Searches: 4,120 customers searched specifically for out-of-stock sizes on the website and app.",
+        "Bounce Rate: 88.0% of shoppers who encountered an out-of-stock message exited without purchasing an alternate item.",
+        "Inventory Imbalance: 420 units of the missing sizes are sitting idle in suburban store stockrooms while downtown flagships are sold out.",
+      ],
+      evidenceDatasets: [
+        {
+          id: "c5-lost-demand",
+          name: "Out-of-Stock Search Queries & Lost Demand Log",
+          badge: "Demand Table",
+          period: "Past 30 Days",
+          totalSum: "₹8.60 Cr Lost Demand",
+          recordCount: "4,120 Search Logs",
+          sourceSystem: "E-Commerce Search Engine Logs",
+          citationId: "CIT-2026-OOS-LOG",
+          description: "Direct log of user search queries returning zero results for core garments and sizes.",
+          columns: ["Search Query ID", "Timestamp", "Channel", "Searched SKU", "Size", "Stock Status", "Customer Action"],
+          rows: [
+            { "Search Query ID": "SRCH-88219", "Timestamp": "23 Sep 11:42", "Channel": "Mobile App", "Searched SKU": "Waterproof Commuter Parka", "Size": "M", "Stock Status": "0 In Stock", "Customer Action": "Abandoned Cart (Exit)" },
+            { "Search Query ID": "SRCH-88204", "Timestamp": "23 Sep 11:38", "Channel": "Web Store", "Searched SKU": "Waterproof Commuter Parka", "Size": "L", "Stock Status": "0 In Stock", "Customer Action": "Abandoned Cart (Exit)" },
+            { "Search Query ID": "SRCH-88190", "Timestamp": "23 Sep 11:29", "Channel": "Mobile App", "Searched SKU": "Classic White Oxford Shirt", "Size": "M", "Stock Status": "0 In Stock", "Customer Action": "Abandoned Cart (Exit)" },
+            { "Search Query ID": "SRCH-88162", "Timestamp": "23 Sep 11:15", "Channel": "Web Store", "Searched SKU": "Tailored Travel Chino", "Size": "32", "Stock Status": "0 In Stock", "Customer Action": "Viewed alternate, no buy" },
+          ],
+        },
+        {
+          id: "c5-store-variance",
+          name: "Store-Level Stock Variance & Distribution",
+          badge: "Store Stock Table",
+          period: "As of Sep 23, 2026",
+          totalSum: "420 Surplus Units",
+          recordCount: "42 Stores",
+          sourceSystem: "ERP Store Inventory Balances",
+          citationId: "CIT-2026-STR-BAL",
+          description: "Comparison of downtown flagship stockouts versus suburban excess holding.",
+          columns: ["Store Code", "Store Name", "Location Type", "Parka Size M", "Parka Size L", "Oxford Shirt Size M", "Balance Status"],
+          rows: [
+            { "Store Code": "STR-DL-01", "Store Name": "Delhi Connaught Flagship", "Location Type": "High-Footfall Downtown", "Parka Size M": "0 pcs (Stockout)", "Parka Size L": "0 pcs (Stockout)", "Oxford Shirt Size M": "0 pcs (Stockout)", "Balance Status": "Severe Deficit" },
+            { "Store Code": "STR-MH-04", "Store Name": "Mumbai Palladium Flagship", "Location Type": "High-Footfall Downtown", "Parka Size M": "0 pcs (Stockout)", "Parka Size L": "0 pcs (Stockout)", "Oxford Shirt Size M": "0 pcs (Stockout)", "Balance Status": "Severe Deficit" },
+            { "Store Code": "STR-UP-12", "Store Name": "Noida Sector 18 Store", "Location Type": "Suburban Mall", "Parka Size M": "140 pcs", "Parka Size L": "110 pcs", "Oxford Shirt Size M": "95 pcs", "Balance Status": "Excess Idle Stock" },
+            { "Store Code": "STR-HR-08", "Store Name": "Gurugram CyberHub Store", "Location Type": "Suburban Hub", "Parka Size M": "85 pcs", "Parka Size L": "85 pcs", "Oxford Shirt Size M": "70 pcs", "Balance Status": "Excess Idle Stock" },
+          ],
+        },
+        {
+          id: "c5-replenishment-po",
+          name: "Replenishment PO & Inbound Pipeline",
+          badge: "Restock Table",
+          period: "Inbound Pipeline",
+          totalSum: "2,000 Units Expedited",
+          recordCount: "4 Inbound POs",
+          sourceSystem: "Inbound Freight Logistics",
+          citationId: "CIT-2026-RPL-PIPE",
+          description: "Emergency factory replenishment orders in transit to restore baseline availability.",
+          columns: ["Shipment PO", "Origin", "Destination Hub", "Units", "Mode", "ETA", "Status"],
+          rows: [
+            { "Shipment PO": "SHP-AIR-2026-19", "Origin": "Hanoi Central Factory", "Destination Hub": "Delhi Central Distribution", "Units": "1,200 pcs (Parkas M/L)", "Mode": "Expedited Air Cargo", "ETA": "26 Sep 2026", "Status": "In Flight" },
+            { "Shipment PO": "SHP-AIR-2026-22", "Origin": "Dhaka Weaving Facility", "Destination Hub": "Mumbai Distribution Center", "Units": "800 pcs (Oxford Shirts)", "Mode": "Expedited Air Cargo", "ETA": "27 Sep 2026", "Status": "Customs Clearance" },
+          ],
+        },
+      ],
+      dataSources: [
+        "Online searches that showed 'Out of Stock' results",
+        "Store assistant notes on sizes customers asked for but could not buy",
+        "Stock counts at every shop showing where extra pieces sit",
+      ],
+      methodology:
+        "We multiplied the number of out-of-stock searches by our normal purchase rate to estimate how much money we lost.",
+    },
+  },
+};
+
+export function getDriverSummaryText(caseId?: string, reportTitle?: string): string {
+  const normTitle = (reportTitle || "").toLowerCase();
+  const id = (caseId || "").toLowerCase();
+
+  if (id.includes("case-1") || normTitle.includes("exposure") || normTitle.includes("inventory")) {
+    return "Inventory exposure is predominantly driven by slow-moving merchandise and aging inventory exceeding the 60-day turnover benchmark across 42 retail locations.";
+  }
+  if (id.includes("case-2") || normTitle.includes("launch") || normTitle.includes("newly")) {
+    return "Launch underperformance is primarily driven by sizing return friction on cargo lines and misallocated ad spending away from fast-selling linen.";
+  }
+  if (id.includes("case-3") || normTitle.includes("mill") || normTitle.includes("revenue") || normTitle.includes("dependent")) {
+    return "Supply chain vulnerability is driven by single-supplier concentration with a Coimbatore mill supplying over 78% of all denim yardage.";
+  }
+  if (id.includes("case-4") || normTitle.includes("decline") || normTitle.includes("lifecycle") || normTitle.includes("markdown")) {
+    return "Margin dilution is driven by heavy clearance discounts and steady volume decline across aging knit polo collections sitting on store racks.";
+  }
+  if (id.includes("case-5") || normTitle.includes("stockout") || normTitle.includes("loss")) {
+    return "Direct revenue loss is driven by acute stockouts in high-traffic downtown stores paired with delayed overseas freight replenishment.";
+  }
+  return "Exposure is driven by compounding inventory aging, declining unit sales velocity, and regional demand mismatches across core product categories.";
+}
+
+export interface GeminiMessageItem {
+  id: string;
+  query: string;
+  timestamp: string;
+  caseId: string;
+  caseItem: ActiveCaseItem;
+  structuredAnswer: CxoStructuredAnswer;
+  isCopied?: boolean;
+  addedToInbox?: boolean;
+  feedback?: "up" | "down" | null;
+  revealedSections?: number;
+}
+
+export const getCaseDetailsForQuery = (query: string): GeminiMessageItem => {
+  const lower = query.toLowerCase();
+  let matchedId = "case-1";
+  let matchedTitle = "Products are creating the highest inventory exposure";
+  let matchedAgent = "Merchandising & Inventory Intelligence";
+  let matchedBody = "Heavyweight wool overcoats and faux-shearling jackets hold ₹18.4 Cr in excess inventory across 42 products with 87 days average inventory age.";
+
+  if (lower.includes("launch") || lower.includes("linen") || lower.includes("cargo")) {
+    matchedId = "case-2";
+    matchedTitle = "Newly launched products performing, and which ones need attention.";
+    matchedAgent = "Product Performance & Launch Agent";
+    matchedBody = "Spring Linen Blend shirts are at 84% full-price sell-through, while High-Rise Utility Cargo pants lag at 28% sell-through needing immediate promotional re-targeting.";
+  } else if (lower.includes("revenue") || lower.includes("share") || lower.includes("denim") || lower.includes("mill")) {
+    matchedId = "case-3";
+    matchedTitle = "Generate the largest share of revenue, and how dependent is the business on them.";
+    matchedAgent = "Revenue Cycle & Portfolio Agent";
+    matchedBody = "Top 4 core denim lines drive 42.6% of monthly gross apparel revenue, posing high supplier concentration risk.";
+  } else if (lower.includes("decline") || lower.includes("lifecycle") || lower.includes("markdown") || lower.includes("polo")) {
+    matchedId = "case-4";
+    matchedTitle = "Products are entering the decline stage of their lifecycle, and what actions should be considered";
+    matchedAgent = "Lifecycle & Markdown Strategy Agent";
+    matchedBody = "Merino knit polo shirts and thermal henleys show consecutive 35% MoM sales drops; recommended phased markdown from 20% to 40% clearance.";
+  } else if (lower.includes("stockout") || lower.includes("loss") || lower.includes("demand") || lower.includes("parka")) {
+    matchedId = "case-5";
+    matchedTitle = "Stockouts caused the greatest loss in sales or customer demand";
+    matchedAgent = "Supply Chain & Stockout Radar";
+    matchedBody = "Size M and L stockouts in Waterproof Commuter Parkas and White Oxford Shirts resulted in ₹8.6 Cr lost demand across flagship stores and e-commerce.";
+  }
+
+  const caseItem: ActiveCaseItem = {
+    age: "Just now",
+    title: matchedTitle,
+    body: matchedBody,
+    isLive: true,
+    agent: matchedAgent,
+  };
+
+  const baseAnswer = cxoStructuredAnswers[matchedId] || cxoStructuredAnswers["case-1"]!;
+  let structuredAnswer = { ...baseAnswer };
+
+  if (lower.includes("30 days") || lower.includes("last 30")) {
+    structuredAnswer = {
+      ...baseAnswer,
+      reportTitle: `${baseAnswer.reportTitle} (Last 30 Days)`,
+      reportDate: "24 Sep 2026",
+      basedOnData: "based on the data form 25 aug 26 to 24 sep 26",
+      kpiStats: [
+        { value: "0.62 CR", label: "30-Day Exposure" },
+        { value: "18", label: "Products" },
+        { value: "4.1 L", label: "Top 10 Products" },
+        { value: "34 Days", label: "Avg. Inventory Age" },
+      ],
+      keyFinding:
+        "Over the last 30 days, inventory exposure reduced to ₹6.2 Cr across 18 high-velocity items.\nTop 10 items account for ₹4.1 Cr (66%) of recent locked capital.\nRecent replenishment shows improved turnover speed of 34 days.",
+    };
+  } else if (lower.includes("quarter") || lower.includes("q1")) {
+    structuredAnswer = {
+      ...baseAnswer,
+      reportTitle: `${baseAnswer.reportTitle} (Q1 Historical Review)`,
+      reportDate: "31 March 2026",
+      basedOnData: "based on the data form 01 jan 26 to 31 march 26",
+      kpiStats: [
+        { value: "1.48 CR", label: "Q1 Exposure" },
+        { value: "36", label: "Products" },
+        { value: "9.4 L", label: "Top 10 Products" },
+        { value: "76 Days", label: "Avg. Inventory Age" },
+      ],
+      keyFinding:
+        "Full Q1 baseline recorded ₹14.8 Cr tied up in 36 products.\nTop 10 lines accounted for ₹9.4 Cr with an average age of 76 days.\nSeasonal transition at quarter-end initiated early markdown pressures.",
+    };
+  } else if (lower.includes("flagship") || lower.includes("top 10 store") || lower.includes("stores only")) {
+    structuredAnswer = {
+      ...baseAnswer,
+      reportTitle: `${baseAnswer.reportTitle} (Top 10 Flagship Doors)`,
+      reportDate: "24 Sep 2026",
+      basedOnData: "based on the data form Top 10 Metro Flagship Doors",
+      kpiStats: [
+        { value: "0.89 CR", label: "Flagship Exposure" },
+        { value: "22", label: "Flagship Products" },
+        { value: "6.3 L", label: "Top 10 Products" },
+        { value: "52 Days", label: "Avg. Inventory Age" },
+      ],
+      keyFinding:
+        "Top 10 metro flagships hold ₹8.9 Cr of total exposure across 22 styles.\nFootfall conversion in downtown flagships was 1.8x higher than suburban outlets.\nStock reallocation to suburban doors is recommended for extreme sizes.",
+    };
+  } else if (lower.includes("yoy") || lower.includes("previous year") || lower.includes("last year")) {
+    structuredAnswer = {
+      ...baseAnswer,
+      reportTitle: `${baseAnswer.reportTitle} (YoY Comparison)`,
+      reportDate: "Sep 2025 vs Sep 2026",
+      basedOnData: "based on the data form sep 25 to sep 26 (YoY)",
+      kpiStats: [
+        { value: "+14.2%", label: "YoY Exposure Increase" },
+        { value: "42", label: "Affected Styles" },
+        { value: "11.2 L", label: "Current Top 10" },
+        { value: "+11 Days", label: "YoY Age Increase" },
+      ],
+      keyFinding:
+        "Inventory exposure grew +14.2% YoY from ₹16.1 Cr in Sep 2025 to ₹18.4 Cr currently.\nAverage inventory shelf age extended by +11 days compared to the same period last year.\nDenim and outerwear drive 72% of the year-over-year increase.",
+    };
+  }
+
+  return {
+    id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    query,
+    timestamp: "Just now",
+    caseId: matchedId,
+    caseItem,
+    structuredAnswer,
+  };
+};
+
+export const initialActiveCases: ActiveCaseItem[] = [
+  {
+    age: "Just now",
+    title: "Products are creating the highest inventory exposure",
+    body: "Heavyweight wool overcoats and faux-shearling jackets hold $420,000 in excess inventory with 68 days of supply remaining past seasonal peak.",
+    isLive: false,
+    agent: "Merchandising & Inventory Intelligence",
+  },
+  {
+    age: "1 hr ago",
+    title: "Newly launched products performing, and which ones need attention.",
+    body: "Spring Linen Blend shirts are at 84% full-price sell-through, while High-Rise Utility Cargo pants lag at 28% sell-through needing immediate promotional re-targeting.",
+    isLive: true,
+    agent: "Product Performance & Launch Agent",
+  },
+  {
+    age: "3 hrs ago",
+    title: "Generate the largest share of revenue, and how dependent is the business on them.",
+    body: "Top 4 core denim lines (Slim Stretch & Relaxed Vintage) drive 42.6% of monthly gross apparel revenue, posing high supplier concentration risk.",
+    isLive: false,
+    agent: "Revenue Cycle & Portfolio Agent",
+    newFindingsCount: 3,
+  },
+  {
+    age: "5 hrs ago",
+    title: "Products are entering the decline stage of their lifecycle, and what actions should be considered",
+    body: "Merino knit polo shirts and thermal henleys show consecutive 35% MoM sales drops; recommended phased markdown from 20% to 40% clearance.",
+    isLive: false,
+    agent: "Lifecycle & Markdown Strategy Agent",
+  },
+  {
+    age: "1 day ago",
+    title: "Stockouts caused the greatest loss in sales or customer demand",
+    body: "Size M and L stockouts in Waterproof Commuter Parkas and White Oxford Shirts resulted in $86,400 in lost demand across flagship stores and e-commerce.",
+    isLive: true,
+    agent: "Supply Chain & Stockout Radar",
+  },
+];
+
+export interface SuggestedCase {
+  id: string;
+  category: "Inventory" | "Merchandising" | "Revenue" | "Supply Chain";
+  department: string;
+  title: string;
+  description: string;
+  impactMetric: string;
+  severity: "High" | "Medium" | "Low";
+  signal: string;
+}
+
+const suggestedCasesList: SuggestedCase[] = [
+  {
+    id: "sug-1",
+    category: "Inventory",
+    department: "Outerwear & Tailoring",
+    title: "Overcoat Excess Inventory in Warm Regional Stores",
+    description: "Southern distribution hubs holding 82% of double-breasted wool overcoats with negligible sell-through.",
+    impactMetric: "$165,600 trapped cash",
+    severity: "High",
+    signal: "Detected 1 hr ago",
+  },
+  {
+    id: "sug-2",
+    category: "Merchandising",
+    department: "Woven Tops & Shirts",
+    title: "Spring Linen Velocity Surge & Stockout Threat",
+    description: "Band-collar linen shirts trending 3.2x above initial sales forecasts with stock depletion in 7 days.",
+    impactMetric: "+$94,000 revenue upside",
+    severity: "Medium",
+    signal: "Detected 3 hrs ago",
+  },
+  {
+    id: "sug-3",
+    category: "Revenue",
+    department: "Denim & Bottoms",
+    title: "Single-Mill Yarn Reliance in Core Stretch Denim",
+    description: "78.5% of raw fabric supplied by Coimbatore spinning mill posing bottleneck risk for top denim lines.",
+    impactMetric: "$1.28M monthly exposure",
+    severity: "High",
+    signal: "Detected yesterday",
+  },
+  {
+    id: "sug-4",
+    category: "Supply Chain",
+    department: "Omnichannel Logistics",
+    title: "Size Break Stockout in Metropolitan Flagships",
+    description: "Sizes Medium and Large in commuter parkas out of stock across New York and Chicago flagship doors.",
+    impactMetric: "-$86,400 unfulfilled demand",
+    severity: "High",
+    signal: "Detected 2 hrs ago",
+  },
+  {
+    id: "sug-5",
+    category: "Merchandising",
+    department: "Knitwear & Basics",
+    title: "Decline Stage Clearance for Heavy Thermal Waffles",
+    description: "Customer purchasing shifted to lightweight modal knits; 8,420 thermal henley units idling.",
+    impactMetric: "$52,000 cash recovery",
+    severity: "Medium",
+    signal: "Detected 4 hrs ago",
+  },
+];
+
+const SUGGESTED_CATEGORIES = [
+  { id: "All", label: "All Categories" },
+  { id: "Inventory", label: "Inventory" },
+  { id: "Merchandising", label: "Merchandising" },
+  { id: "Revenue", label: "Revenue" },
+  { id: "Supply Chain", label: "Supply Chain" },
+] as const;
+
+export interface AIAgentOption {
+  id: string;
+  name: string;
+  category: "Inventory" | "Merchandising" | "Revenue" | "Supply Chain";
+  role: string;
+  icon: React.ElementType;
+  color: string;
+  status: string;
+}
+
+export const AVAILABLE_AGENTS: AIAgentOption[] = [
+  {
+    id: "inventory",
+    name: "Merchandising & Inventory Intelligence",
+    category: "Inventory",
+    role: "Days of supply, seasonal exposure, dead stock liquidation & warehouse allocation",
+    icon: Package,
+    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    status: "Active • Model v2.4",
+  },
+  {
+    id: "launch",
+    name: "Product Performance & Launch Agent",
+    category: "Merchandising",
+    role: "Sell-through velocity, new silhouette diagnostics, return rate audits & ad reallocation",
+    icon: Sparkles,
+    color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    status: "Active • Model v3.1",
+  },
+  {
+    id: "revenue",
+    name: "Revenue Cycle & Portfolio Agent",
+    category: "Revenue",
+    role: "Core revenue SKU concentration, supplier mill dependency & margin protection",
+    icon: DollarSign,
+    color: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+    status: "Active • Model v2.2",
+  },
+  {
+    id: "lifecycle",
+    name: "Lifecycle & Markdown Strategy Agent",
+    category: "Merchandising",
+    role: "Decline stage SKU detection, clearance scheduling, AUR preservation & outlet offloading",
+    icon: Layers,
+    color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    status: "Active • Model v2.8",
+  },
+  {
+    id: "supply-chain",
+    name: "Supply Chain & Stockout Radar",
+    category: "Supply Chain",
+    role: "Core sizing breaks, lost retail demand estimation, inter-store balancing & PO expedites",
+    icon: ShoppingBag,
+    color: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+    status: "Active • Model v3.0",
+  },
+];
+
+const suggestedQueries = [
+  "Products creating highest inventory exposure",
+  "New launch performance & items needing attention",
+  "Top revenue generators & mill dependency",
+  "Stockouts causing greatest loss in sales",
+];
+
+// Persistent state across navigation
+let sharedCasesList: ActiveCaseItem[] = [...initialActiveCases];
+let sharedPendingCase: ActiveCaseItem | null = null;
+let sharedTriggerLoading: boolean = false;
+
+const getInitialPending = (): { pendingCase: ActiveCaseItem | null; shouldLoad: boolean } => {
+  if (sharedTriggerLoading && sharedPendingCase) {
+    return { pendingCase: sharedPendingCase, shouldLoad: true };
+  }
+  try {
+    const stored = typeof window !== "undefined" ? sessionStorage.getItem("pending_inbox_case") : null;
+    if (stored) {
+      const parsed = JSON.parse(stored) as ActiveCaseItem;
+      sharedPendingCase = parsed;
+      sharedTriggerLoading = true;
+      if (!sharedCasesList.some((c) => c.title === parsed.title)) {
+        sharedCasesList = [parsed, ...sharedCasesList];
+      }
+      return { pendingCase: parsed, shouldLoad: true };
+    }
+  } catch { }
+  return { pendingCase: null, shouldLoad: false };
+};
+
+export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | "inbox" }) {
+  const navigate = useNavigate();
+
+  // Active view: "chat" (Ask Astyle) or "inbox" (Inbox for CXO)
+  const [activeView, setActiveView] = useState<"chat" | "inbox">(initialView);
+
+  // Sync state if initialView changes via route navigation
+  useEffect(() => {
+    setActiveView(initialView);
+  }, [initialView]);
+
+  const switchView = (targetView: "chat" | "inbox") => {
+    setActiveView(targetView);
+    if (targetView === "chat") {
+      navigate({ to: "/ask-ai" });
+    } else {
+      navigate({ to: "/inbox" });
+    }
+  };
+
+  // Chat Page state
+  const [chatQuery, setChatQuery] = useState("");
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isConnectingAgents, setIsConnectingAgents] = useState(false);
+  const [connectingStep, setConnectingStep] = useState(1);
+  const [activeQuestion, setActiveQuestion] = useState("");
+
+  // Gemini Chat session state on Home Page
+  const [geminiMessages, setGeminiMessages] = useState<GeminiMessageItem[]>([]);
+  const [isGeminiLoading, setIsGeminiLoading] = useState(false);
+  const [streamingQuery, setStreamingQuery] = useState("");
+  const [geminiLoadingStage, setGeminiLoadingStage] = useState("Agent Sales is looking for data...");
+  const geminiTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const conversationStreamRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => {
+      geminiTimersRef.current.forEach((t) => clearTimeout(t));
+    };
+  }, []);
+
+  const scrollStreamToBottom = (smooth = true) => {
+    if (conversationStreamRef.current) {
+      conversationStreamRef.current.scrollTo({
+        top: conversationStreamRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
+  };
+
+  const [isReportFormatMode, setIsReportFormatMode] = useState(true);
+  const [logoRotation, setLogoRotation] = useState(0);
+  const isToggleFirstMount = useRef(true);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  useEffect(() => {
+    if (isToggleFirstMount.current) {
+      isToggleFirstMount.current = false;
+      return;
+    }
+    setLogoRotation((prev) => prev + 60);
+  }, [isReportFormatMode]);
+  const [expandedHowFound, setExpandedHowFound] = useState<Record<string, boolean>>({});
+  const [openProductTable, setOpenProductTable] = useState<Record<string, boolean>>({});
+  const [activeEvidenceDataset, setActiveEvidenceDataset] = useState<CxoEvidenceDataset | null>(null);
+  const [datasetSearchQuery, setDatasetSearchQuery] = useState("");
+  const [datasetGroupBy, setDatasetGroupBy] = useState<string>("");
+  const [datasetFilterCol, setDatasetFilterCol] = useState<string>("");
+  const [datasetFilterVal, setDatasetFilterVal] = useState<string>("");
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  // Ask AI Chatbox inside Full Screen Dataset View
+  const [datasetChatMessages, setDatasetChatMessages] = useState<{
+    id: string;
+    sender: "user" | "ai";
+    content: string;
+    timestamp: string;
+  }[]>([]);
+  const [datasetChatInput, setDatasetChatInput] = useState("");
+  const [isDatasetChatLoading, setIsDatasetChatLoading] = useState(false);
+  const datasetChatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Initialize dataset chat when a dataset is opened
+  useEffect(() => {
+    if (activeEvidenceDataset) {
+      setDatasetChatMessages([
+        {
+          id: `ds-init-${Date.now()}`,
+          sender: "ai",
+          content: `I've opened the **${activeEvidenceDataset.name}** dataset (${activeEvidenceDataset.totalSum} across ${activeEvidenceDataset.recordCount}).\n\nYou can ask me to calculate totals, filter specific stores, summarize return reasons, or compare product numbers across this dataset.`,
+          timestamp: "Just now",
+        },
+      ]);
+      setDatasetChatInput("");
+    }
+  }, [activeEvidenceDataset?.id]);
+
+  const handleSendDatasetChat = (userQuery: string) => {
+    if (!userQuery.trim() || !activeEvidenceDataset) return;
+
+    const userMsg = {
+      id: `ds-user-${Date.now()}`,
+      sender: "user" as const,
+      content: userQuery,
+      timestamp: "Just now",
+    };
+
+    setDatasetChatMessages((prev) => [...prev, userMsg]);
+    setDatasetChatInput("");
+    setIsDatasetChatLoading(true);
+
+    setTimeout(() => {
+      if (datasetChatScrollRef.current) {
+        datasetChatScrollRef.current.scrollTop = datasetChatScrollRef.current.scrollHeight;
+      }
+    }, 50);
+
+    setTimeout(() => {
+      let aiResponse = "";
+      const lower = userQuery.toLowerCase();
+      const rows = activeEvidenceDataset.rows;
+
+      if (lower.includes("store") || lower.includes("location") || lower.includes("where")) {
+        aiResponse = `Analyzing store locations in this dataset:\n\n• Top billing was recorded at **Delhi Flagship (DL-01)** and **Mumbai Phoenix**, accounting for the largest transaction shares.\n• Suburban outlets show excess inventory units sitting with slower velocity compared to downtown high-footfall flagships.`;
+      } else if (lower.includes("return") || lower.includes("reason") || lower.includes("fit") || lower.includes("size")) {
+        aiResponse = `Customer returns and fit analysis for this dataset:\n\n• Sizing & Fit Issues: Represent **68%** of all logged return tickets, primarily focused on tight waist fits and sleeve lengths.\n• Top SKU affected: **Utility Cargo Pants** and **Men's Denim Jacket** recorded the highest return refund amounts (${activeEvidenceDataset.totalSum} total impact).`;
+      } else if (lower.includes("sum") || lower.includes("total") || lower.includes("revenue") || lower.includes("amount") || lower.includes("cost")) {
+        aiResponse = `Financial data reconciliation:\n\n• Total Calculated Sum: **${activeEvidenceDataset.totalSum}**\n• Audited Record Count: **${activeEvidenceDataset.recordCount}**\n• Source System: **${activeEvidenceDataset.sourceSystem}**\n\nAll aggregated entries reconcile 100% with the high-level executive report.`;
+      } else if (lower.includes("highest") || lower.includes("top") || lower.includes("outlier") || lower.includes("worst") || lower.includes("trend")) {
+        const firstRow = rows[0];
+        const productKey = Object.keys(firstRow || {}).find((k) => k.toLowerCase().includes("product") || k.toLowerCase().includes("style")) || "Product";
+        const topItem = firstRow ? firstRow[productKey] : "Core item";
+        aiResponse = `Key outlier identified in this dataset:\n\n• The single largest driver is **${topItem}**, representing the highest exposure in the sample records.\n• Recommended immediate action: Review safety stock buffer and reallocate inventory to high-velocity doors.`;
+      } else {
+        aiResponse = `Based on the **${activeEvidenceDataset.name}** records:\n\n• Audited timeframe: ${activeEvidenceDataset.period}\n• Total verified sum: **${activeEvidenceDataset.totalSum}** across ${activeEvidenceDataset.recordCount}.\n• Findings confirm that exposure is concentrated in slow-moving categories with below-normal sales velocity.`;
+      }
+
+      const aiMsg = {
+        id: `ds-ai-${Date.now()}`,
+        sender: "ai" as const,
+        content: aiResponse,
+        timestamp: "Just now",
+      };
+
+      setDatasetChatMessages((prev) => [...prev, aiMsg]);
+      setIsDatasetChatLoading(false);
+
+      setTimeout(() => {
+        if (datasetChatScrollRef.current) {
+          datasetChatScrollRef.current.scrollTop = datasetChatScrollRef.current.scrollHeight;
+        }
+      }, 60);
+    }, 600);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activeEvidenceDataset) {
+        setActiveEvidenceDataset(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeEvidenceDataset]);
+
+  const uniqueFilterValues = useMemo(() => {
+    if (!activeEvidenceDataset || !datasetFilterCol) return [];
+    const set = new Set<string>();
+    activeEvidenceDataset.rows.forEach((row) => {
+      const val = row[datasetFilterCol];
+      if (val !== undefined && val !== null && String(val).trim()) {
+        set.add(String(val).trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [activeEvidenceDataset, datasetFilterCol]);
+
+  const filteredEvidenceRows = useMemo(() => {
+    if (!activeEvidenceDataset) return [];
+    let rows = activeEvidenceDataset.rows;
+
+    if (datasetFilterCol && datasetFilterVal) {
+      rows = rows.filter((row) => String(row[datasetFilterCol] ?? "").trim() === datasetFilterVal);
+    }
+
+    if (datasetSearchQuery.trim()) {
+      const q = datasetSearchQuery.toLowerCase();
+      rows = rows.filter((row) =>
+        Object.values(row).some((val) => String(val).toLowerCase().includes(q))
+      );
+    }
+    return rows;
+  }, [activeEvidenceDataset, datasetSearchQuery, datasetFilterCol, datasetFilterVal]);
+
+  const groupedEvidenceRows = useMemo(() => {
+    if (!datasetGroupBy) return null;
+    const groups: Record<string, Record<string, string>[]> = {};
+    filteredEvidenceRows.forEach((row) => {
+      const key = String(row[datasetGroupBy] ?? "Unassigned").trim() || "Unassigned";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(row);
+    });
+    return groups;
+  }, [filteredEvidenceRows, datasetGroupBy]);
+
+  const toggleGroupCollapse = (groupKey: string) => {
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
+  };
+
+  const handleExportCsv = (dataset: CxoEvidenceDataset) => {
+    const header = dataset.columns.join(",");
+    const rows = dataset.rows.map((row) =>
+      dataset.columns.map((col) => `"${(row[col] ?? "").replace(/"/g, '""')}"`).join(",")
+    );
+    const csvContent = "data:text/csv;charset=utf-8," + [header, ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${dataset.id}-evidence-audit.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const toggleHowAnswerFound = (messageId: string) => {
+    setExpandedHowFound((prev) => {
+      const currentState = prev[messageId] !== false;
+      return {
+        ...prev,
+        [messageId]: !currentState,
+      };
+    });
+  };
+
+  const handleToggleInbox = (messageId: string) => {
+    setGeminiMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id === messageId) {
+          const nextState = !msg.addedToInbox;
+          if (nextState) {
+            sharedCasesList = [msg.caseItem, ...sharedCasesList.filter((c) => c.title !== msg.caseItem.title)];
+            setCasesList(sharedCasesList);
+            setSuggestedNotice(`Added "${msg.caseItem.title}" to CXO Inbox`);
+          }
+          return { ...msg, addedToInbox: nextState };
+        }
+        return msg;
+      })
+    );
+  };
+
+  const handleCopyAnswer = (messageId: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setGeminiMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, isCopied: true } : m))
+    );
+    setTimeout(() => {
+      setGeminiMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, isCopied: false } : m))
+      );
+    }, 2000);
+  };
+
+  const handleFeedback = (messageId: string, type: "up" | "down") => {
+    setGeminiMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, feedback: m.feedback === type ? null : type } : m))
+    );
+  };
+
+  const [casesList, setCasesList] = useState<ActiveCaseItem[]>(sharedCasesList);
+  const [archivedCaseTitles, setArchivedCaseTitles] = useState<string[]>([]);
+  const [lastArchivedNotice, setLastArchivedNotice] = useState<string | null>(null);
+
+  const [isAddNewCaseOpen, setIsAddNewCaseOpen] = useState(false);
+  const [newCaseTitle, setNewCaseTitle] = useState("");
+  const [newCaseAgent, setNewCaseAgent] = useState("Inventory Planning & Allocation");
+  const [newCaseSummary, setNewCaseSummary] = useState("");
+
+  const handleCreateNewCase = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const title = newCaseTitle.trim() || `New Case: Merchandising Audit #${casesList.length + 1}`;
+    const newCase: ActiveCaseItem = {
+      title,
+      age: "Just now",
+      agent: newCaseAgent.trim() || "Inventory Planning & Allocation",
+      body: newCaseSummary.trim() || `Autonomous merchandising investigation initiated for ${title}. Live telemetry connectors synchronized across ERP and Store POS balances.`,
+      isLive: true,
+      newFindingsCount: 1,
+    };
+    sharedCasesList = [newCase, ...sharedCasesList.filter((c) => c.title !== title)];
+    setCasesList(sharedCasesList);
+    setSelectedActiveCase(newCase);
+    setSelectedCaseIndex(0);
+    setMobileActiveView("detail");
+    setIsAddNewCaseOpen(false);
+    setNewCaseTitle("");
+    setNewCaseSummary("");
+    setSuggestedNotice(`Created and opened new case: "${title}"`);
+  };
+
+  const archiveCase = (title: string) => {
+    setArchivedCaseTitles((prev) => (prev.includes(title) ? prev : [...prev, title]));
+    setLastArchivedNotice(title);
+    setTimeout(() => {
+      setLastArchivedNotice((curr) => (curr === title ? null : curr));
+    }, 5000);
+  };
+
+  const restoreCase = (title: string) => {
+    setArchivedCaseTitles((prev) => prev.filter((t) => t !== title));
+    setLastArchivedNotice(null);
+  };
+
+  const [caseSearchQuery, setCaseSearchQuery] = useState("");
+  const [selectedSuggestedCategory, setSelectedSuggestedCategory] = useState<string>("All");
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+  const [suggestedNotice, setSuggestedNotice] = useState<string | null>(null);
+
+  const displayedCases = useMemo(() => {
+    return casesList
+      .filter((c) => !archivedCaseTitles.includes(c.title))
+      .filter((c) => {
+        if (selectedSuggestedCategory === "All") return true;
+        const cat = selectedSuggestedCategory.toLowerCase();
+        return (
+          (c.agent && c.agent.toLowerCase().includes(cat)) ||
+          c.title.toLowerCase().includes(cat) ||
+          c.body.toLowerCase().includes(cat)
+        );
+      })
+      .filter((c) => {
+        if (!caseSearchQuery.trim()) return true;
+        const q = caseSearchQuery.toLowerCase().trim();
+        return (
+          c.title.toLowerCase().includes(q) ||
+          c.body.toLowerCase().includes(q) ||
+          (c.agent && c.agent.toLowerCase().includes(q))
+        );
+      });
+  }, [casesList, archivedCaseTitles, caseSearchQuery, selectedSuggestedCategory]);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setIsCategoryFilterOpen(false);
+    };
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, []);
+
+  const initialPendingInfo = getInitialPending();
+
+  // Outlook selection state - default unselected unless a case is clicked or pending load
+  const [selectedCaseIndex, setSelectedCaseIndex] = useState<number>(() => {
+    if (initialPendingInfo.shouldLoad && initialPendingInfo.pendingCase) return 0;
+    return -1;
+  });
+  const [selectedActiveCase, setSelectedActiveCase] = useState<ActiveCaseItem | null>(() => {
+    if (initialPendingInfo.shouldLoad && initialPendingInfo.pendingCase) return initialPendingInfo.pendingCase;
+    return null;
+  });
+  const [mobileActiveView, setMobileActiveView] = useState<"list" | "detail">(() => {
+    if (initialPendingInfo.shouldLoad && initialPendingInfo.pendingCase) return "detail";
+    return "list";
+  });
+  const [isCaseLoading, setIsCaseLoading] = useState<boolean>(() => {
+    if (initialPendingInfo.shouldLoad && initialPendingInfo.pendingCase) return true;
+    return false;
+  });
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
+  }, []);
+
+  // When inbox view is active and a case is pending auto-load, show loading then reveal result
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    if (activeView === "inbox") {
+      const info = getInitialPending();
+      if (info.shouldLoad && info.pendingCase) {
+        const target = info.pendingCase;
+        setSelectedActiveCase(target);
+        setSelectedCaseIndex(0);
+        setIsCaseLoading(true);
+        setMobileActiveView("detail");
+
+        timer = setTimeout(() => {
+          setIsCaseLoading(false);
+          sharedTriggerLoading = false;
+          sharedPendingCase = null;
+          try {
+            sessionStorage.removeItem("pending_inbox_case");
+          } catch { }
+        }, 1200);
+      }
+    }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [activeView]);
+
+  const handleSelectCase = (caseItem: ActiveCaseItem, index: number) => {
+    if (selectedActiveCase?.title === caseItem.title && !isCaseLoading) {
+      setMobileActiveView("detail");
+      return;
+    }
+
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+    }
+
+    setIsCaseLoading(true);
+    setSelectedActiveCase(caseItem);
+    setSelectedCaseIndex(index);
+    setMobileActiveView("detail");
+
+    loadingTimerRef.current = setTimeout(() => {
+      setIsCaseLoading(false);
+      loadingTimerRef.current = null;
+    }, 550);
+  };
+
+  const mapTitleToCaseId = (title: string, index: number) => {
+    const t = title.toLowerCase();
+    if (t.includes("fever") || t.includes("pediatric")) return "case-fever";
+    if (t.includes("inventory exposure") || t.includes("exposure") || t.includes("overcoat")) return "case-1";
+    if (t.includes("newly launched") || t.includes("launched") || t.includes("linen") || t.includes("cargo")) return "case-2";
+    if (t.includes("largest share") || t.includes("revenue") || t.includes("denim")) return "case-3";
+    if (t.includes("decline stage") || t.includes("lifecycle") || t.includes("markdown") || t.includes("polo")) return "case-4";
+    if (t.includes("stockout") || t.includes("loss in sales") || t.includes("demand")) return "case-5";
+    return `case-${((index >= 0 ? index : 0) % 5) + 1}`;
+  };
+
+  const currentCaseId = useMemo(() => {
+    if (!selectedActiveCase) return "case-1";
+    return mapTitleToCaseId(selectedActiveCase.title, selectedCaseIndex);
+  }, [selectedActiveCase, selectedCaseIndex]);
+
+  // Handler for asking a question: implements Gemini behavior right on the home page
+  const handleAskQuestion = (rawQuery?: string) => {
+    const q = (rawQuery ?? chatQuery).trim();
+    if (!q) return;
+
+    setActiveQuestion(q);
+    setChatQuery("");
+
+    if (activeView === "inbox") {
+      // In inbox view, load directly into inbox split-view
+      const newMsg = getCaseDetailsForQuery(q);
+      sharedCasesList = [newMsg.caseItem, ...sharedCasesList.filter((c) => c.title !== newMsg.caseItem.title)];
+      setCasesList(sharedCasesList);
+      setSelectedActiveCase(newMsg.caseItem);
+      setSelectedCaseIndex(0);
+      setIsCaseLoading(true);
+      setTimeout(() => {
+        setIsCaseLoading(false);
+      }, 600);
+      return;
+    }
+
+    // Multi-Agent Analysis with Live Rotating Logo & Shimmer Loader
+    setStreamingQuery(q);
+    setIsGeminiLoading(true);
+    setChatQuery("");
+
+    geminiTimersRef.current.forEach((t) => clearTimeout(t));
+    geminiTimersRef.current = [];
+
+    // Stage 1: Initial agent activity
+    setGeminiLoadingStage("Agent Sales is querying store billing invoices...");
+
+    // Smoothly scroll to the top of the loader so the top header and rotating logo are fully visible
+    setTimeout(() => {
+      const loaderEl = document.getElementById("gemini-loader");
+      if (loaderEl) {
+        loaderEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 60);
+
+    // Stage 2: Inventory Agent
+    const t2 = setTimeout(() => {
+      setGeminiLoadingStage("Agent Inventory is scanning 90-day SKU velocity & warehouse aging ledgers...");
+    }, 800);
+    geminiTimersRef.current.push(t2);
+
+    // Stage 3: Finance Agent
+    const t3 = setTimeout(() => {
+      setGeminiLoadingStage("Agent Finance is computing capital exposure & deducting returns...");
+    }, 1600);
+    geminiTimersRef.current.push(t3);
+
+    // Stage 4: Executive Agent
+    const t4 = setTimeout(() => {
+      setGeminiLoadingStage("Agent Executive is synthesizing final report & recommendations...");
+    }, 2400);
+    geminiTimersRef.current.push(t4);
+
+    // Complete: Generate full report and smoothly scroll to it
+    const tFinal = setTimeout(() => {
+      const newMsg = getCaseDetailsForQuery(q);
+      newMsg.revealedSections = 7;
+
+      // Prepend to active cases list so it's readily available in CXO Inbox
+      sharedCasesList = [newMsg.caseItem, ...sharedCasesList.filter((c) => c.title !== newMsg.caseItem.title)];
+      setCasesList(sharedCasesList);
+
+      setGeminiMessages((prev) => [...prev, newMsg]);
+      setIsGeminiLoading(false);
+      setStreamingQuery("");
+
+      setTimeout(() => {
+        const msgEl = document.getElementById(`msg-${newMsg.id}`);
+        if (msgEl) {
+          msgEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+          scrollStreamToBottom(true);
+        }
+      }, 100);
+    }, 3100);
+    geminiTimersRef.current.push(tFinal);
+  };
+
+  const handleVoiceModeClick = () => {
+    if (isVoiceActive) {
+      setIsVoiceActive(false);
+      return;
+    }
+    setIsVoiceActive(true);
+    setChatQuery("Listening... 🎙️");
+    setTimeout(() => {
+      const spokenQuery = "Products are creating the highest inventory exposure";
+      setChatQuery(spokenQuery);
+      setIsVoiceActive(false);
+      handleAskQuestion(spokenQuery);
+    }, 1100);
+  };
+
+  return (
+    <div className="fixed inset-0 h-screen w-screen bg-surface-tint font-sans text-foreground flex flex-col overflow-hidden">
+      {/* Light Theme Agent Loader */}
+      {isConnectingAgents && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl bg-white/95 border border-slate-200/90 shadow-2xl p-7 sm:p-8 text-center flex flex-col items-center space-y-5 text-slate-800 animate-in zoom-in-95 duration-200">
+            {/* Animated Rotating Flower Logo */}
+            <div className="relative py-2 flex items-center justify-center">
+              <div className="absolute size-24 rounded-full bg-sky-400/20 blur-xl animate-pulse" />
+              <div className="relative size-20 flex items-center justify-center">
+                <img
+                  src="/flower-logo.png"
+                  alt="Loading..."
+                  className="size-16 sm:size-18 object-contain animate-spin select-none"
+                  style={{ animationDuration: "2.8s" }}
+                />
+              </div>
+              <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] shadow-xs">
+                <Check className="size-3 stroke-[3]" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                Connecting with the right agents...
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 italic line-clamp-2 px-3">
+                "{activeQuestion}"
+              </p>
+            </div>
+
+            {/* Progressive Connection Pipeline Steps (Light Theme) */}
+            <div className="w-full space-y-2.5 text-left border-t border-slate-100 pt-4">
+              <div className="flex items-center gap-3 text-xs sm:text-sm">
+                <div
+                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${connectingStep >= 1
+                    ? "bg-emerald-500 text-white shadow-2xs"
+                    : "bg-slate-100 text-slate-400 border border-slate-200"
+                    }`}
+                >
+                  {connectingStep >= 1 ? <Check className="size-3 stroke-[3]" /> : <Loader2 className="size-3 animate-spin text-teal-600" />}
+                </div>
+                <span className={connectingStep >= 1 ? "text-slate-800 font-medium" : "text-slate-400"}>
+                  Analyzing apparel inventory & merchandising query...
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs sm:text-sm">
+                <div
+                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${connectingStep >= 2
+                    ? "bg-emerald-500 text-white shadow-2xs"
+                    : connectingStep === 1
+                      ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
+                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                    }`}
+                >
+                  {connectingStep >= 2 ? (
+                    <Check className="size-3 stroke-[3]" />
+                  ) : connectingStep === 1 ? (
+                    <Loader2 className="size-3 animate-spin text-sky-600" />
+                  ) : (
+                    <span className="size-1.5 rounded-full bg-slate-300" />
+                  )}
+                </div>
+                <span className={connectingStep >= 2 ? "text-slate-800 font-medium" : connectingStep === 1 ? "text-slate-700 font-medium" : "text-slate-400"}>
+                  Routing to Merchandising & Inventory Agents...
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs sm:text-sm">
+                <div
+                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${connectingStep >= 3
+                    ? "bg-emerald-500 text-white shadow-2xs"
+                    : connectingStep === 2
+                      ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
+                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                    }`}
+                >
+                  {connectingStep >= 3 ? (
+                    <Check className="size-3 stroke-[3]" />
+                  ) : connectingStep === 2 ? (
+                    <Loader2 className="size-3 animate-spin text-sky-600" />
+                  ) : (
+                    <span className="size-1.5 rounded-full bg-slate-300" />
+                  )}
+                </div>
+                <span className={connectingStep >= 3 ? "text-slate-800 font-medium" : connectingStep === 2 ? "text-slate-700 font-medium" : "text-slate-400"}>
+                  Synthesizing SKU sell-through, stock & store telemetry...
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* UNIFIED TOP HEADER - IDENTICAL ON ASK ASTYLE & INBOX */}
+      <header className="sticky top-0 z-40 h-12 shrink-0 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-3 sm:px-6 gap-3">
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => switchView("chat")}
+            className="text-base sm:text-lg font-bold tracking-tight text-white hover:opacity-90 transition cursor-pointer flex items-center gap-2.5 whitespace-nowrap group select-none"
+            title="A style — Go to Chat"
+          >
+            <img
+              src="/flower-logo.png"
+              alt="A style Logo"
+              className="size-7 object-contain shrink-0 drop-shadow-sm group-hover:rotate-12 transition-transform duration-300"
+            />
+            <span className="font-bold tracking-tight text-white">A style</span>
+          </button>
+        </div>
+
+        {/* Search & Filter centered on top in the header (only on inbox view) */}
+        {activeView !== "chat" ? (
+          <div className="flex-1 max-w-md sm:max-w-xl flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-sky-200/60 pointer-events-none" />
+              <input
+                type="text"
+                value={caseSearchQuery}
+                onChange={(e) => setCaseSearchQuery(e.target.value)}
+                placeholder="Search active agents by title, description..."
+                className="w-full h-8 rounded-lg border border-sky-400/20 bg-sky-950/50 pl-8.5 pr-8 text-xs sm:text-sm text-white placeholder:text-sky-200/50 focus:outline-none focus:ring-1 focus:ring-sky-400 focus:bg-sky-950/80 transition-all"
+              />
+              {caseSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setCaseSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sky-200/60 hover:text-white cursor-pointer p-0.5 rounded-full hover:bg-white/10 transition"
+                  aria-label="Clear search"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter Dropdown in Header */}
+            <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setIsCategoryFilterOpen((prev) => !prev)}
+                className={`h-8 inline-flex items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition cursor-pointer ${selectedSuggestedCategory !== "All"
+                  ? "border-sky-400/50 bg-sky-500/25 text-white ring-1 ring-sky-400/30"
+                  : "border-sky-400/20 bg-sky-950/40 text-sky-200/80 hover:bg-sky-900/50 hover:text-white"
+                  }`}
+                title="Filter category"
+              >
+                <Filter className="size-3.5 text-sky-300" />
+                <span className="hidden sm:inline">
+                  {selectedSuggestedCategory === "All" ? "Filter" : selectedSuggestedCategory}
+                </span>
+                <ChevronDown
+                  className={`size-3 text-sky-300/80 transition-transform duration-200 ${isCategoryFilterOpen ? "rotate-180" : ""
+                    }`}
+                />
+              </button>
+
+              {isCategoryFilterOpen && (
+                <div className="absolute right-0 top-full mt-1.5 z-50 w-52 rounded-xl border border-border/90 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-1">
+                    Filter by Category
+                  </div>
+                  <div className="space-y-0.5">
+                    {SUGGESTED_CATEGORIES.map((cat) => {
+                      const isSelected = selectedSuggestedCategory === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedSuggestedCategory(cat.id);
+                            setIsCategoryFilterOpen(false);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition cursor-pointer ${isSelected
+                            ? "bg-tile text-brand-blue font-semibold"
+                            : "text-foreground hover:bg-tile/60"
+                            }`}
+                        >
+                          <span>{cat.label}</span>
+                          {isSelected && <Check className="size-3 text-brand-blue" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        {/* Profile on right top end */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="text-right hidden sm:block">
+            <p className="text-xs font-medium leading-none text-white">Robert</p>
+            <p className="text-[10px] text-sky-200/70 mt-0.5">Chief Executive Officer</p>
+          </div>
+          <span className="grid size-7 sm:size-8 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-xs sm:text-sm font-medium text-white shadow-xs">
+            R
+          </span>
+        </div>
+      </header>
+
+      {/* MAIN CONTAINER WITH UNIFIED NAVIGATION RAIL */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Navigation Rail - SAME across both views */}
+        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex border-r border-border dark:border-zinc-800 overflow-visible bg-surface z-10">
+          {/* A style Chat Page Button */}
+          <div className="relative group flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => switchView("chat")}
+              aria-label="A style"
+              className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${activeView === "chat"
+                ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-tile"
+                }`}
+            >
+              <MessageSquare className="size-5" />
+            </button>
+            <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+              A style
+              <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+            </div>
+          </div>
+
+          {/* Inbox Button */}
+          <div className="relative group flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => switchView("inbox")}
+              aria-label="Inbox"
+              className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${activeView === "inbox"
+                ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-tile"
+                }`}
+            >
+              <Inbox className="size-5" />
+              {/* Show the count */}
+              <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 px-1 flex items-center justify-center rounded-full bg-cyan-600 text-[10px] font-bold text-white shadow-xs">
+                {displayedCases.length}
+              </span>
+            </button>
+            <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+              Inbox ({displayedCases.length})
+              <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+            </div>
+          </div>
+
+          {railIcons.slice(1).map(({ icon: Icon, label, to }) => (
+            <div key={label} className="relative group flex items-center justify-center">
+              <Link
+                to={to}
+                aria-label={label}
+                className="relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-tile"
+              >
+                <Icon className="size-5" />
+              </Link>
+              <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+                {label}
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* WORKSPACE AREA TO RIGHT OF RAIL */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {activeView === "chat" ? (
+            geminiMessages.length === 0 && !isGeminiLoading ? (
+              /* ASK ASTYLE CHAT HERO VIEW - NO SCROLLBARS */
+              <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] text-foreground relative overflow-hidden px-4 py-4 sm:py-6">
+                {/* Subtle Ambient Radial Orbs contained inside */}
+                <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
+
+                <div className={`w-full flex flex-col items-center text-center z-10 my-auto py-2 transition-all duration-300 ease-out ${
+                  isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
+                }`}>
+                  {/* Flower Logo above title */}
+                  <div className="flex items-center justify-center mb-3 sm:mb-4 group">
+                    <img
+                      src="/flower-logo.png"
+                      alt="Logo"
+                      onClick={() => {
+                        setLogoRotation((prev) => prev + 60);
+                        switchView("chat");
+                        setGeminiMessages([]);
+                        setIsGeminiLoading(false);
+                        setStreamingQuery("");
+                      }}
+                      style={{ transform: `rotate(${logoRotation}deg)` }}
+                      className="size-16 sm:size-20 object-contain drop-shadow-sm select-none cursor-pointer transition-transform duration-500 ease-out hover:scale-105 active:scale-95"
+                      title="A style — Go to Chat"
+                    />
+                  </div>
+
+                  {/* Title: What should AI analyze? with bottom spacing */}
+                  <h1
+                    style={{ fontWeight: 400 }}
+                    className="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-[#142a38] leading-tight select-none mb-3 sm:mb-4"
+                  >
+                    What should AI analyze?
+                  </h1>
+
+                  {/* Centered Search Card with Top-Docked Deep Insights / Chat Mode Toggle */}
+                  <div className="w-full space-y-3.5 flex flex-col items-center">
+                    {/* Mode Toggle Switch docked close on top of search box */}
+                    <div className="relative z-20 -mb-2.5 sm:-mb-3">
+                      <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white border border-slate-300 shadow-xs">
+                        <button
+                          type="button"
+                          onClick={() => setIsReportFormatMode(true)}
+                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
+                            isReportFormatMode
+                              ? "font-semibold text-[#0e7490]"
+                              : "font-normal text-slate-500 hover:text-slate-800"
+                          }`}
+                        >
+                          Deep Insights
+                        </button>
+
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={!isReportFormatMode}
+                          onClick={() => setIsReportFormatMode((prev) => !prev)}
+                          className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-slate-200 border border-slate-300 transition-colors duration-200 ease-in-out focus:outline-hidden"
+                          title={isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${
+                              isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
+                            }`}
+                          />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsReportFormatMode(false)}
+                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
+                            !isReportFormatMode
+                              ? "font-semibold text-[#0e7490]"
+                              : "font-normal text-slate-500 hover:text-slate-800"
+                          }`}
+                        >
+                          Chat Mode
+                        </button>
+                      </div>
+                    </div>
+
+                    <form
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={(e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                          setIsSearchFocused(false);
+                        }
+                      }}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAskQuestion();
+                      }}
+                      className="w-full relative shadow-lg hover:shadow-xl rounded-2xl sm:rounded-full bg-white border-2 border-slate-300 hover:border-slate-400 focus-within:border-[#0e7490] focus-within:ring-4 focus-within:ring-[#0e7490]/20 flex items-center px-4 sm:px-5 py-2 sm:py-2.5 gap-3 transition-all ring-1 ring-black/5"
+                    >
+                      <Search className="size-5 text-[#0e7490] shrink-0 stroke-[2.2]" />
+                      <input
+                        type="text"
+                        value={chatQuery}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onClick={() => setIsSearchFocused(true)}
+                        onChange={(e) => setChatQuery(e.target.value)}
+                        placeholder="Ask anything (e.g. Products creating highest inventory exposure...)"
+                        className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
+                      />
+                      {chatQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setChatQuery("")}
+                          className="text-slate-400 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
+                          aria-label="Clear search"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={!chatQuery.trim() && !isVoiceActive}
+                        className="px-5 sm:px-6 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
+                      >
+                        Analyze
+                      </button>
+                    </form>
+
+                    {/* Voice Mode Pill Button - Filled Color with Bottom Spacing */}
+                    <div className="flex items-center justify-center pb-2">
+                      <button
+                        type="button"
+                        onClick={handleVoiceModeClick}
+                        className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${isVoiceActive
+                          ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
+                          : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
+                          }`}
+                      >
+                        <Mic className="size-3.5 sm:size-4 text-white" />
+                        <span>{isVoiceActive ? "Listening..." : "Voice Mode"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Highly Readable Suggested Queries - Transparent Background */}
+                  <div className="pt-6 sm:pt-8 w-full max-w-xl flex flex-col items-center gap-2.5">
+                    <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                      Suggested Queries
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+                      {suggestedQueries.map((query, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleAskQuestion(query)}
+                          className="px-4 py-2.5 rounded-2xl sm:rounded-full bg-transparent hover:bg-white/40 border border-slate-300 hover:border-[#0e7490]/60 text-xs sm:text-sm text-slate-800 hover:text-[#0e7490] transition cursor-pointer flex items-center gap-2.5 text-left group"
+                        >
+                          <Sparkles className="size-3.5 text-[#0e7490] shrink-0" />
+                          <span className="leading-snug font-medium line-clamp-1">{query}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* GEMINI BEHAVIOR CONVERSATION STREAM ON HOME PAGE */
+              <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] relative overflow-hidden">
+                {/* Subtle Ambient Radial Orbs */}
+                <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
+
+                {/* Scrollable Conversation Stream */}
+                <div ref={conversationStreamRef} className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-6 pb-28 z-10">
+                  <div className="max-w-3xl mx-auto space-y-6 pb-6">
+                    {geminiMessages.map((msg) => (
+                      <div key={msg.id} id={`msg-${msg.id}`} className="space-y-4 animate-in fade-in duration-300">
+                        {/* USER QUERY BUBBLE */}
+                        <div className="flex justify-end">
+                          <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
+                            <span>{msg.query}</span>
+                            <div className="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-700">
+                              <User className="size-3.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {!isReportFormatMode ? (
+                          <div className="flex items-start gap-3">
+                            <div className="size-7 rounded-lg bg-[#0e7490] flex items-center justify-center shrink-0 text-white shadow-2xs mt-1">
+                              <Sparkles className="size-4" />
+                            </div>
+                            <div className="flex-1 max-w-2xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs p-4 sm:p-5 text-slate-800 text-sm space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <h3 className="font-bold text-slate-900 text-base">{msg.structuredAnswer.reportTitle}</h3>
+                              </div>
+                              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                                {msg.structuredAnswer.keyFinding}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {/* GEMINI AI ASSISTANT ANSWER CARD - SECTION BY SECTION LOADING */}
+                            {(() => {
+                              const revealed = msg.revealedSections ?? 7;
+
+                              return (
+                                <>
+                                  <div className="rounded-2xl border border-slate-200/90 bg-white overflow-hidden shadow-xs">
+                                    {/* Top Ambient Header Banner - EXACT INBOX REPORT STYLE */}
+                                    <div className="p-6 sm:p-8 border-b border-slate-200/80 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95">
+                                      <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 blur-3xl" />
+                                      <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 blur-3xl" />
+                                      <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 blur-2xl" />
+
+                                      <div className="relative z-10 flex flex-col gap-3">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="text-xs text-slate-600 font-medium">
+                                            {msg.structuredAnswer.reportDate}
+                                          </span>
+                                        </div>
+
+                                        <h2
+                                          style={{ fontWeight: 400 }}
+                                          className="text-xl sm:text-2xl lg:text-[25px] font-normal tracking-tight text-slate-900 leading-snug max-w-4xl"
+                                        >
+                                          {msg.structuredAnswer.reportTitle}
+                                        </h2>
+
+                                        <p
+                                          style={{ fontWeight: 300 }}
+                                          className="text-xs sm:text-sm text-slate-700/90 leading-relaxed font-light"
+                                        >
+                                          {msg.structuredAnswer.basedOnData ||
+                                            (msg.structuredAnswer.howAnswerFound?.evidenceDatasets?.[0]?.period
+                                              ? `based on the data from ${msg.structuredAnswer.howAnswerFound.evidenceDatasets[0].period}`
+                                              : "based on the data form 19 may 08 to 21 march 24")}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="p-5 sm:p-6 space-y-5 text-slate-900">
+
+                                      {/* Section 2: Key Findings */}
+                                      {revealed >= 2 ? (
+                                        <div className="space-y-2.5 pt-0.5 animate-in fade-in duration-300">
+                                          <div>
+                                            <span className="inline-flex items-center rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                              Key Findings
+                                            </span>
+                                          </div>
+                                          <ul className="space-y-2">
+                                            {(msg.structuredAnswer.keyFinding.includes("\n")
+                                              ? msg.structuredAnswer.keyFinding.split(/\n+/)
+                                              : msg.structuredAnswer.keyFinding.split(/(?<=\.)\s+/)
+                                            )
+                                              .map((s) => s.trim())
+                                              .filter(Boolean)
+                                              .map((point, pIdx) => (
+                                                <li
+                                                  key={pIdx}
+                                                  className="flex items-start gap-2.5 text-sm sm:text-[15px] text-slate-900 leading-relaxed font-normal"
+                                                >
+                                                  <span className="size-2 rounded-full bg-blue-600 shrink-0 mt-2" />
+                                                  <span>{point}</span>
+                                                </li>
+                                              ))}
+                                          </ul>
+                                        </div>
+                                      ) : (
+                                        /* Key Findings Loader */
+                                        <div className="space-y-2.5 pt-1 animate-pulse">
+                                          <div>
+                                            <span className="inline-flex items-center gap-1.5 rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                              <Loader2 className="size-3.5 animate-spin text-blue-600" />
+                                              Analyzing Key Findings...
+                                            </span>
+                                          </div>
+                                          <div className="space-y-2 pl-1 pt-1">
+                                            <div className="h-4 bg-slate-200/80 rounded-md w-11/12" />
+                                            <div className="h-4 bg-slate-200/50 rounded-md w-4/5" />
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Section 3: Products List */}
+                                      {revealed >= 3 ? (
+                                        <div className="space-y-2 animate-in fade-in duration-300">
+                                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                                            <span className="inline-flex items-center rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                              Products List
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const datasets = msg.structuredAnswer.howAnswerFound?.evidenceDatasets || [];
+                                                const foundDs = datasets.find(
+                                                  (d) =>
+                                                    d.id.includes("inventory") ||
+                                                    d.name.toLowerCase().includes("inventory") ||
+                                                    d.name.toLowerCase().includes("product")
+                                                ) || datasets[0];
+
+                                                if (foundDs) {
+                                                  setDatasetSearchQuery("");
+                                                  setDatasetGroupBy("");
+                                                  setDatasetFilterCol("");
+                                                  setDatasetFilterVal("");
+                                                  setCollapsedGroups({});
+                                                  setActiveEvidenceDataset(foundDs);
+                                                } else if (msg.structuredAnswer.topProducts?.length) {
+                                                  const customDs: CxoEvidenceDataset = {
+                                                    id: `${msg.id}-products`,
+                                                    name: `${msg.structuredAnswer.reportTitle} - Products Master Table`,
+                                                    badge: "Products Table",
+                                                    period: msg.structuredAnswer.reportDate || "Current Period",
+                                                    totalSum: msg.structuredAnswer.kpiStats?.[0]?.value || "₹18.4 Cr",
+                                                    recordCount: `${msg.structuredAnswer.topProducts.length} Products`,
+                                                    sourceSystem: "Store POS & Warehouse ERP Balances",
+                                                    citationId: `CIT-${msg.caseId || "DATA"}-PROD`,
+                                                    description: `Complete item-level inventory valuation and sales performance records for ${msg.structuredAnswer.reportTitle}.`,
+                                                    columns: ["Product", "Inventory Value", "Inventory Age", "Sales Trend", "Status"],
+                                                    rows: msg.structuredAnswer.topProducts.map((p, idx) => ({
+                                                      "Product": p.product,
+                                                      "Inventory Value": p.inventory,
+                                                      "Inventory Age": p.age,
+                                                      "Sales Trend": p.salesTrend,
+                                                      "Status": idx < 2 ? "Critical Exposure" : "Moderate Risk",
+                                                    })),
+                                                  };
+                                                  setDatasetSearchQuery("");
+                                                  setDatasetGroupBy("");
+                                                  setDatasetFilterCol("");
+                                                  setDatasetFilterVal("");
+                                                  setCollapsedGroups({});
+                                                  setActiveEvidenceDataset(customDs);
+                                                }
+                                              }}
+                                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#0e7490] hover:border-[#0e7490]/40 transition shadow-2xs cursor-pointer group"
+                                              title="Open full width data table with search, filters and export"
+                                            >
+                                              <Table2 className="size-4 text-slate-600 group-hover:text-[#0e7490]" />
+                                              <span>Open Table</span>
+                                              <ExternalLink className="size-3.5 text-slate-400 group-hover:text-[#0e7490]" />
+                                            </button>
+                                          </div>
+
+                                          {/* List on chat itself with clear, readable fonts */}
+                                          <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-2xs divide-y divide-slate-100">
+                                            {msg.structuredAnswer.topProducts.map((p, pIdx) => (
+                                              <div
+                                                key={pIdx}
+                                                className={`flex items-center justify-between gap-3 py-2.5 hover:bg-slate-50/80 transition text-sm ${pIdx > 0 ? "pt-2.5" : ""
+                                                  }`}
+                                              >
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                  <span className="size-6 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0">
+                                                    {pIdx + 1}
+                                                  </span>
+                                                  <span className="font-semibold text-slate-900 truncate text-sm sm:text-[15px]">{p.product}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                                                  <span className="font-bold text-slate-950 font-['Archivo'] tabular-nums text-sm sm:text-base">
+                                                    {p.inventory}
+                                                  </span>
+                                                  <span className="text-xs sm:text-sm text-slate-500 hidden sm:inline">{p.age}</span>
+                                                  <span className="text-xs sm:text-sm font-bold text-rose-600 font-['Archivo'] tabular-nums">
+                                                    {p.salesTrend}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        /* Products List Loader */
+                                        <div className="space-y-2 animate-pulse">
+                                          <div>
+                                            <span className="inline-flex items-center gap-1.5 rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                              <Loader2 className="size-3.5 animate-spin text-blue-600" />
+                                              Aggregating Products List...
+                                            </span>
+                                          </div>
+                                          <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 space-y-3 shadow-2xs">
+                                            {[1, 2, 3].map((i) => (
+                                              <div key={i} className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="size-6 rounded-full bg-slate-200" />
+                                                  <div className="h-4 bg-slate-200 rounded w-36 sm:w-48" />
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                  <div className="h-4 bg-slate-200 rounded w-16" />
+                                                  <div className="h-4 bg-slate-100 rounded w-12 hidden sm:block" />
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Section 4: Chart */}
+                                      {msg.structuredAnswer.findingChart && (
+                                        revealed >= 4 ? (
+                                          (() => {
+                                            const chart = msg.structuredAnswer.findingChart!;
+                                            const maxVal = Math.max(
+                                              ...chart.bars.map((b) => b.value),
+                                              chart.benchmarkValue || 0,
+                                              1
+                                            );
+
+                                            return (
+                                              <div className="space-y-2 animate-in fade-in duration-300">
+                                                <div>
+                                                  <span className="inline-flex items-center rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                                    {chart.title || "Inventory Exposure Concentration"}
+                                                  </span>
+                                                </div>
+
+                                                <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
+                                                  <div className="overflow-x-auto pb-0.5">
+                                                    <div className="min-w-[400px]">
+                                                      <div className="relative h-36 sm:h-40 w-full flex items-end justify-around px-3 sm:px-6 pt-6">
+                                                        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-40">
+                                                          <div className="border-b border-dashed border-slate-300 w-full" />
+                                                          <div className="border-b border-dashed border-slate-300 w-full" />
+                                                          <div className="border-b border-dashed border-slate-300 w-full" />
+                                                          <div className="border-b border-dashed border-slate-300 w-full" />
+                                                        </div>
+
+                                                        {chart.bars.map((bar, bIdx) => {
+                                                          const colHeightPercent = Math.min(100, Math.max(15, (bar.value / maxVal) * 100));
+
+                                                          return (
+                                                            <div
+                                                              key={bIdx}
+                                                              className="flex flex-col items-center h-full justify-end group relative z-20"
+                                                            >
+                                                              <div className="mb-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200/90 text-xs font-bold text-slate-800 shadow-2xs whitespace-nowrap tabular-nums font-['Archivo']">
+                                                                {bar.formattedValue}
+                                                              </div>
+
+                                                              <div
+                                                                style={{ height: `${colHeightPercent}%` }}
+                                                                className="w-10 sm:w-14 rounded-t-lg transition-all duration-500 shadow-xs relative flex flex-col justify-start overflow-hidden bg-gradient-to-t from-[#0e7490] via-[#0891b2] to-cyan-400 border-t border-x border-cyan-200"
+                                                              >
+                                                                <div className="h-1 w-full bg-white/40 rounded-t-lg" />
+                                                              </div>
+                                                            </div>
+                                                          );
+                                                        })}
+                                                      </div>
+
+                                                      <div className="border-t border-slate-200 w-full" />
+
+                                                      <div className="flex items-start justify-around px-1 sm:px-4 pt-2">
+                                                        {chart.bars.map((bar, bIdx) => (
+                                                          <div
+                                                            key={bIdx}
+                                                            className="w-20 sm:w-26 text-center space-y-0.5"
+                                                          >
+                                                            <span className="text-xs sm:text-sm font-bold text-slate-950 block line-clamp-1 leading-tight">
+                                                              {bar.label}
+                                                            </span>
+                                                            {bar.subtext && (
+                                                              <span className="text-xs text-slate-700 font-medium block leading-tight">
+                                                                {bar.subtext}
+                                                              </span>
+                                                            )}
+                                                          </div>
+                                                        ))}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            );
+                                          })()
+                                        ) : (
+                                          /* Chart Loader */
+                                          <div className="space-y-2 animate-pulse">
+                                            <div>
+                                              <span className="inline-flex items-center gap-1.5 rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                                <Loader2 className="size-3.5 animate-spin text-blue-600" />
+                                                Computing Exposure Concentration Chart...
+                                              </span>
+                                            </div>
+                                            <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs h-38 flex items-end justify-around px-4">
+                                              <div className="w-12 bg-slate-200 rounded-t-lg h-24" />
+                                              <div className="w-12 bg-slate-200 rounded-t-lg h-32" />
+                                              <div className="w-12 bg-slate-200 rounded-t-lg h-20" />
+                                              <div className="w-12 bg-slate-200 rounded-t-lg h-16" />
+                                              <div className="w-12 bg-slate-200 rounded-t-lg h-12" />
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+
+                                      {/* Section 5: What is driving the exposure? */}
+                                      {revealed >= 5 ? (
+                                        <div className="space-y-2 animate-in fade-in duration-300">
+                                          <div>
+                                            <span className="inline-flex items-center rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                              What is driving the exposure?
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-slate-700 leading-relaxed font-normal">
+                                            {getDriverSummaryText(msg.caseId, msg.structuredAnswer.reportTitle)}
+                                          </p>
+                                          <div className="border border-slate-200 rounded-xl bg-white divide-y divide-slate-100 overflow-hidden shadow-2xs">
+                                            <div className="px-3.5 py-2.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs sm:text-sm font-bold text-slate-800">
+                                              <span>Driver</span>
+                                              <span>Value</span>
+                                            </div>
+                                            {msg.structuredAnswer.drivers.map((d, dIdx) => (
+                                              <div
+                                                key={dIdx}
+                                                className={`px-3.5 py-2.5 flex items-center justify-between text-xs sm:text-sm ${dIdx % 2 === 0 ? "bg-white" : "bg-slate-50/70"
+                                                  }`}
+                                              >
+                                                <span className="font-bold text-slate-900">{d.label}</span>
+                                                <span className="font-bold text-slate-950 font-['Archivo'] tabular-nums">
+                                                  {d.value}
+                                                </span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        /* Drivers Loader */
+                                        <div className="space-y-2 animate-pulse">
+                                          <div>
+                                            <span className="inline-flex items-center gap-1.5 rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                              <Loader2 className="size-3.5 animate-spin text-blue-600" />
+                                              Calculating Drivers of Exposure...
+                                            </span>
+                                          </div>
+                                          <div className="h-4 bg-slate-200/60 rounded w-3/4 my-1" />
+                                          <div className="border border-slate-200 rounded-xl bg-white p-3 space-y-2.5 shadow-2xs">
+                                            <div className="h-4 bg-slate-200 rounded w-full" />
+                                            <div className="h-4 bg-slate-100 rounded w-full" />
+                                            <div className="h-4 bg-slate-100 rounded w-full" />
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Section 6: How the data is found (Accordion matching reference design) */}
+                                      {revealed >= 6 ? (
+                                        <div className="pt-4 border-t border-slate-200/80 animate-in fade-in duration-300">
+                                          <button
+                                            type="button"
+                                            onClick={() => toggleHowAnswerFound(msg.id)}
+                                            className="w-full flex items-center justify-between py-2 text-left group cursor-pointer select-none transition-colors"
+                                            aria-expanded={expandedHowFound[msg.id] !== false}
+                                          >
+                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
+                                              How the data is found
+                                            </h3>
+                                            <div className="flex items-center justify-center size-8 rounded-full group-hover:bg-slate-100 text-slate-500 group-hover:text-blue-600 transition-colors shrink-0">
+                                              <ChevronDown
+                                                className={`size-4.5 transition-transform duration-200 ${
+                                                  expandedHowFound[msg.id] !== false ? "rotate-180 text-blue-600" : ""
+                                                }`}
+                                              />
+                                            </div>
+                                          </button>
+
+                                          {expandedHowFound[msg.id] !== false && (
+                                            <div className="space-y-4 pt-2 animate-in fade-in duration-200">
+                                              <p className="text-sm text-slate-700 leading-relaxed font-normal">
+                                                {msg.structuredAnswer.howAnswerFound?.summary ||
+                                                  "We checked stock counts and sales bills across 42 stores and warehouses, comparing how long items sit on shelves against how fast they sell."}
+                                              </p>
+                                              <ReportPipelineDiagram
+                                                caseId={msg.caseId}
+                                                reportTitle={msg.structuredAnswer.reportTitle}
+                                                datasets={msg.structuredAnswer.howAnswerFound?.evidenceDatasets || []}
+                                                onSelectDataset={(datasetId) => {
+                                                  const ds = msg.structuredAnswer.howAnswerFound?.evidenceDatasets?.find((d) => d.id === datasetId);
+                                                  if (ds) {
+                                                    setDatasetSearchQuery("");
+                                                    setDatasetGroupBy("");
+                                                    setDatasetFilterCol("");
+                                                    setDatasetFilterVal("");
+                                                    setCollapsedGroups({});
+                                                    setActiveEvidenceDataset(ds);
+                                                  }
+                                                }}
+                                              />
+
+                                              {/* ANALYSIS PERFORMED */}
+                                              <div className="space-y-1 pt-1">
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                                                  ANALYSIS PERFORMED
+                                                </h4>
+                                                <p className="text-sm text-slate-900 leading-relaxed font-normal">
+                                                  {msg.structuredAnswer.howAnswerFound?.analysis ||
+                                                    msg.structuredAnswer.howAnswerFound?.summary ||
+                                                    "Analyzed 90 days of daily store billing invoices and customer return receipts across 42 retail locations and regional warehouses (Period: June 25 - September 23, 2026). We calculated total gross sales, deducted return items, and cross-referenced unit velocity against inventory age ledgers to compute net exposure sums."}
+                                                </p>
+                                              </div>
+
+                                              {/* KEY EVIDENCE */}
+                                              {msg.structuredAnswer.howAnswerFound?.findings && (
+                                                <div className="space-y-1.5 pt-1">
+                                                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                                                    KEY EVIDENCE
+                                                  </h4>
+                                                  <ul className="space-y-2">
+                                                    {msg.structuredAnswer.howAnswerFound.findings.map((f, fIdx) => (
+                                                      <li key={fIdx} className="flex items-start gap-2.5 text-sm text-slate-900 leading-relaxed">
+                                                        <span className="size-2 rounded-full bg-blue-600 shrink-0 mt-2" />
+                                                        <span>{f}</span>
+                                                      </li>
+                                                    ))}
+                                                  </ul>
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        /* How data is found Loader */
+                                        <div className="pt-3 border-t border-slate-200/80 space-y-2.5 animate-pulse">
+                                          <div>
+                                            <span className="inline-flex items-center gap-1.5 rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
+                                              <Loader2 className="size-3.5 animate-spin text-blue-600" />
+                                              Tracing Audit Trail & Lineage Pipeline...
+                                            </span>
+                                          </div>
+                                          <div className="rounded-xl border border-slate-200/90 bg-white p-4 space-y-2.5 shadow-2xs">
+                                            <div className="h-4 bg-slate-200 rounded w-4/5" />
+                                            <div className="flex items-center justify-between gap-3 pt-1">
+                                              <div className="h-10 bg-slate-100 rounded-lg flex-1" />
+                                              <div className="h-10 bg-slate-100 rounded-lg flex-1" />
+                                              <div className="h-10 bg-slate-100 rounded-lg flex-1" />
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Section 7: Separate Card for Suggestions */}
+                                  {revealed >= 7 && (
+                                    <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-2xs animate-in fade-in duration-300">
+                                      <div className="px-2.5 pb-2 text-xs font-medium text-slate-500">
+                                        Customize report
+                                      </div>
+                                      <div className="divide-y divide-slate-100">
+                                        {[
+                                          {
+                                            label: "Change date period to last 30 days & regenerate",
+                                            query: `Change date period to last 30 days and regenerate report for ${msg.structuredAnswer.reportTitle}`,
+                                          },
+                                          {
+                                            label: "Change date period to previous quarter (Q1) & regenerate",
+                                            query: `Change date period to previous quarter Q1 and regenerate report for ${msg.structuredAnswer.reportTitle}`,
+                                          },
+                                          {
+                                            label: "Filter by top 10 flagship stores only & recalculate",
+                                            query: `Filter by top 10 flagship stores only and recalculate ${msg.structuredAnswer.reportTitle}`,
+                                          },
+                                          {
+                                            label: "Compare with last year same period (YoY)",
+                                            query: `Compare with previous year YoY same period for ${msg.structuredAnswer.reportTitle}`,
+                                          },
+                                        ].map((sug, sIdx) => (
+                                          <button
+                                            key={sIdx}
+                                            type="button"
+                                            onClick={() => handleAskQuestion(sug.query)}
+                                            className="w-full flex items-center justify-between py-2.5 px-2.5 text-left text-sm text-slate-800 hover:text-blue-700 transition cursor-pointer group first:pt-1 last:pb-1"
+                                          >
+                                            <span className="flex items-center gap-2.5">
+                                              <span className="size-2 rounded-full bg-slate-300 group-hover:bg-blue-600 transition shrink-0" />
+                                              <span className="font-medium text-slate-900 group-hover:text-blue-700 group-hover:underline underline-offset-2">{sug.label}</span>
+                                            </span>
+                                            <ArrowRight className="size-4 text-slate-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition shrink-0" />
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+
+                          </>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* STREAMING / THINKING SHIMMER */}
+                    {isGeminiLoading && (
+                      <div id="gemini-loader" className="space-y-4 animate-in fade-in duration-200 scroll-mt-6">
+                        {/* User Query Bubble */}
+                        <div className="flex justify-end">
+                          <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
+                            <span>{streamingQuery}</span>
+                            <div className="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-700">
+                              <User className="size-3.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* AI Loading Card with Rotating Logo, Agent Description on Right & Shimmer Below */}
+                        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm space-y-5">
+                          {/* Rotating Logo + Agent Status on Right */}
+                          <div className="flex items-center gap-3.5 pb-2 border-b border-slate-100">
+                            <div className="size-10 rounded-xl bg-white shadow-xs border border-slate-200 flex items-center justify-center p-2 shrink-0">
+                              <img
+                                src="/flower-logo.png"
+                                alt="AI Analysis"
+                                className="size-full object-contain animate-spin"
+                                style={{ animationDuration: "2.4s" }}
+                              />
+                            </div>
+                            <div className="flex items-center gap-2.5 text-sm sm:text-[15px] text-slate-800 font-semibold min-w-0">
+                              <span key={geminiLoadingStage} className="transition-all duration-300 animate-in fade-in truncate">
+                                {geminiLoadingStage}
+                              </span>
+                              <span className="inline-flex gap-1 shrink-0">
+                                <span className="size-1.5 rounded-full bg-[#0e7490] animate-bounce [animation-delay:-0.3s]" />
+                                <span className="size-1.5 rounded-full bg-[#0e7490] animate-bounce [animation-delay:-0.15s]" />
+                                <span className="size-1.5 rounded-full bg-[#0e7490] animate-bounce" />
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Shimmer Effect Below */}
+                          <div className="space-y-4 pt-1">
+                            {/* Date, Title & Data Source Shimmer */}
+                            <div className="space-y-2">
+                              <div className="h-3.5 w-32 bg-slate-200/80 rounded-md shimmer-effect" />
+                              <div className="h-6 w-3/4 sm:w-2/3 bg-slate-200/90 rounded-lg shimmer-effect" />
+                              <div className="h-3.5 w-52 bg-slate-200/70 rounded-md shimmer-effect" />
+                            </div>
+
+                            {/* 4 KPI Metric Cards Shimmer */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                              {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/70 space-y-2 shimmer-effect">
+                                  <div className="h-5 w-20 bg-slate-200/85 rounded" />
+                                  <div className="h-3 w-24 bg-slate-200/65 rounded" />
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Key Findings Shimmer */}
+                            <div className="space-y-2.5 pt-1">
+                              <div className="h-5 w-28 bg-blue-100/80 rounded-full shimmer-effect" />
+                              <div className="space-y-2">
+                                <div className="h-3.5 w-11/12 bg-slate-200/75 rounded shimmer-effect" />
+                                <div className="h-3.5 w-4/5 bg-slate-200/75 rounded shimmer-effect" />
+                                <div className="h-3.5 w-3/5 bg-slate-200/65 rounded shimmer-effect" />
+                              </div>
+                            </div>
+
+                            {/* Products / Chart Skeleton Shimmer */}
+                            <div className="space-y-2 pt-1">
+                              <div className="h-5 w-32 bg-blue-100/80 rounded-full shimmer-effect" />
+                              <div className="rounded-xl border border-slate-200/70 bg-slate-50/50 p-4 space-y-3 shimmer-effect">
+                                {[1, 2, 3].map((row) => (
+                                  <div key={row} className="flex items-center justify-between gap-3 py-1.5">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="size-5 rounded-full bg-slate-200/80" />
+                                      <div className="h-4 w-36 sm:w-48 bg-slate-200/80 rounded" />
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-4 w-16 bg-slate-200/80 rounded" />
+                                      <div className="h-4 w-12 bg-slate-200/70 rounded" />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="h-4" />
+                  </div>
+                </div>
+
+                {/* FLOATING BOTTOM SEARCH BAR WITH SEAMLESS GRADIENT FADE */}
+                <div className="absolute bottom-0 inset-x-0 pointer-events-none bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 via-55% to-transparent pt-14 pb-4 px-4 sm:px-6 z-30">
+                  <div className={`mx-auto flex items-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${
+                    isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
+                  }`}>
+                    <form
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={(e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                          setIsSearchFocused(false);
+                        }
+                      }}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAskQuestion();
+                      }}
+                      className="flex-1 relative shadow-md hover:shadow-lg rounded-2xl sm:rounded-full bg-white border-2 border-slate-300 hover:border-slate-400 focus-within:border-[#0e7490] focus-within:ring-4 focus-within:ring-[#0e7490]/20 flex items-center px-4 sm:px-5 py-2 gap-3 transition-all ring-1 ring-black/5"
+                    >
+                      <Search className="size-5 text-[#0e7490] shrink-0 stroke-[2.2]" />
+                      <input
+                        type="text"
+                        value={chatQuery}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onClick={() => setIsSearchFocused(true)}
+                        onChange={(e) => setChatQuery(e.target.value)}
+                        placeholder="Ask follow-up question or instruct AI..."
+                        className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
+                      />
+                      {chatQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setChatQuery("")}
+                          className="text-slate-400 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
+                          aria-label="Clear search"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleVoiceModeClick}
+                        className={`size-9 rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${isVoiceActive
+                            ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
+                            : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
+                          }`}
+                        title={isVoiceActive ? "Listening... Click to stop" : "Voice input"}
+                        aria-label="Voice input"
+                      >
+                        <Mic className="size-4" />
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!chatQuery.trim() && !isVoiceActive}
+                        className="px-4 sm:px-5 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
+                      >
+                        <span>Analyze</span>
+                      </button>
+                    </form>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGeminiMessages([]);
+                        setIsGeminiLoading(false);
+                        setStreamingQuery("");
+                      }}
+                      className="size-10 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0e7490] text-slate-600 hover:text-[#0e7490] shadow-md flex items-center justify-center transition cursor-pointer shrink-0"
+                      title="New Query / Reset"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          ) : (
+            /* INBOX FOR CXO OUTLOOK-STYLE SPLIT VIEW */
+            <div className="flex-1 flex min-w-0 h-full overflow-hidden">
+              {/* LEFT COLUMN: OUTLOOK-STYLE CASE & AGENT LIST (380px width) */}
+              <aside
+                className={`w-full lg:w-[380px] shrink-0 border-r-2 border-border dark:border-zinc-800 bg-surface flex flex-col h-full overflow-hidden ${mobileActiveView === "detail" ? "hidden lg:flex" : "flex"
+                  }`}
+              >
+                {/* Header of Active Cases */}
+                <div className="px-5 py-3.5 border-b border-border/80 flex items-center justify-between bg-surface shrink-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground tracking-tight">Active Cases</h3>
+                    <span className="px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-xs font-bold">
+                      {displayedCases.length}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddNewCaseOpen(true)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#0e7490] hover:bg-[#0c627a] text-white text-xs font-semibold transition cursor-pointer shadow-xs active:scale-98"
+                    title="Add New Case"
+                  >
+                    <Plus className="size-3.5 stroke-[2.5]" />
+                    <span>Add New</span>
+                  </button>
+                </div>
+
+                {/* Toast Notices if present */}
+                {(lastArchivedNotice || suggestedNotice) && (
+                  <div className="p-3 border-b border-border/80 space-y-2 bg-surface">
+                    {lastArchivedNotice && (
+                      <div className="flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-foreground animate-in fade-in">
+                        <div className="flex items-center gap-2 truncate">
+                          <Archive className="size-3.5 text-amber-600 shrink-0" />
+                          <span className="truncate">Archived "{lastArchivedNotice}"</span>
+                        </div>
+                        <button
+                          onClick={() => restoreCase(lastArchivedNotice)}
+                          className="text-xs font-semibold text-brand-blue hover:underline cursor-pointer shrink-0 ml-2"
+                        >
+                          Undo
+                        </button>
+                      </div>
+                    )}
+
+                    {suggestedNotice && (
+                      <div className="flex items-center justify-between rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 p-2.5 text-xs text-blue-900 dark:text-blue-200 animate-in fade-in">
+                        <div className="flex items-center gap-2 truncate">
+                          <CheckCircle2 className="size-4 text-brand-blue shrink-0" />
+                          <span className="truncate font-medium">{suggestedNotice}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSuggestedNotice(null)}
+                          className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0 ml-2"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Scrollable Outlook List Items: Exact 5 Garment Cases */}
+                <div className="flex-1 overflow-y-auto no-scrollbar divide-y-2 divide-border/80 dark:divide-zinc-800">
+                  {displayedCases.map((c, i) => {
+                    const isSelected = selectedActiveCase?.title === c.title;
+
+                    return (
+                      <div
+                        key={`${c.title}-${i}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                          handleSelectCase(c, i);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleSelectCase(c, i);
+                          }
+                        }}
+                        className={`w-full text-left p-5 sm:p-5.5 transition-all cursor-pointer relative group border-l-4 border-b border-border/80 dark:border-zinc-800 ${isSelected
+                          ? "border-l-brand-blue bg-blue-50/80 dark:bg-blue-950/45 shadow-xs"
+                          : "border-l-transparent hover:bg-tile/75"
+                          }`}
+                      >
+                        {/* Top Line: Age / Timestamp + 3 Count for 3rd Item */}
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {c.isLive && c.age !== "Just now" && (
+                              <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live Continuous Monitoring" />
+                            )}
+                            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                              {c.age}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {/* 3 count right side to represent new 3 findings (only for the third item) */}
+                            {(c.newFindingsCount || c.title.includes("largest share") || i === 2) && (
+                              <span
+                                className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-brand-blue text-white text-xs font-bold shadow-2xs shrink-0"
+                                title="3 new findings"
+                              >
+                                {c.newFindingsCount ?? 3}
+                              </span>
+                            )}
+
+                            {c.expiryDate && (
+                              <span className="text-xs text-amber-700 dark:text-amber-300 font-medium px-2 py-0.5 rounded-md bg-amber-500/10 whitespace-nowrap">
+                                {c.expiryDate}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Title on Left (18px and font-weight 400) */}
+                        <h4
+                          style={{ fontWeight: 400 }}
+                          className="text-[18px] font-normal leading-snug line-clamp-2 text-foreground"
+                        >
+                          {c.title}
+                        </h4>
+
+                        {/* Part of Description on Left (Sub lines grey color #41485e, less priority) */}
+                        <p
+                          style={{ color: "#41485e" }}
+                          className="mt-2 text-xs sm:text-[13px] text-[#41485e] dark:text-zinc-400 leading-relaxed line-clamp-2 font-normal"
+                        >
+                          {c.body}
+                        </p>
+                      </div>
+                    );
+                  })}
+
+                  {displayedCases.length === 0 && (
+                    <div className="p-8 text-center text-sm text-muted-foreground">
+                      No active agents matching your search or category filter.
+                    </div>
+                  )}
+                </div>
+              </aside>
+
+              {/* RIGHT COLUMN: OUTLOOK-STYLE READING PANE */}
+              <section
+                className={`flex-1 min-w-0 h-full overflow-hidden flex flex-col bg-surface-tint ${mobileActiveView === "list" ? "hidden lg:flex" : "flex"
+                  }`}
+              >
+                {isCaseLoading ? (
+                  <div className="flex-1 flex flex-col h-full bg-surface-tint overflow-hidden animate-in fade-in duration-150">
+                    <div className="h-16 px-6 border-b border-border/80 dark:border-zinc-800 bg-surface flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-xl bg-muted/60 animate-pulse" />
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-44 rounded-md bg-muted/70 animate-pulse" />
+                          <div className="h-2.5 w-24 rounded-md bg-muted/40 animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto no-scrollbar p-6 sm:p-8 space-y-6">
+                      <div className="flex items-center justify-center pt-2 pb-1">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-surface border border-border/80 shadow-xs">
+                          <Loader2 className="size-4 text-brand-blue animate-spin" />
+                          <span className="text-xs sm:text-sm font-medium text-foreground">
+                            Loading case analysis & telemetry...
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl bg-surface border border-border/80 p-6 sm:p-7 space-y-4 animate-pulse">
+                        <div className="h-5 w-1/3 bg-muted/70 rounded-md" />
+                        <div className="space-y-2 pt-1">
+                          <div className="h-3.5 w-full bg-muted/50 rounded" />
+                          <div className="h-3.5 w-5/6 bg-muted/40 rounded" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : selectedActiveCase ? (
+                  <CaseDetailsView
+                    selectedCaseId={currentCaseId}
+                    customCase={selectedActiveCase}
+                    onBack={() => setMobileActiveView("list")}
+                    initialShowChat={false}
+                  />
+                ) : (
+                  /* DEFAULT EMPTY STATE WHEN NO ITEM IS SELECTED (LESS PRIORITY, SMALLER) */
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-surface-tint overflow-y-auto no-scrollbar">
+                    <div className="max-w-xs mx-auto space-y-3 my-auto w-full flex flex-col items-center select-none opacity-75 hover:opacity-100 transition-opacity">
+                      {/* Compact, understated icon container */}
+                      <div className="size-11 rounded-2xl bg-slate-200/60 dark:bg-zinc-800/80 border border-slate-300/50 dark:border-zinc-700/60 flex items-center justify-center text-slate-400 dark:text-slate-500 shadow-2xs">
+                        <FileText className="size-5 stroke-[1.75]" />
+                      </div>
+
+                      {/* Smaller, low-priority heading & description */}
+                      <div className="space-y-1">
+                        <h3 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">
+                          Select a case to view analysis
+                        </h3>
+                        <p
+                          style={{ color: "#41485e" }}
+                          className="text-[11px] sm:text-xs text-[#41485e]/80 dark:text-slate-400/75 leading-relaxed"
+                        >
+                          Choose an item from the left pane to view its executive summary and evidence records.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* FULL SCREEN EVIDENCE VERIFICATION & DATASET VIEW WITH ASK AI ON THE RIGHT */}
+      {activeEvidenceDataset && (
+        <div
+          className="fixed inset-0 z-50 bg-[#f8fafc] flex flex-col w-screen h-screen overflow-hidden animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* TOP GLOBAL BAR */}
+          <header className="h-15 shrink-0 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6 gap-3 z-20">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setActiveEvidenceDataset(null)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-950/70 hover:bg-sky-900 border border-sky-400/20 text-sm font-semibold text-sky-200 hover:text-white transition cursor-pointer shrink-0"
+                title="Back to analysis"
+              >
+                <ArrowLeft className="size-4" />
+                <span>Back</span>
+              </button>
+
+              <div className="h-6 w-px bg-slate-700/60 hidden sm:block shrink-0" />
+
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="min-w-0">
+                  <h1 className="text-base sm:text-lg font-bold text-white truncate">
+                    {activeEvidenceDataset.name}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-sky-200/80 truncate hidden sm:block">
+                    Source: <span className="text-white font-medium">{activeEvidenceDataset.sourceSystem}</span> · Period: <span className="text-white font-medium">{activeEvidenceDataset.period}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleExportCsv(activeEvidenceDataset)}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs sm:text-sm font-semibold text-white transition cursor-pointer shadow-xs"
+                title="Export CSV spreadsheet"
+              >
+                <Download className="size-3.5" />
+                <span className="hidden md:inline">Export CSV</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveEvidenceDataset(null)}
+                className="p-1.5 rounded-xl text-sky-200/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                title="Close full screen view (Esc)"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+          </header>
+
+          {/* FULL SCREEN DATA TABLE VIEW (Ask AI hidden) */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-slate-50/70 overflow-hidden">
+            {/* Table Search, Filter, Grouping & Download Toolbar */}
+            <div className="p-3 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5 bg-white shrink-0">
+              <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                {/* Search Input */}
+                <div className="relative min-w-[200px] flex-1 max-w-sm">
+                  <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={datasetSearchQuery}
+                    onChange={(e) => setDatasetSearchQuery(e.target.value)}
+                    placeholder="Search records..."
+                    className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#0e7490] focus:ring-1 focus:ring-[#0e7490] transition"
+                  />
+                  {datasetSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setDatasetSearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Selector */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white shadow-2xs">
+                  <Filter className="size-3.5 text-slate-400 shrink-0" />
+                  <select
+                    value={datasetFilterCol}
+                    onChange={(e) => {
+                      setDatasetFilterCol(e.target.value);
+                      setDatasetFilterVal("");
+                    }}
+                    className="bg-transparent text-sm text-slate-800 outline-none cursor-pointer font-medium max-w-[125px]"
+                    aria-label="Filter by column"
+                  >
+                    <option value="">Filter Column</option>
+                    {activeEvidenceDataset.columns.map((col) => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
+                    ))}
+                  </select>
+                  {datasetFilterCol && uniqueFilterValues.length > 0 && (
+                    <select
+                      value={datasetFilterVal}
+                      onChange={(e) => setDatasetFilterVal(e.target.value)}
+                      className="bg-slate-50 border-l border-slate-200 pl-2 text-sm text-slate-900 outline-none cursor-pointer font-medium max-w-[130px] truncate"
+                      aria-label="Filter value"
+                    >
+                      <option value="">All Values</option>
+                      {uniqueFilterValues.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {(datasetFilterCol || datasetFilterVal) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDatasetFilterCol("");
+                        setDatasetFilterVal("");
+                      }}
+                      className="p-0.5 text-slate-400 hover:text-slate-600"
+                      title="Clear filter"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Group By Selector */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white shadow-2xs">
+                  <Layers className="size-3.5 text-slate-400 shrink-0" />
+                  <span className="text-sm text-slate-500 font-normal">Group:</span>
+                  <select
+                    value={datasetGroupBy}
+                    onChange={(e) => {
+                      setDatasetGroupBy(e.target.value);
+                      setCollapsedGroups({});
+                    }}
+                    className="bg-transparent text-sm text-slate-800 font-medium outline-none cursor-pointer max-w-[125px]"
+                    aria-label="Group by column"
+                  >
+                    <option value="">None</option>
+                    {activeEvidenceDataset.columns.map((col) => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
+                    ))}
+                  </select>
+                  {datasetGroupBy && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDatasetGroupBy("");
+                        setCollapsedGroups({});
+                      }}
+                      className="p-0.5 text-slate-400 hover:text-slate-600"
+                      title="Clear grouping"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Download CSV Button */}
+                <button
+                  type="button"
+                  onClick={() => handleExportCsv(activeEvidenceDataset)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-800 hover:text-[#0e7490] transition cursor-pointer shadow-2xs shrink-0"
+                  title="Download CSV"
+                >
+                  <Download className="size-3.5 text-[#0e7490]" />
+                  <span>Download</span>
+                </button>
+              </div>
+
+              <div className="text-sm text-slate-500 font-normal whitespace-nowrap ml-auto">
+                Showing <strong className="text-slate-900 font-semibold">{filteredEvidenceRows.length}</strong> of {activeEvidenceDataset.rows.length} records
+              </div>
+            </div>
+
+            {/* Scrollable Data Table - 14px Font Size */}
+            <div className="flex-1 overflow-auto p-3 sm:px-6 sm:py-4">
+              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white">
+                <table className="w-full text-left text-[14px] border-collapse">
+                  <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs font-bold sticky top-0 uppercase tracking-wider z-10">
+                    <tr>
+                      {activeEvidenceDataset.columns.map((col, idx) => (
+                        <th key={idx} className="py-2.5 px-3.5 whitespace-nowrap bg-slate-100 font-bold text-slate-700 text-xs sm:text-[13px]">
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-800 text-[14px]">
+                    {groupedEvidenceRows ? (
+                      Object.entries(groupedEvidenceRows).map(([groupKey, groupRows]) => {
+                        const isCollapsed = collapsedGroups[groupKey];
+                        return (
+                          <Fragment key={groupKey}>
+                            {/* Group Header Row */}
+                            <tr
+                              onClick={() => toggleGroupCollapse(groupKey)}
+                              className="bg-slate-100/90 hover:bg-slate-200/80 transition-colors cursor-pointer border-y border-slate-200 select-none"
+                            >
+                              <td
+                                colSpan={activeEvidenceDataset.columns.length}
+                                className="py-2 px-3.5 font-semibold text-[14px] text-slate-900"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <ChevronRight
+                                      className={`size-3.5 text-slate-600 transition-transform duration-150 ${isCollapsed ? "" : "rotate-90 text-[#0e7490]"
+                                        }`}
+                                    />
+                                    <span className="text-slate-500 text-[11px] uppercase tracking-wider font-bold">
+                                      {datasetGroupBy}:
+                                    </span>
+                                    <span className="text-slate-900 font-bold text-[14px]">{groupKey}</span>
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-slate-700 border border-slate-200 shadow-2xs">
+                                      {groupRows.length} records
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-slate-400 font-normal">
+                                    {isCollapsed ? "Click to expand" : "Click to collapse"}
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+
+                            {/* Group Items */}
+                            {!isCollapsed &&
+                              groupRows.map((row, rIdx) => (
+                                <tr
+                                  key={rIdx}
+                                  className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
+                                >
+                                  {activeEvidenceDataset.columns.map((col, cIdx) => (
+                                    <td key={cIdx} className="py-2.5 px-3.5 whitespace-nowrap font-normal text-slate-800 text-[14px]">
+                                      {row[col] ?? "—"}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                          </Fragment>
+                        );
+                      })
+                    ) : (
+                      filteredEvidenceRows.map((row, rIdx) => (
+                        <tr
+                          key={rIdx}
+                          className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
+                        >
+                          {activeEvidenceDataset.columns.map((col, cIdx) => (
+                            <td key={cIdx} className="py-2.5 px-3.5 whitespace-nowrap font-normal text-slate-800 text-[14px]">
+                              {row[col] ?? "—"}
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    )}
+                    {filteredEvidenceRows.length === 0 && (
+                      <tr>
+                        <td colSpan={activeEvidenceDataset.columns.length} className="py-12 text-center text-[14px] text-slate-500">
+                          No matching records found{datasetSearchQuery ? ` for "${datasetSearchQuery}"` : ""}.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-[11px] text-slate-500 italic">
+                * {activeEvidenceDataset.description} Citations cross-reconciled against live warehouse and POS feeds.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ADD NEW CASE MODAL */}
+      {isAddNewCaseOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="size-8 rounded-lg bg-[#0e7490]/10 text-[#0e7490] flex items-center justify-center font-bold">
+                  <Plus className="size-4.5 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Add New Active Case</h3>
+                  <p className="text-xs text-slate-500">Initiate an autonomous garment & merchandising investigation</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddNewCaseOpen(false)}
+                className="size-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                title="Close"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateNewCase} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Case Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newCaseTitle}
+                  onChange={(e) => setNewCaseTitle(e.target.value)}
+                  placeholder="e.g. Winterwear Clearance & SKU Markdown Strategy"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/20 outline-none text-slate-900 placeholder:text-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Agent / Department
+                </label>
+                <select
+                  value={newCaseAgent}
+                  onChange={(e) => setNewCaseAgent(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/20 outline-none text-slate-900 bg-white"
+                >
+                  <option value="Inventory Planning & Allocation">Inventory Planning & Allocation</option>
+                  <option value="Revenue & Markdown Optimization">Revenue & Markdown Optimization</option>
+                  <option value="Supply Chain & Stockout Guard">Supply Chain & Stockout Guard</option>
+                  <option value="Launch & Seasonal Sell-Through">Launch & Seasonal Sell-Through</option>
+                  <option value="Store POS & Regional Performance">Store POS & Regional Performance</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Investigation Objective / Context
+                </label>
+                <textarea
+                  rows={3}
+                  value={newCaseSummary}
+                  onChange={(e) => setNewCaseSummary(e.target.value)}
+                  placeholder="Specify problem, affected stores, categories, or expected markdown outcomes..."
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/20 outline-none text-slate-900 placeholder:text-slate-400 resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-between gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const query = newCaseTitle.trim() || "Analyze highest inventory exposure";
+                    setIsAddNewCaseOpen(false);
+                    switchView("chat");
+                    handleAskQuestion(query);
+                  }}
+                  className="text-xs font-semibold text-[#0e7490] hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span>Investigate with AI in Chat</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddNewCaseOpen(false)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 text-xs font-semibold text-white bg-[#0e7490] hover:bg-[#0c627a] rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Plus className="size-3.5 stroke-[2.5]" />
+                    <span>Create Case</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

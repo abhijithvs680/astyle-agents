@@ -882,17 +882,15 @@ function CaseDetailsPage() {
                       </span>
                       <div className="flex flex-wrap items-baseline gap-1">
                         <span
-                          className={`text-base sm:text-lg font-['Archivo'] tabular-nums font-bold ${
-                            m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
-                          }`}
+                          className={`text-base sm:text-lg font-['Archivo'] tabular-nums font-bold ${m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
+                            }`}
                         >
                           {mainVal}
                         </span>
                         {changeVal && (
                           <span
-                            className={`text-xs font-['Archivo'] tabular-nums font-medium ${
-                              m.alert ? "text-rose-600/80 dark:text-rose-400/80" : "text-slate-500 dark:text-slate-400"
-                            }`}
+                            className={`text-xs font-['Archivo'] tabular-nums font-medium ${m.alert ? "text-rose-600/80 dark:text-rose-400/80" : "text-slate-500 dark:text-slate-400"
+                              }`}
                           >
                             {changeVal}
                           </span>
@@ -1022,8 +1020,8 @@ function CaseDetailsPage() {
                 <div className="flex items-center gap-2.5">
                   <Table2 className="size-5 text-brand-blue shrink-0" />
                   <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  Key Metrics
-                </h3>
+                    Key Metrics
+                  </h3>
                 </div>
                 <span className="text-xs font-medium text-muted-foreground">Variance vs. Target</span>
               </div>
@@ -1040,7 +1038,14 @@ function CaseDetailsPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-200/80 dark:divide-zinc-800">
                     {currentMetrics.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                      <tr
+                        key={idx}
+                        className={`transition-colors ${
+                          idx % 2 === 0
+                            ? "bg-white dark:bg-zinc-900"
+                            : "bg-slate-50/80 dark:bg-zinc-800/40"
+                        } hover:bg-slate-100/70 dark:hover:bg-zinc-800/70`}
+                      >
                         <td className="px-3.5 sm:px-4 py-3 text-sm sm:text-base font-medium text-foreground">{row.metric}</td>
                         <td className="px-3.5 sm:px-4 py-3 font-['Archivo'] tabular-nums text-sm sm:text-base font-bold text-foreground text-right">{row.current}</td>
                         <td className="px-3.5 sm:px-4 py-3 font-['Archivo'] tabular-nums text-sm sm:text-base text-muted-foreground text-right">{row.target}</td>
@@ -1103,8 +1108,8 @@ function CaseDetailsPage() {
                 <div className="flex items-center gap-2.5">
                   <CheckSquare className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  Recommended Actions
-                </h3>
+                    Recommended Actions
+                  </h3>
                 </div>
                 <span className="text-xs text-muted-foreground">Click card to mark complete</span>
               </div>
@@ -1119,11 +1124,10 @@ function CaseDetailsPage() {
                     <div
                       key={idx}
                       onClick={() => toggleAction(idx)}
-                      className={`rounded-2xl border p-4 sm:p-5 transition cursor-pointer ${
-                        isDone
-                          ? "bg-emerald-50/70 border-emerald-300/80 dark:bg-emerald-950/25 dark:border-emerald-800/60"
-                          : "bg-slate-50/80 border-slate-200/70 hover:border-slate-300 dark:bg-zinc-800/50 dark:border-zinc-800 dark:hover:border-zinc-700"
-                      }`}
+                      className={`rounded-2xl border p-4 sm:p-5 transition cursor-pointer ${isDone
+                        ? "bg-emerald-50/70 border-emerald-300/80 dark:bg-emerald-950/25 dark:border-emerald-800/60"
+                        : "bg-slate-50/80 border-slate-200/70 hover:border-slate-300 dark:bg-zinc-800/50 dark:border-zinc-800 dark:hover:border-zinc-700"
+                        }`}
                     >
                       <div className="flex items-start gap-4">
                         <button
@@ -1132,11 +1136,10 @@ function CaseDetailsPage() {
                             e.stopPropagation();
                             toggleAction(idx);
                           }}
-                          className={`mt-1 size-5 rounded-lg border flex items-center justify-center transition shrink-0 cursor-pointer shadow-2xs ${
-                            isDone
-                              ? "bg-emerald-600 border-emerald-600 text-white"
-                              : "border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800"
-                          }`}
+                          className={`mt-1 size-5 rounded-lg border flex items-center justify-center transition shrink-0 cursor-pointer shadow-2xs ${isDone
+                            ? "bg-emerald-600 border-emerald-600 text-white"
+                            : "border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800"
+                            }`}
                           aria-label={`Mark action ${idx + 1} as ${isDone ? "incomplete" : "complete"}`}
                         >
                           {isDone && <Check className="size-3.5 stroke-[3]" />}
@@ -1144,9 +1147,8 @@ function CaseDetailsPage() {
                         <div className="space-y-1 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <h4
-                              className={`text-base sm:text-lg font-semibold leading-snug ${
-                                isDone ? "text-emerald-800 dark:text-emerald-300 line-through" : "text-foreground"
-                              }`}
+                              className={`text-base sm:text-lg font-semibold leading-snug ${isDone ? "text-emerald-800 dark:text-emerald-300 line-through" : "text-foreground"
+                                }`}
                             >
                               {title}
                             </h4>
@@ -1157,9 +1159,8 @@ function CaseDetailsPage() {
                             )}
                           </div>
                           <p
-                            className={`text-base sm:text-[17px] leading-relaxed font-normal ${
-                              isDone ? "text-foreground/75" : "text-foreground/85"
-                            }`}
+                            className={`text-base sm:text-[17px] leading-relaxed font-normal ${isDone ? "text-foreground/75" : "text-foreground/85"
+                              }`}
                           >
                             {description.trim()}
                           </p>
@@ -1188,15 +1189,13 @@ function CaseDetailsPage() {
 
               <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div className="space-y-3 max-w-2xl">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xs border border-white/60 dark:border-zinc-700/60 text-slate-800 dark:text-slate-200 shadow-2xs">
-                    Evidence Telemetry
-                  </span>
+
 
                   <h2
                     style={{ fontWeight: 300 }}
                     className="text-2xl sm:text-3xl lg:text-[32px] font-light font-[300] tracking-tight text-slate-900 dark:text-slate-100 leading-snug"
                   >
-                    Sample Telemetry & Evidence Records
+                    Evidence Records
                   </h2>
                   <p
                     style={{ fontWeight: 300 }}
@@ -1204,31 +1203,6 @@ function CaseDetailsPage() {
                   >
                     Branch-level transaction telemetry capturing stockout durations, footfall churn, and dead stock capital lockup across monitored clusters.
                   </p>
-                </div>
-
-                {/* Exposure Highlight Banner */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 rounded-2xl bg-white/85 dark:bg-zinc-900/85 backdrop-blur-xs border border-white/60 dark:border-zinc-700/60 p-4 sm:p-5 shadow-2xs shrink-0">
-                  <div>
-                    <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Sampled Financial Exposure
-                    </span>
-                    <span className="text-2xl sm:text-3xl font-['Archivo'] tabular-nums font-bold text-rose-600 dark:text-rose-400">
-                      {currentTelemetry.totalExposure}
-                    </span>
-                    <span className="block text-xs text-muted-foreground pt-0.5">
-                      {currentTelemetry.coverage}
-                    </span>
-                  </div>
-                  <div className="hidden sm:block h-10 w-px bg-slate-200 dark:bg-zinc-700" />
-                  <div>
-                    <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Telemetry Status
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full mt-1">
-                      <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                      Live Verified
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1239,8 +1213,8 @@ function CaseDetailsPage() {
                 <div className="flex items-center gap-2">
                   <Activity className="size-4 text-brand-blue shrink-0" />
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Sample Data Records (Underlying Evidence)
-                </h3>
+                    Sample Data Records (Underlying Evidence)
+                  </h3>
                 </div>
                 <span className="text-[11px] font-medium text-muted-foreground">
                   Showing {currentTelemetry.records.length} Audited Clinical & Retail Clusters
@@ -1260,7 +1234,14 @@ function CaseDetailsPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-200/80 dark:divide-zinc-800">
                     {currentTelemetry.records.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-colors">
+                      <tr
+                        key={idx}
+                        className={`transition-colors ${
+                          idx % 2 === 0
+                            ? "bg-white dark:bg-zinc-900"
+                            : "bg-slate-50/80 dark:bg-zinc-800/40"
+                        } hover:bg-slate-100/70 dark:hover:bg-zinc-800/70`}
+                      >
                         <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">{row.branchId}</td>
                         <td className="px-3.5 py-2 text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">{row.categoryItem}</td>
                         <td className="px-3.5 py-2 whitespace-nowrap">
@@ -1339,19 +1320,17 @@ function CaseDetailsPage() {
                   key={slide.id}
                   type="button"
                   onClick={() => scrollToSlide(slide.id)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs sm:text-sm font-medium font-[500] rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                    isActive
-                      ? "bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 font-semibold border border-blue-200/80 dark:border-blue-800/80 shadow-2xs"
-                      : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-tile"
-                  }`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs sm:text-sm font-medium font-[500] rounded-lg transition-all cursor-pointer whitespace-nowrap ${isActive
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 font-semibold border border-blue-200/80 dark:border-blue-800/80 shadow-2xs"
+                    : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-tile"
+                    }`}
                   title={`Jump to ${slide.fullTitle}`}
                 >
                   <span
-                    className={`inline-flex items-center justify-center size-4 rounded-full text-[10px] font-['Archivo'] tabular-nums font-bold transition-colors ${
-                      isActive
-                        ? "bg-blue-600 text-white dark:bg-blue-500"
-                        : "bg-slate-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                    }`}
+                    className={`inline-flex items-center justify-center size-4 rounded-full text-[10px] font-['Archivo'] tabular-nums font-bold transition-colors ${isActive
+                      ? "bg-blue-600 text-white dark:bg-blue-500"
+                      : "bg-slate-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                      }`}
                   >
                     {idx + 1}
                   </span>
@@ -1367,15 +1346,14 @@ function CaseDetailsPage() {
             <button
               type="button"
               onClick={() => setShowHistory((prev) => !prev)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs sm:text-sm font-medium font-[500] rounded-lg transition cursor-pointer ${
-                showHistory
-                  ? "text-blue-700 bg-blue-100/80 dark:text-blue-400 dark:bg-blue-950/60 font-medium"
-                  : "text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400 hover:bg-tile"
-              }`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs sm:text-sm font-medium font-[500] rounded-lg transition cursor-pointer ${showHistory
+                ? "text-blue-700 bg-blue-100/80 dark:text-blue-400 dark:bg-blue-950/60 font-medium"
+                : "text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400 hover:bg-tile"
+                }`}
               title="View or hide Case History"
             >
               <History className={`size-3.5 sm:size-4 ${showHistory ? "text-blue-700 dark:text-blue-400" : "text-zinc-700 dark:text-zinc-300"}`} />
-              <span>Case History</span>
+              <span>History</span>
             </button>
 
             {/* Line separator */}
@@ -1390,9 +1368,8 @@ function CaseDetailsPage() {
               title="Check Status Now"
             >
               <RotateCw
-                className={`size-3.5 sm:size-4 ${
-                  isCheckingStatus ? "animate-spin text-blue-600" : "text-zinc-700 dark:text-zinc-300"
-                }`}
+                className={`size-3.5 sm:size-4 ${isCheckingStatus ? "animate-spin text-blue-600" : "text-zinc-700 dark:text-zinc-300"
+                  }`}
               />
               <span>Check Status Now</span>
             </button>
@@ -1415,11 +1392,10 @@ function CaseDetailsPage() {
                   return next;
                 });
               }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs sm:text-sm font-medium font-[500] rounded-lg transition cursor-pointer ${
-                isFollowing
-                  ? "text-emerald-700 bg-emerald-100/80 dark:text-emerald-400 dark:bg-emerald-950/60 font-medium"
-                  : "text-zinc-900 hover:text-emerald-600 dark:text-zinc-100 dark:hover:text-emerald-400 hover:bg-tile"
-              }`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs sm:text-sm font-medium font-[500] rounded-lg transition cursor-pointer ${isFollowing
+                ? "text-emerald-700 bg-emerald-100/80 dark:text-emerald-400 dark:bg-emerald-950/60 font-medium"
+                : "text-zinc-900 hover:text-emerald-600 dark:text-zinc-100 dark:hover:text-emerald-400 hover:bg-tile"
+                }`}
               title={isFollowing ? "Continuous auditing active" : "Enable continuous auditing"}
             >
               {isFollowing ? (
@@ -1453,9 +1429,8 @@ function CaseDetailsPage() {
                 <span className={`size-2 rounded-full ${currentStatusConfig.dotClass}`} />
                 <span>Status: {currentStatusConfig.label}</span>
                 <ChevronDown
-                  className={`size-3 text-current transition-transform duration-200 ${
-                    showStatusDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`size-3 text-current transition-transform duration-200 ${showStatusDropdown ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -1479,11 +1454,10 @@ function CaseDetailsPage() {
                           setTimeout(() => setStatusMessage(null), 3000);
                           setShowStatusDropdown(false);
                         }}
-                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition cursor-pointer ${
-                          isSelected
-                            ? "bg-tile font-semibold text-foreground"
-                            : "text-foreground/80 hover:bg-tile hover:text-foreground"
-                        }`}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition cursor-pointer ${isSelected
+                          ? "bg-tile font-semibold text-foreground"
+                          : "text-foreground/80 hover:bg-tile hover:text-foreground"
+                          }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <span className={`size-2 rounded-full ${opt.dotClass}`} />
@@ -1574,9 +1548,8 @@ function CaseDetailsPage() {
                 <ListFilter className="size-3 text-zinc-600 dark:text-zinc-400 group-hover:text-blue-600" />
                 <span>Index</span>
                 <ChevronDown
-                  className={`size-3 text-zinc-500 transition-transform duration-150 ${
-                    showIndexDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`size-3 text-zinc-500 transition-transform duration-150 ${showIndexDropdown ? "rotate-180" : ""
+                    }`}
                 />
                 <span className="text-[10px] font-['Archivo'] tabular-nums px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 ml-0.5">
                   {Math.round(scrollProgress)}%
