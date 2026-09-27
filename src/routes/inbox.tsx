@@ -4,13 +4,13 @@ import { CxoDashboard } from "../components/CxoDashboard";
 export const Route = createFileRoute("/inbox")({
   head: () => ({
     meta: [
-      { title: "A style — Case Analytics & Insights Dashboard" },
+      { title: "ASTYLE — Case Analytics & Insights Dashboard" },
       {
         name: "description",
         content:
-          "A style showing newly detected garment cases, active inventory exposure analytics, and supply chain stockouts.",
+          "ASTYLE showing newly detected garment cases, active inventory exposure analytics, and supply chain stockouts.",
       },
-      { property: "og:title", content: "A style — Case Analytics Dashboard" },
+      { property: "og:title", content: "ASTYLE — Case Analytics Dashboard" },
       {
         property: "og:description",
         content:

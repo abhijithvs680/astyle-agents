@@ -41,6 +41,10 @@ import {
   Download,
   ShieldCheck,
   BarChart3,
+  Pencil,
+  RotateCcw,
+  SlidersHorizontal,
+  Play,
 } from "lucide-react";
 import {
   CaseDetailsView,
@@ -946,6 +950,177 @@ export function getDriverSummaryText(caseId?: string, reportTitle?: string): str
   return "Exposure is driven by compounding inventory aging, declining unit sales velocity, and regional demand mismatches across core product categories.";
 }
 
+export interface AgentPlanItem {
+  id: string;
+  name: string;
+  role: string;
+  icon: string;
+  description: string;
+  isEnabled: boolean;
+  isCustom?: boolean;
+}
+
+export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
+  const q = query.toLowerCase();
+  if (q.includes("launch") || q.includes("newly") || q.includes("linen") || q.includes("cargo")) {
+    return [
+      {
+        id: "sales-agent",
+        name: "Sales Billing Agent",
+        role: "Omnichannel POS & Web Invoices",
+        icon: "🛍️",
+        description: "Will ingest store sales receipts and e-commerce cart transactions across the initial 18-day launch window to benchmark sell-through velocity.",
+        isEnabled: true,
+      },
+      {
+        id: "returns-agent",
+        name: "Returns & Fitment Agent",
+        role: "Customer Ticket Reason Audit",
+        icon: "🔄",
+        description: "Will audit customer return tickets, exchange logs, and sizing feedback to detect fit or quality friction on lagging styles.",
+        isEnabled: true,
+      },
+      {
+        id: "marketing-agent",
+        name: "Campaign ROI Agent",
+        role: "Ad Budget vs Sell-Through Rate",
+        icon: "📊",
+        description: "Will evaluate digital marketing spend and ad impressions against footfall and conversions to measure promotional efficiency.",
+        isEnabled: true,
+      },
+      {
+        id: "executive-agent",
+        name: "Allocation Strategy Agent",
+        role: "Actionable Turnaround Playbook",
+        icon: "👔",
+        description: "Will formulate an actionable inventory strategy, detailing budget reallocation toward top sellers and clearance schedules for slow-moving lines.",
+        isEnabled: true,
+      },
+    ];
+  }
+
+  // Default: Inventory Exposure & General Merchandising
+  return [
+    {
+      id: "sales-agent",
+      name: "Sales Billing Agent",
+      role: "POS Invoices & Store Velocity",
+      icon: "🛍️",
+      description: "Will extract and analyze 90-day store billing transactions across all 42 retail doors to benchmark sell-through velocity and detect demand drop-offs.",
+      isEnabled: true,
+    },
+    {
+      id: "inventory-agent",
+      name: "Inventory & Warehouse Agent",
+      role: "Stock Aging & Depot Balances",
+      icon: "📦",
+      description: "Will scan central warehouse ledgers and store depot levels to flag SKUs with holding age >60 days and stock cover exceeding safe thresholds.",
+      isEnabled: true,
+    },
+    {
+      id: "finance-agent",
+      name: "Finance & Exposure Agent",
+      role: "Working Capital & Returns Deduction",
+      icon: "💰",
+      description: "Will calculate working capital tied up in slow-moving inventory and audit customer return deductions to quantify net financial exposure.",
+      isEnabled: true,
+    },
+    {
+      id: "executive-agent",
+      name: "Executive Strategy Agent",
+      role: "Synthesis & Turnaround Playbook",
+      icon: "👔",
+      description: "Will synthesize findings across all agent analyses into an executive turnaround plan with prioritized markdown timelines and stock redistribution.",
+      isEnabled: true,
+    },
+  ];
+};
+
+export interface DataRepoItem {
+  id: string;
+  name: string;
+  sourceType: string;
+  recordsCount: string;
+  lastSync: string;
+  isEnabled: boolean;
+  isCustom?: boolean;
+}
+
+export const getDefaultDataRepos = (query: string): DataRepoItem[] => {
+  const q = query.toLowerCase();
+  if (q.includes("launch") || q.includes("newly") || q.includes("linen") || q.includes("cargo")) {
+    return [
+      {
+        id: "repo-pos",
+        name: "Omnichannel Store POS & Shopify Orders",
+        sourceType: "First 18-day billing transactions (42 doors & web)",
+        recordsCount: "148,290 bills",
+        lastSync: "Today, 14:10",
+        isEnabled: true,
+      },
+      {
+        id: "repo-returns",
+        name: "Returns & Customer Exchange Tickets",
+        sourceType: "Customer service fitment & size ticket logs",
+        recordsCount: "12,410 tickets",
+        lastSync: "Today, 12:45",
+        isEnabled: true,
+      },
+      {
+        id: "repo-campaigns",
+        name: "Meta & Google Ads Campaign Telemetry",
+        sourceType: "Digital marketing impressions & spend by SKU",
+        recordsCount: "64 ad sets",
+        lastSync: "Today, 09:30",
+        isEnabled: true,
+      },
+      {
+        id: "repo-erp",
+        name: "SAP Garment Warehouse Stock Ledger",
+        sourceType: "Central depot dispatch & regional depot stock",
+        recordsCount: "3,840 SKUs",
+        lastSync: "Today, 06:00",
+        isEnabled: true,
+      },
+    ];
+  }
+
+  return [
+    {
+      id: "repo-erp",
+      name: "SAP Garment Warehouse Stock Ledger",
+      sourceType: "Central depot dispatch & regional inventory ledgers",
+      recordsCount: "18,420 SKUs",
+      lastSync: "Today, 06:00",
+      isEnabled: true,
+    },
+    {
+      id: "repo-pos",
+      name: "Omnichannel Store POS & Web Invoices",
+      sourceType: "90-day store billing across 42 retail doors & online",
+      recordsCount: "420,500 bills",
+      lastSync: "Today, 14:10",
+      isEnabled: true,
+    },
+    {
+      id: "repo-wms",
+      name: "WMS Inventory Aging & Valuation Tables",
+      sourceType: "Aging ledgers (>60-90 days) & warehouse cost value",
+      recordsCount: "42 categories",
+      lastSync: "Today, 11:15",
+      isEnabled: true,
+    },
+    {
+      id: "repo-finance",
+      name: "Finance ERP & Customer Returns Ledger",
+      sourceType: "Working capital, credit notes & vendor chargebacks",
+      recordsCount: "₹6.8 Cr reconciled",
+      lastSync: "Today, 08:30",
+      isEnabled: true,
+    },
+  ];
+};
+
 export interface GeminiMessageItem {
   id: string;
   query: string;
@@ -957,6 +1132,9 @@ export interface GeminiMessageItem {
   addedToInbox?: boolean;
   feedback?: "up" | "down" | null;
   revealedSections?: number;
+  agentPlan?: AgentPlanItem[];
+  dataRepos?: DataRepoItem[];
+  customInstructions?: string;
 }
 
 export const getCaseDetailsForQuery = (query: string): GeminiMessageItem => {
@@ -1068,6 +1246,9 @@ export const getCaseDetailsForQuery = (query: string): GeminiMessageItem => {
     caseId: matchedId,
     caseItem,
     structuredAnswer,
+    agentPlan: getDefaultAgentPlan(query),
+    dataRepos: getDefaultDataRepos(query),
+    customInstructions: "",
   };
 };
 
@@ -1333,6 +1514,163 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
     }
     setLogoRotation((prev) => prev + 60);
   }, [isReportFormatMode]);
+
+  // Multi-Agent Planning Customization State
+  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+  const [editedTaskText, setEditedTaskText] = useState<string>("");
+  const [isAddingAgentMsgId, setIsAddingAgentMsgId] = useState<string | null>(null);
+  const [newAgentName, setNewAgentName] = useState("");
+  const [newAgentRole, setNewAgentRole] = useState("");
+  const [newAgentTask, setNewAgentTask] = useState("");
+  const [collapsedPlanMap, setCollapsedPlanMap] = useState<Record<string, boolean>>({});
+
+  // Data Repositories & Additional Instructions State
+  const [isAddingRepoMsgId, setIsAddingRepoMsgId] = useState<string | null>(null);
+  const [newRepoName, setNewRepoName] = useState("");
+  const [newRepoSource, setNewRepoSource] = useState("");
+  const [instructionDraftMap, setInstructionDraftMap] = useState<Record<string, string>>({});
+
+  const handleToggleAgent = (msgId: string, agentId: string) => {
+    setGeminiMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId) return m;
+        const plan = m.agentPlan || getDefaultAgentPlan(m.query);
+        const updatedPlan = plan.map((a) => (a.id === agentId ? { ...a, isEnabled: !a.isEnabled } : a));
+        return { ...m, agentPlan: updatedPlan };
+      })
+    );
+  };
+
+  const handleStartEditAgent = (agent: AgentPlanItem) => {
+    setEditingAgentId(agent.id);
+    setEditedTaskText(agent.description);
+  };
+
+  const handleSaveEditAgent = (msgId: string, agentId: string) => {
+    setGeminiMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId) return m;
+        const plan = m.agentPlan || getDefaultAgentPlan(m.query);
+        const updatedPlan = plan.map((a) =>
+          a.id === agentId ? { ...a, description: editedTaskText.trim() || a.description } : a
+        );
+        return { ...m, agentPlan: updatedPlan };
+      })
+    );
+    setEditingAgentId(null);
+    setEditedTaskText("");
+  };
+
+  const handleAddCustomAgent = (msgId: string) => {
+    if (!newAgentName.trim()) return;
+    const newAgent: AgentPlanItem = {
+      id: `custom-agent-${Date.now()}`,
+      name: newAgentName.trim(),
+      role: newAgentRole.trim() || "Custom Merchandising Task",
+      icon: "⚡",
+      description: newAgentTask.trim() || `Will conduct specialized merchandising analysis as directed for ${newAgentName.trim()}.`,
+      isEnabled: true,
+      isCustom: true,
+    };
+    setGeminiMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId) return m;
+        const plan = m.agentPlan || getDefaultAgentPlan(m.query);
+        return { ...m, agentPlan: [...plan, newAgent] };
+      })
+    );
+    setIsAddingAgentMsgId(null);
+    setNewAgentName("");
+    setNewAgentRole("");
+    setNewAgentTask("");
+  };
+
+  const handleToggleDataRepo = (msgId: string, repoId: string) => {
+    setGeminiMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId) return m;
+        const repos = m.dataRepos || getDefaultDataRepos(m.query);
+        const updatedRepos = repos.map((r) => (r.id === repoId ? { ...r, isEnabled: !r.isEnabled } : r));
+        return { ...m, dataRepos: updatedRepos };
+      })
+    );
+  };
+
+  const handleAddCustomRepo = (msgId: string) => {
+    if (!newRepoName.trim()) return;
+    const newRepo: DataRepoItem = {
+      id: `custom-repo-${Date.now()}`,
+      name: newRepoName.trim(),
+      sourceType: newRepoSource.trim() || "Custom Enterprise Dataset",
+      recordsCount: "Live Stream",
+      lastSync: "Just now",
+      isEnabled: true,
+      isCustom: true,
+    };
+    setGeminiMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId) return m;
+        const repos = m.dataRepos || getDefaultDataRepos(m.query);
+        return { ...m, dataRepos: [...repos, newRepo] };
+      })
+    );
+    setIsAddingRepoMsgId(null);
+    setNewRepoName("");
+    setNewRepoSource("");
+  };
+
+  const handleRerunWithCustomPlan = (msg: GeminiMessageItem) => {
+    const activeAgents = (msg.agentPlan || getDefaultAgentPlan(msg.query)).filter((a) => a.isEnabled);
+    const activeRepos = (msg.dataRepos || getDefaultDataRepos(msg.query)).filter((r) => r.isEnabled);
+    const customInst = (instructionDraftMap[msg.id] ?? msg.customInstructions ?? "").trim();
+    if (activeAgents.length === 0) return;
+
+    setStreamingQuery(msg.query);
+    setIsGeminiLoading(true);
+    geminiTimersRef.current.forEach((t) => clearTimeout(t));
+    geminiTimersRef.current = [];
+
+    // Cycle through connecting data repositories first
+    activeRepos.forEach((repo, idx) => {
+      const t = setTimeout(() => {
+        setGeminiLoadingStage(`Connecting data repository: ${repo.name}...`);
+      }, idx * 350);
+      geminiTimersRef.current.push(t);
+    });
+
+    const baseOffset = Math.max(activeRepos.length * 350, 400);
+
+    // Then cycle through each active agent executing their assigned mandate
+    activeAgents.forEach((agent, idx) => {
+      const t = setTimeout(() => {
+        setGeminiLoadingStage(`${agent.name} is executing: ${agent.description.slice(0, 52)}...`);
+      }, baseOffset + idx * 600);
+      geminiTimersRef.current.push(t);
+    });
+
+    const totalDuration = baseOffset + activeAgents.length * 600 + 400;
+
+    const tFinal = setTimeout(() => {
+      setGeminiMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== msg.id) return m;
+          const instructionNote = customInst ? ` • Custom Instruction: "${customInst.slice(0, 48)}..."` : "";
+          return {
+            ...m,
+            revealedSections: 7,
+            customInstructions: customInst,
+            structuredAnswer: {
+              ...m.structuredAnswer,
+              basedOnData: `Regenerated using ${activeAgents.length} agents across ${activeRepos.length} data repos${instructionNote}`,
+            },
+          };
+        })
+      );
+      setIsGeminiLoading(false);
+      setStreamingQuery("");
+    }, totalDuration);
+    geminiTimersRef.current.push(tFinal);
+  };
   const [expandedHowFound, setExpandedHowFound] = useState<Record<string, boolean>>({});
   const [openProductTable, setOpenProductTable] = useState<Record<string, boolean>>({});
   const [activeEvidenceDataset, setActiveEvidenceDataset] = useState<CxoEvidenceDataset | null>(null);
@@ -1920,15 +2258,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
           <button
             type="button"
             onClick={() => switchView("chat")}
-            className="text-base sm:text-lg font-bold tracking-tight text-white hover:opacity-90 transition cursor-pointer flex items-center gap-2.5 whitespace-nowrap group select-none"
-            title="A style — Go to Chat"
+            className="text-base sm:text-lg font-extrabold tracking-wider text-white hover:text-sky-200 transition cursor-pointer flex items-center whitespace-nowrap select-none"
+            title="ASTYLE — Go to Chat"
           >
-            <img
-              src="/flower-logo.png"
-              alt="A style Logo"
-              className="size-7 object-contain shrink-0 drop-shadow-sm group-hover:rotate-12 transition-transform duration-300"
-            />
-            <span className="font-bold tracking-tight text-white">A style</span>
+            ASTYLE
           </button>
         </div>
 
@@ -2033,7 +2366,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
             <button
               type="button"
               onClick={() => switchView("chat")}
-              aria-label="A style"
+              aria-label="ASTYLE"
               className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${activeView === "chat"
                 ? "bg-chip-active text-chip-active-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground hover:bg-tile"
@@ -2042,7 +2375,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
               <MessageSquare className="size-5" />
             </button>
             <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
-              A style
+              ASTYLE
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
             </div>
           </div>
@@ -2097,9 +2430,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                 <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
 
-                <div className={`w-full flex flex-col items-center text-center z-10 my-auto py-2 transition-all duration-300 ease-out ${
-                  isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
-                }`}>
+                <div className={`w-full flex flex-col items-center text-center z-10 my-auto py-2 transition-all duration-300 ease-out ${isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
+                  }`}>
                   {/* Flower Logo above title */}
                   <div className="flex items-center justify-center mb-3 sm:mb-4 group">
                     <img
@@ -2134,11 +2466,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                         <button
                           type="button"
                           onClick={() => setIsReportFormatMode(true)}
-                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
-                            isReportFormatMode
-                              ? "font-semibold text-[#0e7490]"
-                              : "font-normal text-slate-500 hover:text-slate-800"
-                          }`}
+                          className={`text-xs sm:text-sm transition-all cursor-pointer ${isReportFormatMode
+                            ? "font-semibold text-[#0e7490]"
+                            : "font-normal text-slate-500 hover:text-slate-800"
+                            }`}
                         >
                           Deep Insights
                         </button>
@@ -2152,20 +2483,18 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                           title={isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"}
                         >
                           <span
-                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${
-                              isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
-                            }`}
+                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
+                              }`}
                           />
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setIsReportFormatMode(false)}
-                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
-                            !isReportFormatMode
-                              ? "font-semibold text-[#0e7490]"
-                              : "font-normal text-slate-500 hover:text-slate-800"
-                          }`}
+                          className={`text-xs sm:text-sm transition-all cursor-pointer ${!isReportFormatMode
+                            ? "font-semibold text-[#0e7490]"
+                            : "font-normal text-slate-500 hover:text-slate-800"
+                            }`}
                         >
                           Chat Mode
                         </button>
@@ -2295,6 +2624,223 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
                               return (
                                 <>
+                                  {/* MULTI-AGENT PLANNING & ORCHESTRATION CARD */}
+                                  {(() => {
+                                    const plan = msg.agentPlan || getDefaultAgentPlan(msg.query);
+                                    const repos = msg.dataRepos || getDefaultDataRepos(msg.query);
+                                    const isCollapsed = collapsedPlanMap[msg.id] ?? false;
+                                    const activeCount = plan.filter((a) => a.isEnabled).length;
+                                    const activeReposCount = repos.filter((r) => r.isEnabled).length;
+                                    const isAddingAgent = isAddingAgentMsgId === msg.id;
+                                    const isAddingRepo = isAddingRepoMsgId === msg.id;
+
+                                    return (
+                                      <div className="rounded-2xl border border-sky-200/80 bg-gradient-to-b from-white via-sky-50/20 to-white p-5 sm:p-7 shadow-2xs space-y-5 mb-5 animate-in fade-in duration-300">
+                                        {/* Card Header - Clean Title */}
+                                        <div className="border-b border-slate-200/70 pb-3">
+                                          <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                                            Report Generation Plan
+                                          </h3>
+                                          <p className="text-sm text-slate-600 mt-1 font-normal">
+                                            This plan outlines how specialized merchandising agents will analyze data and synthesize findings to generate your report.
+                                          </p>
+                                        </div>
+
+                                        <div className="space-y-5 pt-1">
+                                          {/* 1. AGENTS - SIMPLE LIST VIEW (Minimum 14px font size) */}
+                                          <div className="space-y-2.5">
+
+                                            <div className="divide-y divide-slate-200/80 rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
+                                              {plan.map((agent, index) => {
+                                                const isEditing = editingAgentId === agent.id;
+
+                                                return (
+                                                  <div
+                                                    key={agent.id}
+                                                    className={`p-4 sm:p-5 transition-colors ${agent.isEnabled
+                                                      ? "bg-white hover:bg-slate-50/60"
+                                                      : "bg-slate-50/50 opacity-60"
+                                                      }`}
+                                                  >
+                                                    <div className="flex items-start justify-between gap-4">
+                                                      <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                                                        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700 border border-slate-200 mt-0.5 select-none">
+                                                          {String(index + 1).padStart(2, "0")}
+                                                        </span>
+                                                        <div className="min-w-0 flex-1 space-y-1.5">
+                                                          <div className="flex items-center gap-2.5 flex-wrap">
+                                                            <h4 className="text-base font-bold text-slate-900">
+                                                              {agent.name}
+                                                            </h4>
+                                                          </div>
+
+                                                          {!isEditing ? (
+                                                            <p className="text-sm text-slate-700 leading-relaxed font-normal">
+                                                              {agent.description}
+                                                            </p>
+                                                          ) : (
+                                                            <div className="space-y-2.5 pt-2 animate-in fade-in duration-150">
+                                                              <textarea
+                                                                rows={2}
+                                                                value={editedTaskText}
+                                                                onChange={(e) => setEditedTaskText(e.target.value)}
+                                                                className="w-full text-sm p-3 rounded-xl border-2 border-[#0e7490] bg-white outline-none text-slate-900 resize-none shadow-inner leading-relaxed"
+                                                                placeholder="Customize what this agent will do in this plan..."
+                                                              />
+                                                              <div className="flex items-center justify-end gap-2.5">
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => setEditingAgentId(null)}
+                                                                  className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                                                                >
+                                                                  Cancel
+                                                                </button>
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => handleSaveEditAgent(msg.id, agent.id)}
+                                                                  className="px-4 py-1.5 text-sm font-semibold text-white bg-[#0e7490] hover:bg-[#0c627a] rounded-lg transition cursor-pointer shadow-2xs"
+                                                                >
+                                                                  Save
+                                                                </button>
+                                                              </div>
+                                                            </div>
+                                                          )}
+                                                        </div>
+                                                      </div>
+
+                                                      {/* Right Controls: Edit button & Toggle switch */}
+                                                      <div className="flex items-center gap-3.5 shrink-0 pt-0.5">
+                                                        {!isEditing && (
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => handleStartEditAgent(agent)}
+                                                            className="text-sm font-medium text-[#0e7490] hover:text-[#0c627a] hover:underline cursor-pointer flex items-center gap-1.5"
+                                                            title="Edit agent plan"
+                                                          >
+                                                            <Pencil className="size-3.5" />
+                                                            <span>Edit</span>
+                                                          </button>
+                                                        )}
+
+                                                        {/* Toggle switch (Spacious & Easy to Read) */}
+                                                        <button
+                                                          type="button"
+                                                          role="switch"
+                                                          aria-checked={agent.isEnabled}
+                                                          onClick={() => handleToggleAgent(msg.id, agent.id)}
+                                                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${agent.isEnabled ? "bg-[#0e7490]" : "bg-slate-300"
+                                                            }`}
+                                                          title={agent.isEnabled ? "Disable Agent" : "Enable Agent"}
+                                                        >
+                                                          <span
+                                                            className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out mt-0.5 ${agent.isEnabled ? "translate-x-5.5" : "translate-x-0.5"
+                                                              }`}
+                                                          />
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+
+                                          {/* Add Custom Agent Form if triggered */}
+                                          {isAddingAgent && (
+                                            <div className="rounded-xl border border-sky-300 bg-sky-50/50 p-4 sm:p-5 space-y-3.5 animate-in zoom-in-95 duration-200">
+                                              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                <span>Add New Custom Merchandising Agent</span>
+                                              </h4>
+                                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <input
+                                                  type="text"
+                                                  value={newAgentName}
+                                                  onChange={(e) => setNewAgentName(e.target.value)}
+                                                  placeholder="Agent Name (e.g. Quality & Fit Inspector)"
+                                                  className="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#0e7490]"
+                                                />
+                                                <input
+                                                  type="text"
+                                                  value={newAgentRole}
+                                                  onChange={(e) => setNewAgentRole(e.target.value)}
+                                                  placeholder="Role Focus (e.g. Fabric Tear & Stitch Audits)"
+                                                  className="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#0e7490]"
+                                                />
+                                              </div>
+                                              <textarea
+                                                rows={2}
+                                                value={newAgentTask}
+                                                onChange={(e) => setNewAgentTask(e.target.value)}
+                                                placeholder="What will this agent do in this plan? (e.g. Will inspect fabric quality certificates and audit supplier lot defect rates...)"
+                                                className="w-full text-sm p-3 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#0e7490] resize-none leading-relaxed"
+                                              />
+                                              <div className="flex items-center justify-end gap-2.5">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setIsAddingAgentMsgId(null)}
+                                                  className="px-3.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer"
+                                                >
+                                                  Cancel
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleAddCustomAgent(msg.id)}
+                                                  className="px-4 py-1.5 text-sm font-semibold text-white bg-[#0e7490] hover:bg-[#0c627a] rounded-xl cursor-pointer shadow-xs"
+                                                >
+                                                  Add to Plan
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* 2. ADDITIONAL INSTRUCTIONS PROVIDING OPTION (Minimum 14px font size) */}
+                                          <div className="space-y-2 pt-2">
+                                            <div className="text-sm font-bold text-slate-800 uppercase tracking-wider px-1">
+                                              <span>Additional Instructions for Agents</span>
+                                            </div>
+                                            <textarea
+                                              rows={2}
+                                              value={instructionDraftMap[msg.id] ?? (msg.customInstructions || "")}
+                                              onChange={(e) =>
+                                                setInstructionDraftMap((prev) => ({
+                                                  ...prev,
+                                                  [msg.id]: e.target.value,
+                                                }))
+                                              }
+                                              placeholder="Provide specific instructions or constraints for the agents (e.g. Focus analysis specifically on South zone retail doors, exclude promotional discounts under 20% margin, or prioritize high-ticket winter wear...)"
+                                              className="w-full text-sm p-3.5 rounded-xl border border-slate-300 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#0e7490] focus:ring-1 focus:ring-[#0e7490] transition text-slate-900 resize-none shadow-2xs leading-relaxed"
+                                            />
+                                          </div>
+
+                                          {/* Action Bar */}
+                                          <div className="flex items-center justify-between pt-4 border-t border-slate-200/80 flex-wrap gap-3">
+                                            <div>
+                                              {!isAddingAgent && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setIsAddingAgentMsgId(msg.id)}
+                                                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-white text-sm font-medium text-slate-700 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+                                                >
+                                                  <Plus className="size-4 text-slate-500" />
+                                                  <span>Add Agent</span>
+                                                </button>
+                                              )}
+                                            </div>
+
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRerunWithCustomPlan(msg)}
+                                              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0e7490] hover:bg-[#0c627a] text-white text-sm sm:text-base font-semibold transition cursor-pointer shadow-xs hover:shadow active:scale-98"
+                                            >
+                                              <span>Continue</span>
+                                              <ArrowRight className="size-4" />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+
                                   <div className="rounded-2xl border border-slate-200/90 bg-white overflow-hidden shadow-xs">
                                     {/* Top Ambient Header Banner - EXACT INBOX REPORT STYLE */}
                                     <div className="p-6 sm:p-8 border-b border-slate-200/80 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95">
@@ -2647,9 +3193,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             </h3>
                                             <div className="flex items-center justify-center size-8 rounded-full group-hover:bg-slate-100 text-slate-500 group-hover:text-blue-600 transition-colors shrink-0">
                                               <ChevronDown
-                                                className={`size-4.5 transition-transform duration-200 ${
-                                                  expandedHowFound[msg.id] !== false ? "rotate-180 text-blue-600" : ""
-                                                }`}
+                                                className={`size-4.5 transition-transform duration-200 ${expandedHowFound[msg.id] !== false ? "rotate-180 text-blue-600" : ""
+                                                  }`}
                                               />
                                             </div>
                                           </button>
@@ -2875,9 +3420,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
                 {/* FLOATING BOTTOM SEARCH BAR WITH SEAMLESS GRADIENT FADE */}
                 <div className="absolute bottom-0 inset-x-0 pointer-events-none bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 via-55% to-transparent pt-14 pb-4 px-4 sm:px-6 z-30">
-                  <div className={`mx-auto flex items-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${
-                    isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
-                  }`}>
+                  <div className={`mx-auto flex items-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
+                    }`}>
                     <form
                       onFocus={() => setIsSearchFocused(true)}
                       onBlur={(e) => {
@@ -2915,8 +3459,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                         type="button"
                         onClick={handleVoiceModeClick}
                         className={`size-9 rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${isVoiceActive
-                            ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
-                            : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
+                          ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
+                          : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
                           }`}
                         title={isVoiceActive ? "Listening... Click to stop" : "Voice input"}
                         aria-label="Voice input"

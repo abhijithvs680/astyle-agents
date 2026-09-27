@@ -4,13 +4,13 @@ import { CxoDashboard } from "../components/CxoDashboard";
 export const Route = createFileRoute("/ask-ai")({
   head: () => ({
     meta: [
-      { title: "A style — Intelligent Garment & Merchandising Assistant" },
+      { title: "ASTYLE — Intelligent Garment & Merchandising Assistant" },
       {
         name: "description",
         content:
           "Autonomous garment and apparel merchandising intelligence, inventory exposure analysis, and supply chain telemetry.",
       },
-      { property: "og:title", content: "A style" },
+      { property: "og:title", content: "ASTYLE" },
       {
         property: "og:description",
         content:
