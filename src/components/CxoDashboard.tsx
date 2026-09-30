@@ -56,6 +56,7 @@ import {
   type CaseMethodologyText,
 } from "./CaseDetailsView";
 import { ReportPipelineDiagram } from "./ReportPipelineDiagram";
+import { SessionHistorySidebar, type HistorySession } from "./SessionHistorySidebar";
 
 const railIcons = [
   { icon: Inbox, label: "Inbox", to: "/inbox" },
@@ -1452,6 +1453,245 @@ const getInitialPending = (): { pendingCase: ActiveCaseItem | null; shouldLoad: 
   return { pendingCase: null, shouldLoad: false };
 };
 
+const createDefaultSessionHistory = (): HistorySession[] => {
+  const deep1 = getCaseDetailsForQuery("Products are creating the highest inventory exposure");
+  deep1.revealedSections = 7;
+
+  const deep2 = getCaseDetailsForQuery("Newly launched products performing, and which ones need attention.");
+  deep2.revealedSections = 7;
+
+  const deep3 = getCaseDetailsForQuery("Generate the largest share of revenue, and how dependent is the business on them.");
+  deep3.revealedSections = 7;
+
+  const deep4 = getCaseDetailsForQuery("Products are entering the decline stage of their lifecycle, and what actions should be considered");
+  deep4.revealedSections = 7;
+
+  const deep5 = getCaseDetailsForQuery("Stockouts caused the greatest loss in sales or customer demand");
+  deep5.revealedSections = 7;
+
+  const chatMsg1: GeminiMessageItem = {
+    id: "msg-chat-1",
+    query: "What is the current DOS on core denim lines?",
+    timestamp: "11:20 AM",
+    caseId: "case-3",
+    caseItem: {
+      age: "Today",
+      title: "What is the current DOS on core denim lines?",
+      body: "Core denim lines hold an average 48 Days of Supply (DOS) against the 35-day safety threshold.",
+      agent: "Merchandising Intelligence",
+    },
+    structuredAnswer: {
+      reportTitle: "Core Denim Lines — Days of Supply (DOS) Summary",
+      reportDate: "Today",
+      kpiStats: [
+        { value: "48 Days", label: "Current DOS" },
+        { value: "35 Days", label: "Target Benchmark" },
+        { value: "4", label: "Core Styles" },
+        { value: "$1.28M", label: "Inventory Value" },
+      ],
+      keyFinding:
+        "The current Days of Supply (DOS) across the 4 core denim lines is 48 days, which exceeds our healthy 35-day threshold.\n\n• Slim Stretch Denim holds 52 DOS ($142,000 inventory).\n• Relaxed Vintage Denim is healthy at 28 DOS with 84% sell-through.\n\nRecommended Action: Pause new factory purchase orders on Slim Stretch for 3 weeks until depot stock realigns.",
+      topProducts: [],
+      drivers: [],
+      insights: [],
+      businessImpact: "Excess working capital tied up in Slim Stretch denim.",
+      focusAreas: ["Pause factory purchase orders", "Promote in Northern stores"],
+    },
+  };
+
+  const chatMsg2: GeminiMessageItem = {
+    id: "msg-chat-2",
+    query: "Summarize August EBITDA drop in two bullet points",
+    timestamp: "09:40 AM",
+    caseId: "case-1",
+    caseItem: {
+      age: "Today",
+      title: "Summarize August EBITDA drop in two bullet points",
+      body: "August EBITDA margin dropped from 14.2% down to 9.8% driven by stockouts and footfall drop.",
+      agent: "Finance & Exposure Agent",
+    },
+    structuredAnswer: {
+      reportTitle: "August EBITDA Compression — 2-Point Executive Brief",
+      reportDate: "August 2026",
+      kpiStats: [
+        { value: "-11.4%", label: "MoM Revenue" },
+        { value: "9.8%", label: "August EBITDA" },
+        { value: "14.2%", label: "Baseline EBITDA" },
+        { value: "$142K", label: "Lost Conversions" },
+      ],
+      keyFinding:
+        "• High-velocity chronic stockouts caused an estimated $142,000 in lost basket conversions at flagship doors.\n• Competing 10-minute delivery services triggered a 19% drop in walk-in footfall, lowering average basket items from 3.4 to 2.6.",
+      topProducts: [],
+      drivers: [],
+      insights: [],
+      businessImpact: "EBITDA compressed by 4.4 percentage points.",
+      focusAreas: ["Replenish flagship doors", "Counter 10-minute delivery app churn"],
+    },
+  };
+
+  const chatMsg3: GeminiMessageItem = {
+    id: "msg-chat-3",
+    query: "Which retail doors have excess wool overcoats?",
+    timestamp: "Yesterday",
+    caseId: "case-1",
+    caseItem: {
+      age: "Yesterday",
+      title: "Which retail doors have excess wool overcoats?",
+      body: "Warm regional retail hubs in Southern regions hold 82% of heavy wool overcoats with slow sell-through.",
+      agent: "Supply Chain & Inventory Radar",
+    },
+    structuredAnswer: {
+      reportTitle: "Wool Overcoat Regional Stock Distribution",
+      reportDate: "Yesterday",
+      kpiStats: [
+        { value: "82%", label: "Trapped in South" },
+        { value: "14 Doors", label: "Affected Stores" },
+        { value: "$165K", label: "Locked Capital" },
+        { value: "124 Days", label: "Holding Age" },
+      ],
+      keyFinding:
+        "Southern warm-climate stores hold 82% of the double-breasted wool overcoat inventory where seasonal temperatures remain above 28°C.\n\n• Top affected doors: Chennai Express Mall (340 units) and Bengaluru Central (280 units).\n• Northern doors (Delhi, Chandigarh) are running critically low with under 12 units each.\n\nRecommended Action: Initiate immediate inter-store stock balancing transfers to Northern doors within 48 hours.",
+      topProducts: [],
+      drivers: [],
+      insights: [],
+      businessImpact: "$165,600 trapped in non-selling warm-climate locations.",
+      focusAreas: ["Auto-transfer to Northern doors", "Markdown slow units in South"],
+    },
+  };
+
+  const chatMsg4: GeminiMessageItem = {
+    id: "msg-chat-4",
+    query: "Draft supplier inquiry for Gujarat denim mills",
+    timestamp: "3 days ago",
+    caseId: "case-3",
+    caseItem: {
+      age: "3 days ago",
+      title: "Draft supplier inquiry for Gujarat denim mills",
+      body: "Inquiry letter requesting production schedule acceleration for Autumn denim lines.",
+      agent: "Supply Chain & Procurement",
+    },
+    structuredAnswer: {
+      reportTitle: "Procurement Notice: Gujarat Denim Mills Assortment",
+      reportDate: "3 days ago",
+      kpiStats: [
+        { value: "42.6%", label: "Revenue Share" },
+        { value: "3 Weeks", label: "Lead Time Buffer" },
+        { value: "4 Lines", label: "Affected Styles" },
+        { value: "100%", label: "Audit Complete" },
+      ],
+      keyFinding:
+        "Draft Notice Prepared:\n\n'Dear Gujarat Denim Mills Operations Team,\n\nIn reference to Purchase Orders #DM-8821 through #DM-8824 (Slim Stretch & Relaxed Vintage denim fabrics), please confirm whether the revised delivery date of October 12th remains firm. Current depot inventory has reached 48 DOS.\n\nPlease expedite batch #2 dispatch notices by this Friday.\n\nSincerely,\nASTYLE Merchandising & Sourcing Team'",
+      topProducts: [],
+      drivers: [],
+      insights: [],
+      businessImpact: "Protects $1.28M monthly gross revenue against mill delays.",
+      focusAreas: ["Send procurement letter", "Follow up with logistics team"],
+    },
+  };
+
+  return [
+    {
+      id: "sess-1",
+      title: "Products creating highest inventory exposure",
+      timestamp: "Today, 08:30 AM",
+      group: "Today",
+      agentName: "Merchandising Intelligence",
+      category: "Outerwear & Tailoring",
+      summarySnippet: "Heavyweight wool overcoats hold ₹18.4 Cr across 42 styles with 87 days average age.",
+      impactMetric: "₹18.4 Cr exposure",
+      messages: [deep1],
+    },
+    {
+      id: "sess-2",
+      title: "New launch performance & items needing attention",
+      timestamp: "Today, 07:15 AM",
+      group: "Today",
+      agentName: "Product Launch Agent",
+      category: "Woven Tops & Pants",
+      summarySnippet: "Spring Linen shirts at 84% sell-through; Cargo pants lag at 28% requiring re-targeting.",
+      impactMetric: "84% vs 28% velocity",
+      messages: [deep2],
+    },
+    {
+      id: "sess-3",
+      title: "What is the current DOS on core denim lines?",
+      timestamp: "Today, 11:20 AM",
+      group: "Today",
+      agentName: "Merchandising Chat",
+      category: "Denim Portfolio",
+      summarySnippet: "Core denim holds 48 DOS vs 35-day safety benchmark. Slim Stretch holds 52 DOS.",
+      impactMetric: "48 DOS (High)",
+      messages: [chatMsg1],
+    },
+    {
+      id: "sess-4",
+      title: "Top revenue generators & mill dependency",
+      timestamp: "Yesterday, 04:20 PM",
+      group: "Yesterday",
+      agentName: "Revenue Portfolio Agent",
+      category: "Core Denim",
+      summarySnippet: "Top 4 core denim lines drive 42.6% of monthly gross revenue, posing single-mill risk.",
+      impactMetric: "42.6% concentration",
+      messages: [deep3],
+    },
+    {
+      id: "sess-5",
+      title: "Which retail doors have excess wool overcoats?",
+      timestamp: "Yesterday, 02:15 PM",
+      group: "Yesterday",
+      agentName: "Store Logistics",
+      category: "Regional Stock",
+      summarySnippet: "Southern stores hold 82% of overcoats in warm temperatures. Rebalance to North.",
+      impactMetric: "14 Doors Affected",
+      messages: [chatMsg3],
+    },
+    {
+      id: "sess-6",
+      title: "Summarize August EBITDA drop in two bullet points",
+      timestamp: "Yesterday, 09:40 AM",
+      group: "Yesterday",
+      agentName: "Finance Brief",
+      category: "Executive Brief",
+      summarySnippet: "Acute prescription stockouts ($142K lost) + 19% drop in walk-in footfall from quick-commerce.",
+      impactMetric: "-4.4% Margin",
+      messages: [chatMsg2],
+    },
+    {
+      id: "sess-7",
+      title: "Products entering decline stage of lifecycle",
+      timestamp: "2 days ago, 11:45 AM",
+      group: "Previous 7 Days",
+      agentName: "Lifecycle Markdown Agent",
+      category: "Knitwear & Polos",
+      summarySnippet: "Merino knit polo shirts show consecutive 35% MoM sales drop; phased markdown needed.",
+      impactMetric: "-35% MoM sales",
+      messages: [deep4],
+    },
+    {
+      id: "sess-8",
+      title: "Stockouts causing greatest loss in sales",
+      timestamp: "3 days ago, 02:10 PM",
+      group: "Previous 7 Days",
+      agentName: "Stockout Radar Agent",
+      category: "Supply Chain",
+      summarySnippet: "Sizes M & L stockouts in parkas and oxford shirts resulted in ₹8.6 Cr lost demand.",
+      impactMetric: "₹8.6 Cr lost demand",
+      messages: [deep5],
+    },
+    {
+      id: "sess-9",
+      title: "Draft supplier inquiry for Gujarat denim mills",
+      timestamp: "3 days ago, 04:50 PM",
+      group: "Previous 7 Days",
+      agentName: "Procurement Ops",
+      category: "Supplier Draft",
+      summarySnippet: "Prepared inquiry letter for PO #DM-8821 through #DM-8824 requesting October 12 schedule.",
+      impactMetric: "PO Expedite",
+      messages: [chatMsg4],
+    },
+  ];
+};
+
 export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | "inbox" }) {
   const navigate = useNavigate();
 
@@ -1486,6 +1726,39 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
   const [geminiLoadingStage, setGeminiLoadingStage] = useState("Agent Sales is looking for data...");
   const geminiTimersRef = useRef<NodeJS.Timeout[]>([]);
   const conversationStreamRef = useRef<HTMLDivElement>(null);
+
+  // Session History Sidebar state
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionHistoryList, setSessionHistoryList] = useState<HistorySession[]>(() => createDefaultSessionHistory());
+
+  const handleSelectSession = (session: HistorySession) => {
+    setActiveSessionId(session.id);
+    setGeminiMessages(session.messages);
+    setActiveQuestion(session.title);
+    setChatQuery("");
+    setIsGeminiLoading(false);
+    setStreamingQuery("");
+    setTimeout(() => {
+      scrollStreamToBottom(false);
+    }, 60);
+  };
+
+  const handleNewSession = () => {
+    setActiveSessionId(null);
+    setGeminiMessages([]);
+    setChatQuery("");
+    setActiveQuestion("");
+    setIsGeminiLoading(false);
+    setStreamingQuery("");
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    setSessionHistoryList((prev) => prev.filter((s) => s.id !== sessionId));
+    if (activeSessionId === sessionId) {
+      handleNewSession();
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -2130,6 +2403,21 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
       setIsGeminiLoading(false);
       setStreamingQuery("");
 
+      // Automatically add to session history
+      const newSession: HistorySession = {
+        id: `session-${Date.now()}`,
+        title: q,
+        timestamp: "Just now",
+        group: "Today",
+        agentName: newMsg.caseItem.agent || "Intelligence Agent",
+        category: "General Analysis",
+        summarySnippet: newMsg.structuredAnswer.keyFinding.slice(0, 110) + "...",
+        impactMetric: newMsg.structuredAnswer.kpiStats?.[0]?.value,
+        messages: [newMsg],
+      };
+      setSessionHistoryList((prev) => [newSession, ...prev]);
+      setActiveSessionId(newSession.id);
+
       setTimeout(() => {
         const msgEl = document.getElementById(`msg-${newMsg.id}`);
         if (msgEl) {
@@ -2257,7 +2545,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
         <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
-            onClick={() => switchView("chat")}
+            onClick={() => {
+              switchView("chat");
+              handleNewSession();
+            }}
             className="text-base sm:text-lg font-extrabold tracking-wider text-white hover:text-sky-200 transition cursor-pointer flex items-center whitespace-nowrap select-none"
             title="ASTYLE — Go to Chat"
           >
@@ -2420,6 +2711,19 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
           ))}
         </nav>
 
+        {/* Session History Sidebar (between Nav Rail and Workspace when on chat view) */}
+        {activeView === "chat" && (
+          <SessionHistorySidebar
+            isExpanded={isHistoryExpanded}
+            onToggleExpand={() => setIsHistoryExpanded((prev) => !prev)}
+            activeSessionId={activeSessionId}
+            onSelectSession={handleSelectSession}
+            onNewSession={handleNewSession}
+            historySessions={sessionHistoryList}
+            onDeleteSession={handleDeleteSession}
+          />
+        )}
+
         {/* WORKSPACE AREA TO RIGHT OF RAIL */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {activeView === "chat" ? (
@@ -2440,9 +2744,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                       onClick={() => {
                         setLogoRotation((prev) => prev + 60);
                         switchView("chat");
-                        setGeminiMessages([]);
-                        setIsGeminiLoading(false);
-                        setStreamingQuery("");
+                        handleNewSession();
                       }}
                       style={{ transform: `rotate(${logoRotation}deg)` }}
                       className="size-16 sm:size-20 object-contain drop-shadow-sm select-none cursor-pointer transition-transform duration-500 ease-out hover:scale-105 active:scale-95"
