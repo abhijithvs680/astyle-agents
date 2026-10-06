@@ -57,6 +57,9 @@ import {
 } from "./CaseDetailsView";
 import { ReportPipelineDiagram } from "./ReportPipelineDiagram";
 import { SessionHistorySidebar, type HistorySession } from "./SessionHistorySidebar";
+import { ChatSkeleton, PlanSkeleton } from "./AnalysisLoaders";
+import { startAnalysis } from "../api/analysis";
+import type { AnalysisMode } from "../api/types";
 
 const railIcons = [
   { icon: Inbox, label: "Inbox", to: "/inbox" },
@@ -191,13 +194,44 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
       badge: "61% in Top 10",
       type: "distribution",
       bars: [
-        { label: "Men's Denim Jacket", value: 2.8, formattedValue: "₹2.8 Cr", subtext: "124 days avg age · ↓ 42% sales", color: "bg-[#0e7490]" },
-        { label: "Women's Kurti", value: 2.1, formattedValue: "₹2.1 Cr", subtext: "109 days avg age · ↓ 35% sales", color: "bg-[#0891b2]" },
-        { label: "Slim Fit Shirt", value: 1.7, formattedValue: "₹1.7 Cr", subtext: "96 days avg age · ↓ 28% sales", color: "bg-[#0284c7]" },
-        { label: "Casual Trousers", value: 1.4, formattedValue: "₹1.4 Cr", subtext: "91 days avg age · ↓ 24% sales", color: "bg-[#38bdf8]" },
-        { label: "Printed T-shirt", value: 1.2, formattedValue: "₹1.2 Cr", subtext: "86 days avg age · ↓ 19% sales", color: "bg-[#7dd3fc]" },
+        {
+          label: "Men's Denim Jacket",
+          value: 2.8,
+          formattedValue: "₹2.8 Cr",
+          subtext: "124 days avg age · ↓ 42% sales",
+          color: "bg-[#0e7490]",
+        },
+        {
+          label: "Women's Kurti",
+          value: 2.1,
+          formattedValue: "₹2.1 Cr",
+          subtext: "109 days avg age · ↓ 35% sales",
+          color: "bg-[#0891b2]",
+        },
+        {
+          label: "Slim Fit Shirt",
+          value: 1.7,
+          formattedValue: "₹1.7 Cr",
+          subtext: "96 days avg age · ↓ 28% sales",
+          color: "bg-[#0284c7]",
+        },
+        {
+          label: "Casual Trousers",
+          value: 1.4,
+          formattedValue: "₹1.4 Cr",
+          subtext: "91 days avg age · ↓ 24% sales",
+          color: "bg-[#38bdf8]",
+        },
+        {
+          label: "Printed T-shirt",
+          value: 1.2,
+          formattedValue: "₹1.2 Cr",
+          subtext: "86 days avg age · ↓ 19% sales",
+          color: "bg-[#7dd3fc]",
+        },
       ],
-      takeaway: "Top 10 items lock up ₹11.2 Cr (61%) of total exposure with an average age exceeding 87 days.",
+      takeaway:
+        "Top 10 items lock up ₹11.2 Cr (61%) of total exposure with an average age exceeding 87 days.",
     },
     topProducts: [
       { product: "Men's Denim Jacket", inventory: "₹2.8 Cr", age: "124 days", salesTrend: "↓ 42%" },
@@ -257,34 +291,243 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "24,190 Invoices",
           sourceSystem: "Store POS & ERP Invoicing Feed",
           citationId: "CIT-2026-SLS-42",
-          description: "All store and digital invoices used to compute revenue velocity and sales run-rates.",
-          columns: ["Invoice #", "Date", "Store / Region", "Product", "Units Sold", "Net Amount", "Sales Trend"],
+          description:
+            "All store and digital invoices used to compute revenue velocity and sales run-rates.",
+          columns: [
+            "Invoice #",
+            "Date",
+            "Store / Region",
+            "Product",
+            "Units Sold",
+            "Net Amount",
+            "Sales Trend",
+          ],
           rows: [
-            { "Invoice #": "INV-2026-8841", "Date": "23 Sep 2026", "Store / Region": "Delhi Flagship (DL-01)", "Product": "Men's Denim Jacket", "Units Sold": "4", "Net Amount": "₹15,996", "Sales Trend": "Slow (-42%)" },
-            { "Invoice #": "INV-2026-8820", "Date": "23 Sep 2026", "Store / Region": "Mumbai Phoenix (MH-04)", "Product": "Women's Kurti", "Units Sold": "6", "Net Amount": "₹11,994", "Sales Trend": "Slow (-35%)" },
-            { "Invoice #": "INV-2026-8794", "Date": "22 Sep 2026", "Store / Region": "Bengaluru Indiranagar", "Product": "Slim Fit Shirt", "Units Sold": "8", "Net Amount": "₹15,192", "Sales Trend": "Sluggish (-28%)" },
-            { "Invoice #": "INV-2026-8750", "Date": "22 Sep 2026", "Store / Region": "Hyderabad Banjara", "Product": "Casual Trousers", "Units Sold": "5", "Net Amount": "₹11,495", "Sales Trend": "Lagging (-24%)" },
-            { "Invoice #": "INV-2026-8692", "Date": "21 Sep 2026", "Store / Region": "Kolkata Park St", "Product": "Printed T-shirt", "Units Sold": "12", "Net Amount": "₹11,988", "Sales Trend": "Lagging (-19%)" },
-            { "Invoice #": "INV-2026-8610", "Date": "20 Sep 2026", "Store / Region": "Pune Viman Nagar", "Product": "Linen Casual Shirt", "Units Sold": "28", "Net Amount": "₹69,972", "Sales Trend": "Fast (+32%)" },
-            { "Invoice #": "INV-2026-8540", "Date": "19 Sep 2026", "Store / Region": "Chennai Express", "Product": "Chino Shorts", "Units Sold": "18", "Net Amount": "₹26,982", "Sales Trend": "Normal (+4%)" },
-            { "Invoice #": "INV-2026-8492", "Date": "19 Sep 2026", "Store / Region": "Ahmedabad Alpha", "Product": "Relaxed Utility Cargo", "Units Sold": "3", "Net Amount": "₹8,997", "Sales Trend": "Slow (-31%)" },
-            { "Invoice #": "INV-2026-8430", "Date": "18 Sep 2026", "Store / Region": "Jaipur World Trade", "Product": "Heavyweight Wool Overcoat", "Units Sold": "2", "Net Amount": "₹15,998", "Sales Trend": "Stagnant (-48%)" },
-            { "Invoice #": "INV-2026-8380", "Date": "18 Sep 2026", "Store / Region": "Chandigarh Elante", "Product": "Merino Knit Polo", "Units Sold": "7", "Net Amount": "₹19,593", "Sales Trend": "Sluggish (-16%)" },
-            { "Invoice #": "INV-2026-8312", "Date": "17 Sep 2026", "Store / Region": "Lucknow Phoenix", "Product": "Vintage Straight Denim", "Units Sold": "14", "Net Amount": "₹41,986", "Sales Trend": "Stable (+8%)" },
-            { "Invoice #": "INV-2026-8270", "Date": "17 Sep 2026", "Store / Region": "Kochi Lulu Mall", "Product": "Band-Collar Linen Shirt", "Units Sold": "32", "Net Amount": "₹79,968", "Sales Trend": "Surging (+88%)" },
-            { "Invoice #": "INV-2026-8215", "Date": "16 Sep 2026", "Store / Region": "Indore Treasure", "Product": "Quilted Puffer Vest", "Units Sold": "4", "Net Amount": "₹11,996", "Sales Trend": "Lagging (-22%)" },
-            { "Invoice #": "INV-2026-8170", "Date": "16 Sep 2026", "Store / Region": "Surat VR Mall", "Product": "Tailored Stretch Chino", "Units Sold": "19", "Net Amount": "₹43,681", "Sales Trend": "Healthy (+11%)" },
-            { "Invoice #": "INV-2026-8104", "Date": "15 Sep 2026", "Store / Region": "Delhi Saket (DL-02)", "Product": "Silk Blend Resort Shirt", "Units Sold": "22", "Net Amount": "₹87,978", "Sales Trend": "Fast (+74%)" },
-            { "Invoice #": "INV-2026-8051", "Date": "15 Sep 2026", "Store / Region": "Mumbai Palladium", "Product": "Oversized Fleece Hoodie", "Units Sold": "5", "Net Amount": "₹12,495", "Sales Trend": "Slow (-17%)" },
-            { "Invoice #": "INV-2026-7992", "Date": "14 Sep 2026", "Store / Region": "Bengaluru Koramangala", "Product": "Ribbed Modal Tank Top", "Units Sold": "38", "Net Amount": "₹37,962", "Sales Trend": "Stable (+15%)" },
-            { "Invoice #": "INV-2026-7935", "Date": "14 Sep 2026", "Store / Region": "Noida DLF Mall", "Product": "Classic Bomber Jacket", "Units Sold": "3", "Net Amount": "₹11,997", "Sales Trend": "Stagnant (-33%)" },
-            { "Invoice #": "INV-2026-7880", "Date": "13 Sep 2026", "Store / Region": "Gurugram Ambience", "Product": "Corduroy Overshirt", "Units Sold": "6", "Net Amount": "₹17,994", "Sales Trend": "Slow (-12%)" },
-            { "Invoice #": "INV-2026-7822", "Date": "13 Sep 2026", "Store / Region": "Nagpur Empress", "Product": "Lightweight Windbreaker", "Units Sold": "15", "Net Amount": "₹44,985", "Sales Trend": "Normal (+6%)" },
-            { "Invoice #": "INV-2026-7760", "Date": "12 Sep 2026", "Store / Region": "Bhopal DB City", "Product": "Premium Leather Belt", "Units Sold": "24", "Net Amount": "₹35,976", "Sales Trend": "Strong (+19%)" },
-            { "Invoice #": "INV-2026-7710", "Date": "12 Sep 2026", "Store / Region": "Patna City Centre", "Product": "Striped Poplin Shirt", "Units Sold": "16", "Net Amount": "₹39,984", "Sales Trend": "Healthy (+10%)" },
-            { "Invoice #": "INV-2026-7654", "Date": "11 Sep 2026", "Store / Region": "Guwahati City Square", "Product": "Double-Breasted Trench", "Units Sold": "1", "Net Amount": "₹7,999", "Sales Trend": "Frozen (-52%)" },
-            { "Invoice #": "INV-2026-7601", "Date": "11 Sep 2026", "Store / Region": "Vadodara Inorbit", "Product": "Cable-Knit Cardigan", "Units Sold": "4", "Net Amount": "₹9,996", "Sales Trend": "Slow (-27%)" },
-            { "Invoice #": "INV-2026-7540", "Date": "10 Sep 2026", "Store / Region": "Online D2C Webstore", "Product": "Canvas Chore Jacket", "Units Sold": "11", "Net Amount": "₹38,489", "Sales Trend": "Healthy (+9%)" },
+            {
+              "Invoice #": "INV-2026-8841",
+              Date: "23 Sep 2026",
+              "Store / Region": "Delhi Flagship (DL-01)",
+              Product: "Men's Denim Jacket",
+              "Units Sold": "4",
+              "Net Amount": "₹15,996",
+              "Sales Trend": "Slow (-42%)",
+            },
+            {
+              "Invoice #": "INV-2026-8820",
+              Date: "23 Sep 2026",
+              "Store / Region": "Mumbai Phoenix (MH-04)",
+              Product: "Women's Kurti",
+              "Units Sold": "6",
+              "Net Amount": "₹11,994",
+              "Sales Trend": "Slow (-35%)",
+            },
+            {
+              "Invoice #": "INV-2026-8794",
+              Date: "22 Sep 2026",
+              "Store / Region": "Bengaluru Indiranagar",
+              Product: "Slim Fit Shirt",
+              "Units Sold": "8",
+              "Net Amount": "₹15,192",
+              "Sales Trend": "Sluggish (-28%)",
+            },
+            {
+              "Invoice #": "INV-2026-8750",
+              Date: "22 Sep 2026",
+              "Store / Region": "Hyderabad Banjara",
+              Product: "Casual Trousers",
+              "Units Sold": "5",
+              "Net Amount": "₹11,495",
+              "Sales Trend": "Lagging (-24%)",
+            },
+            {
+              "Invoice #": "INV-2026-8692",
+              Date: "21 Sep 2026",
+              "Store / Region": "Kolkata Park St",
+              Product: "Printed T-shirt",
+              "Units Sold": "12",
+              "Net Amount": "₹11,988",
+              "Sales Trend": "Lagging (-19%)",
+            },
+            {
+              "Invoice #": "INV-2026-8610",
+              Date: "20 Sep 2026",
+              "Store / Region": "Pune Viman Nagar",
+              Product: "Linen Casual Shirt",
+              "Units Sold": "28",
+              "Net Amount": "₹69,972",
+              "Sales Trend": "Fast (+32%)",
+            },
+            {
+              "Invoice #": "INV-2026-8540",
+              Date: "19 Sep 2026",
+              "Store / Region": "Chennai Express",
+              Product: "Chino Shorts",
+              "Units Sold": "18",
+              "Net Amount": "₹26,982",
+              "Sales Trend": "Normal (+4%)",
+            },
+            {
+              "Invoice #": "INV-2026-8492",
+              Date: "19 Sep 2026",
+              "Store / Region": "Ahmedabad Alpha",
+              Product: "Relaxed Utility Cargo",
+              "Units Sold": "3",
+              "Net Amount": "₹8,997",
+              "Sales Trend": "Slow (-31%)",
+            },
+            {
+              "Invoice #": "INV-2026-8430",
+              Date: "18 Sep 2026",
+              "Store / Region": "Jaipur World Trade",
+              Product: "Heavyweight Wool Overcoat",
+              "Units Sold": "2",
+              "Net Amount": "₹15,998",
+              "Sales Trend": "Stagnant (-48%)",
+            },
+            {
+              "Invoice #": "INV-2026-8380",
+              Date: "18 Sep 2026",
+              "Store / Region": "Chandigarh Elante",
+              Product: "Merino Knit Polo",
+              "Units Sold": "7",
+              "Net Amount": "₹19,593",
+              "Sales Trend": "Sluggish (-16%)",
+            },
+            {
+              "Invoice #": "INV-2026-8312",
+              Date: "17 Sep 2026",
+              "Store / Region": "Lucknow Phoenix",
+              Product: "Vintage Straight Denim",
+              "Units Sold": "14",
+              "Net Amount": "₹41,986",
+              "Sales Trend": "Stable (+8%)",
+            },
+            {
+              "Invoice #": "INV-2026-8270",
+              Date: "17 Sep 2026",
+              "Store / Region": "Kochi Lulu Mall",
+              Product: "Band-Collar Linen Shirt",
+              "Units Sold": "32",
+              "Net Amount": "₹79,968",
+              "Sales Trend": "Surging (+88%)",
+            },
+            {
+              "Invoice #": "INV-2026-8215",
+              Date: "16 Sep 2026",
+              "Store / Region": "Indore Treasure",
+              Product: "Quilted Puffer Vest",
+              "Units Sold": "4",
+              "Net Amount": "₹11,996",
+              "Sales Trend": "Lagging (-22%)",
+            },
+            {
+              "Invoice #": "INV-2026-8170",
+              Date: "16 Sep 2026",
+              "Store / Region": "Surat VR Mall",
+              Product: "Tailored Stretch Chino",
+              "Units Sold": "19",
+              "Net Amount": "₹43,681",
+              "Sales Trend": "Healthy (+11%)",
+            },
+            {
+              "Invoice #": "INV-2026-8104",
+              Date: "15 Sep 2026",
+              "Store / Region": "Delhi Saket (DL-02)",
+              Product: "Silk Blend Resort Shirt",
+              "Units Sold": "22",
+              "Net Amount": "₹87,978",
+              "Sales Trend": "Fast (+74%)",
+            },
+            {
+              "Invoice #": "INV-2026-8051",
+              Date: "15 Sep 2026",
+              "Store / Region": "Mumbai Palladium",
+              Product: "Oversized Fleece Hoodie",
+              "Units Sold": "5",
+              "Net Amount": "₹12,495",
+              "Sales Trend": "Slow (-17%)",
+            },
+            {
+              "Invoice #": "INV-2026-7992",
+              Date: "14 Sep 2026",
+              "Store / Region": "Bengaluru Koramangala",
+              Product: "Ribbed Modal Tank Top",
+              "Units Sold": "38",
+              "Net Amount": "₹37,962",
+              "Sales Trend": "Stable (+15%)",
+            },
+            {
+              "Invoice #": "INV-2026-7935",
+              Date: "14 Sep 2026",
+              "Store / Region": "Noida DLF Mall",
+              Product: "Classic Bomber Jacket",
+              "Units Sold": "3",
+              "Net Amount": "₹11,997",
+              "Sales Trend": "Stagnant (-33%)",
+            },
+            {
+              "Invoice #": "INV-2026-7880",
+              Date: "13 Sep 2026",
+              "Store / Region": "Gurugram Ambience",
+              Product: "Corduroy Overshirt",
+              "Units Sold": "6",
+              "Net Amount": "₹17,994",
+              "Sales Trend": "Slow (-12%)",
+            },
+            {
+              "Invoice #": "INV-2026-7822",
+              Date: "13 Sep 2026",
+              "Store / Region": "Nagpur Empress",
+              Product: "Lightweight Windbreaker",
+              "Units Sold": "15",
+              "Net Amount": "₹44,985",
+              "Sales Trend": "Normal (+6%)",
+            },
+            {
+              "Invoice #": "INV-2026-7760",
+              Date: "12 Sep 2026",
+              "Store / Region": "Bhopal DB City",
+              Product: "Premium Leather Belt",
+              "Units Sold": "24",
+              "Net Amount": "₹35,976",
+              "Sales Trend": "Strong (+19%)",
+            },
+            {
+              "Invoice #": "INV-2026-7710",
+              Date: "12 Sep 2026",
+              "Store / Region": "Patna City Centre",
+              Product: "Striped Poplin Shirt",
+              "Units Sold": "16",
+              "Net Amount": "₹39,984",
+              "Sales Trend": "Healthy (+10%)",
+            },
+            {
+              "Invoice #": "INV-2026-7654",
+              Date: "11 Sep 2026",
+              "Store / Region": "Guwahati City Square",
+              Product: "Double-Breasted Trench",
+              "Units Sold": "1",
+              "Net Amount": "₹7,999",
+              "Sales Trend": "Frozen (-52%)",
+            },
+            {
+              "Invoice #": "INV-2026-7601",
+              Date: "11 Sep 2026",
+              "Store / Region": "Vadodara Inorbit",
+              Product: "Cable-Knit Cardigan",
+              "Units Sold": "4",
+              "Net Amount": "₹9,996",
+              "Sales Trend": "Slow (-27%)",
+            },
+            {
+              "Invoice #": "INV-2026-7540",
+              Date: "10 Sep 2026",
+              "Store / Region": "Online D2C Webstore",
+              Product: "Canvas Chore Jacket",
+              "Units Sold": "11",
+              "Net Amount": "₹38,489",
+              "Sales Trend": "Healthy (+9%)",
+            },
           ],
         },
         {
@@ -296,14 +539,63 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "1,840 Records",
           sourceSystem: "Customer Support & Returns Portal",
           citationId: "CIT-2026-RET-18",
-          description: "Customer return logs categorized by reason codes, fit feedback, and refunded sums.",
-          columns: ["Return ID", "Return Date", "Channel", "Product", "Size", "Return Reason", "Refund Amount"],
+          description:
+            "Customer return logs categorized by reason codes, fit feedback, and refunded sums.",
+          columns: [
+            "Return ID",
+            "Return Date",
+            "Channel",
+            "Product",
+            "Size",
+            "Return Reason",
+            "Refund Amount",
+          ],
           rows: [
-            { "Return ID": "RET-2026-1044", "Return Date": "23 Sep 2026", "Channel": "Online App", "Product": "Men's Denim Jacket", "Size": "L", "Return Reason": "Sleeve length too long", "Refund Amount": "₹3,999" },
-            { "Return ID": "RET-2026-1021", "Return Date": "22 Sep 2026", "Channel": "Delhi Flagship", "Product": "Women's Kurti", "Size": "M", "Return Reason": "Tight shoulder fit", "Refund Amount": "₹1,999" },
-            { "Return ID": "RET-2026-0988", "Return Date": "21 Sep 2026", "Channel": "Bengaluru Indiranagar", "Product": "Casual Trousers", "Size": "34", "Return Reason": "Waist runs tight", "Refund Amount": "₹2,299" },
-            { "Return ID": "RET-2026-0952", "Return Date": "20 Sep 2026", "Channel": "Mumbai Phoenix", "Product": "Slim Fit Shirt", "Size": "40", "Return Reason": "Collar fit uncomfortable", "Refund Amount": "₹1,899" },
-            { "Return ID": "RET-2026-0911", "Return Date": "19 Sep 2026", "Channel": "Online App", "Product": "Printed T-shirt", "Size": "XL", "Return Reason": "Fabric print mismatch", "Refund Amount": "₹999" },
+            {
+              "Return ID": "RET-2026-1044",
+              "Return Date": "23 Sep 2026",
+              Channel: "Online App",
+              Product: "Men's Denim Jacket",
+              Size: "L",
+              "Return Reason": "Sleeve length too long",
+              "Refund Amount": "₹3,999",
+            },
+            {
+              "Return ID": "RET-2026-1021",
+              "Return Date": "22 Sep 2026",
+              Channel: "Delhi Flagship",
+              Product: "Women's Kurti",
+              Size: "M",
+              "Return Reason": "Tight shoulder fit",
+              "Refund Amount": "₹1,999",
+            },
+            {
+              "Return ID": "RET-2026-0988",
+              "Return Date": "21 Sep 2026",
+              Channel: "Bengaluru Indiranagar",
+              Product: "Casual Trousers",
+              Size: "34",
+              "Return Reason": "Waist runs tight",
+              "Refund Amount": "₹2,299",
+            },
+            {
+              "Return ID": "RET-2026-0952",
+              "Return Date": "20 Sep 2026",
+              Channel: "Mumbai Phoenix",
+              Product: "Slim Fit Shirt",
+              Size: "40",
+              "Return Reason": "Collar fit uncomfortable",
+              "Refund Amount": "₹1,899",
+            },
+            {
+              "Return ID": "RET-2026-0911",
+              "Return Date": "19 Sep 2026",
+              Channel: "Online App",
+              Product: "Printed T-shirt",
+              Size: "XL",
+              "Return Reason": "Fabric print mismatch",
+              "Refund Amount": "₹999",
+            },
           ],
         },
         {
@@ -315,39 +607,257 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "42 Products",
           sourceSystem: "Warehouse WMS & Stock Balances",
           citationId: "CIT-2026-INV-87",
-          description: "Inventory age distribution and exposure valuation across central and regional hubs.",
-          columns: ["Product Name", "Units in Stock", "Avg Age", "Unit Cost", "Total Exposure", "Risk Level"],
+          description:
+            "Inventory age distribution and exposure valuation across central and regional hubs.",
+          columns: [
+            "Product Name",
+            "Units in Stock",
+            "Avg Age",
+            "Unit Cost",
+            "Total Exposure",
+            "Risk Level",
+          ],
           rows: [
-            { "Product Name": "Men's Denim Jacket", "Units in Stock": "7,000 pcs", "Avg Age": "124 days", "Unit Cost": "₹4,000", "Total Exposure": "₹2.80 Cr", "Risk Level": "High Risk" },
-            { "Product Name": "Women's Kurti", "Units in Stock": "10,500 pcs", "Avg Age": "109 days", "Unit Cost": "₹2,000", "Total Exposure": "₹2.10 Cr", "Risk Level": "High Risk" },
-            { "Product Name": "Slim Fit Shirt", "Units in Stock": "8,950 pcs", "Avg Age": "96 days", "Unit Cost": "₹1,900", "Total Exposure": "₹1.70 Cr", "Risk Level": "Moderate Risk" },
-            { "Product Name": "Casual Trousers", "Units in Stock": "6,080 pcs", "Avg Age": "91 days", "Unit Cost": "₹2,300", "Total Exposure": "₹1.40 Cr", "Risk Level": "Moderate Risk" },
-            { "Product Name": "Printed T-shirt", "Units in Stock": "12,000 pcs", "Avg Age": "86 days", "Unit Cost": "₹1,000", "Total Exposure": "₹1.20 Cr", "Risk Level": "Moderate Risk" },
-            { "Product Name": "Relaxed Fit Utility Cargo", "Units in Stock": "4,200 pcs", "Avg Age": "82 days", "Unit Cost": "₹2,740", "Total Exposure": "₹1.15 Cr", "Risk Level": "High Risk" },
-            { "Product Name": "Heavyweight Wool Overcoat", "Units in Stock": "2,450 pcs", "Avg Age": "118 days", "Unit Cost": "₹4,000", "Total Exposure": "₹98.0 L", "Risk Level": "High Risk" },
-            { "Product Name": "Fine Gauge Merino Knit Polo", "Units in Stock": "3,100 pcs", "Avg Age": "74 days", "Unit Cost": "₹2,740", "Total Exposure": "₹85.0 L", "Risk Level": "Moderate Risk" },
-            { "Product Name": "Vintage Wash Straight Jeans", "Units in Stock": "2,600 pcs", "Avg Age": "65 days", "Unit Cost": "₹3,000", "Total Exposure": "₹78.0 L", "Risk Level": "Watching" },
-            { "Product Name": "French Linen Band-Collar Shirt", "Units in Stock": "1,850 pcs", "Avg Age": "18 days", "Unit Cost": "₹3,510", "Total Exposure": "₹65.0 L", "Risk Level": "Stockout Risk" },
-            { "Product Name": "Quilted Puffer Vest", "Units in Stock": "1,930 pcs", "Avg Age": "94 days", "Unit Cost": "₹3,000", "Total Exposure": "₹58.0 L", "Risk Level": "High Risk" },
-            { "Product Name": "Tailored Stretch Chino Pants", "Units in Stock": "2,400 pcs", "Avg Age": "58 days", "Unit Cost": "₹2,250", "Total Exposure": "₹54.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Silk Blend Resort Shirt", "Units in Stock": "1,220 pcs", "Avg Age": "22 days", "Unit Cost": "₹4,010", "Total Exposure": "₹49.0 L", "Risk Level": "Stockout Risk" },
-            { "Product Name": "Oversized Fleece Hoodie", "Units in Stock": "1,800 pcs", "Avg Age": "88 days", "Unit Cost": "₹2,500", "Total Exposure": "₹45.0 L", "Risk Level": "Moderate Risk" },
-            { "Product Name": "Ribbed Modal Tank Top", "Units in Stock": "4,200 pcs", "Avg Age": "45 days", "Unit Cost": "₹1,000", "Total Exposure": "₹42.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Classic Bomber Jacket", "Units in Stock": "1,150 pcs", "Avg Age": "105 days", "Unit Cost": "₹3,390", "Total Exposure": "₹39.0 L", "Risk Level": "High Risk" },
-            { "Product Name": "Stretch Cotton Bermuda Shorts", "Units in Stock": "2,000 pcs", "Avg Age": "92 days", "Unit Cost": "₹1,800", "Total Exposure": "₹36.0 L", "Risk Level": "Moderate Risk" },
-            { "Product Name": "Corduroy Overshirt", "Units in Stock": "1,100 pcs", "Avg Age": "68 days", "Unit Cost": "₹3,000", "Total Exposure": "₹33.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Lightweight Windbreaker", "Units in Stock": "1,000 pcs", "Avg Age": "62 days", "Unit Cost": "₹3,000", "Total Exposure": "₹30.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Premium Leather Dress Belt", "Units in Stock": "1,860 pcs", "Avg Age": "55 days", "Unit Cost": "₹1,500", "Total Exposure": "₹28.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Striped Poplin Work Shirt", "Units in Stock": "1,040 pcs", "Avg Age": "48 days", "Unit Cost": "₹2,500", "Total Exposure": "₹26.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Double-Breasted Trench Coat", "Units in Stock": "600 pcs", "Avg Age": "112 days", "Unit Cost": "₹4,000", "Total Exposure": "₹24.0 L", "Risk Level": "High Risk" },
-            { "Product Name": "Cable-Knit Wool Cardigan", "Units in Stock": "880 pcs", "Avg Age": "95 days", "Unit Cost": "₹2,500", "Total Exposure": "₹22.0 L", "Risk Level": "Moderate Risk" },
-            { "Product Name": "Athleisure Jogger Pants", "Units in Stock": "1,250 pcs", "Avg Age": "42 days", "Unit Cost": "₹1,600", "Total Exposure": "₹20.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Canvas Chore Jacket", "Units in Stock": "514 pcs", "Avg Age": "76 days", "Unit Cost": "₹3,500", "Total Exposure": "₹18.0 L", "Risk Level": "Watching" },
-            { "Product Name": "Chambray Casual Button-Down", "Units in Stock": "620 pcs", "Avg Age": "51 days", "Unit Cost": "₹2,400", "Total Exposure": "₹14.9 L", "Risk Level": "Watching" },
-            { "Product Name": "Waxed Cotton Field Parka", "Units in Stock": "310 pcs", "Avg Age": "116 days", "Unit Cost": "₹4,200", "Total Exposure": "₹13.0 L", "Risk Level": "High Risk" },
-            { "Product Name": "Relaxed Linen Drawstring Trouser", "Units in Stock": "480 pcs", "Avg Age": "24 days", "Unit Cost": "₹2,500", "Total Exposure": "₹12.0 L", "Risk Level": "Stockout Risk" },
-            { "Product Name": "Brushed Flannel Plaid Shirt", "Units in Stock": "440 pcs", "Avg Age": "72 days", "Unit Cost": "₹2,200", "Total Exposure": "₹9.7 L", "Risk Level": "Watching" },
-            { "Product Name": "Pima Cotton Crew Undershirt (3-Pack)", "Units in Stock": "650 pcs", "Avg Age": "30 days", "Unit Cost": "₹1,400", "Total Exposure": "₹9.1 L", "Risk Level": "Optimal" },
+            {
+              "Product Name": "Men's Denim Jacket",
+              "Units in Stock": "7,000 pcs",
+              "Avg Age": "124 days",
+              "Unit Cost": "₹4,000",
+              "Total Exposure": "₹2.80 Cr",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Women's Kurti",
+              "Units in Stock": "10,500 pcs",
+              "Avg Age": "109 days",
+              "Unit Cost": "₹2,000",
+              "Total Exposure": "₹2.10 Cr",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Slim Fit Shirt",
+              "Units in Stock": "8,950 pcs",
+              "Avg Age": "96 days",
+              "Unit Cost": "₹1,900",
+              "Total Exposure": "₹1.70 Cr",
+              "Risk Level": "Moderate Risk",
+            },
+            {
+              "Product Name": "Casual Trousers",
+              "Units in Stock": "6,080 pcs",
+              "Avg Age": "91 days",
+              "Unit Cost": "₹2,300",
+              "Total Exposure": "₹1.40 Cr",
+              "Risk Level": "Moderate Risk",
+            },
+            {
+              "Product Name": "Printed T-shirt",
+              "Units in Stock": "12,000 pcs",
+              "Avg Age": "86 days",
+              "Unit Cost": "₹1,000",
+              "Total Exposure": "₹1.20 Cr",
+              "Risk Level": "Moderate Risk",
+            },
+            {
+              "Product Name": "Relaxed Fit Utility Cargo",
+              "Units in Stock": "4,200 pcs",
+              "Avg Age": "82 days",
+              "Unit Cost": "₹2,740",
+              "Total Exposure": "₹1.15 Cr",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Heavyweight Wool Overcoat",
+              "Units in Stock": "2,450 pcs",
+              "Avg Age": "118 days",
+              "Unit Cost": "₹4,000",
+              "Total Exposure": "₹98.0 L",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Fine Gauge Merino Knit Polo",
+              "Units in Stock": "3,100 pcs",
+              "Avg Age": "74 days",
+              "Unit Cost": "₹2,740",
+              "Total Exposure": "₹85.0 L",
+              "Risk Level": "Moderate Risk",
+            },
+            {
+              "Product Name": "Vintage Wash Straight Jeans",
+              "Units in Stock": "2,600 pcs",
+              "Avg Age": "65 days",
+              "Unit Cost": "₹3,000",
+              "Total Exposure": "₹78.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "French Linen Band-Collar Shirt",
+              "Units in Stock": "1,850 pcs",
+              "Avg Age": "18 days",
+              "Unit Cost": "₹3,510",
+              "Total Exposure": "₹65.0 L",
+              "Risk Level": "Stockout Risk",
+            },
+            {
+              "Product Name": "Quilted Puffer Vest",
+              "Units in Stock": "1,930 pcs",
+              "Avg Age": "94 days",
+              "Unit Cost": "₹3,000",
+              "Total Exposure": "₹58.0 L",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Tailored Stretch Chino Pants",
+              "Units in Stock": "2,400 pcs",
+              "Avg Age": "58 days",
+              "Unit Cost": "₹2,250",
+              "Total Exposure": "₹54.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Silk Blend Resort Shirt",
+              "Units in Stock": "1,220 pcs",
+              "Avg Age": "22 days",
+              "Unit Cost": "₹4,010",
+              "Total Exposure": "₹49.0 L",
+              "Risk Level": "Stockout Risk",
+            },
+            {
+              "Product Name": "Oversized Fleece Hoodie",
+              "Units in Stock": "1,800 pcs",
+              "Avg Age": "88 days",
+              "Unit Cost": "₹2,500",
+              "Total Exposure": "₹45.0 L",
+              "Risk Level": "Moderate Risk",
+            },
+            {
+              "Product Name": "Ribbed Modal Tank Top",
+              "Units in Stock": "4,200 pcs",
+              "Avg Age": "45 days",
+              "Unit Cost": "₹1,000",
+              "Total Exposure": "₹42.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Classic Bomber Jacket",
+              "Units in Stock": "1,150 pcs",
+              "Avg Age": "105 days",
+              "Unit Cost": "₹3,390",
+              "Total Exposure": "₹39.0 L",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Stretch Cotton Bermuda Shorts",
+              "Units in Stock": "2,000 pcs",
+              "Avg Age": "92 days",
+              "Unit Cost": "₹1,800",
+              "Total Exposure": "₹36.0 L",
+              "Risk Level": "Moderate Risk",
+            },
+            {
+              "Product Name": "Corduroy Overshirt",
+              "Units in Stock": "1,100 pcs",
+              "Avg Age": "68 days",
+              "Unit Cost": "₹3,000",
+              "Total Exposure": "₹33.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Lightweight Windbreaker",
+              "Units in Stock": "1,000 pcs",
+              "Avg Age": "62 days",
+              "Unit Cost": "₹3,000",
+              "Total Exposure": "₹30.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Premium Leather Dress Belt",
+              "Units in Stock": "1,860 pcs",
+              "Avg Age": "55 days",
+              "Unit Cost": "₹1,500",
+              "Total Exposure": "₹28.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Striped Poplin Work Shirt",
+              "Units in Stock": "1,040 pcs",
+              "Avg Age": "48 days",
+              "Unit Cost": "₹2,500",
+              "Total Exposure": "₹26.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Double-Breasted Trench Coat",
+              "Units in Stock": "600 pcs",
+              "Avg Age": "112 days",
+              "Unit Cost": "₹4,000",
+              "Total Exposure": "₹24.0 L",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Cable-Knit Wool Cardigan",
+              "Units in Stock": "880 pcs",
+              "Avg Age": "95 days",
+              "Unit Cost": "₹2,500",
+              "Total Exposure": "₹22.0 L",
+              "Risk Level": "Moderate Risk",
+            },
+            {
+              "Product Name": "Athleisure Jogger Pants",
+              "Units in Stock": "1,250 pcs",
+              "Avg Age": "42 days",
+              "Unit Cost": "₹1,600",
+              "Total Exposure": "₹20.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Canvas Chore Jacket",
+              "Units in Stock": "514 pcs",
+              "Avg Age": "76 days",
+              "Unit Cost": "₹3,500",
+              "Total Exposure": "₹18.0 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Chambray Casual Button-Down",
+              "Units in Stock": "620 pcs",
+              "Avg Age": "51 days",
+              "Unit Cost": "₹2,400",
+              "Total Exposure": "₹14.9 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Waxed Cotton Field Parka",
+              "Units in Stock": "310 pcs",
+              "Avg Age": "116 days",
+              "Unit Cost": "₹4,200",
+              "Total Exposure": "₹13.0 L",
+              "Risk Level": "High Risk",
+            },
+            {
+              "Product Name": "Relaxed Linen Drawstring Trouser",
+              "Units in Stock": "480 pcs",
+              "Avg Age": "24 days",
+              "Unit Cost": "₹2,500",
+              "Total Exposure": "₹12.0 L",
+              "Risk Level": "Stockout Risk",
+            },
+            {
+              "Product Name": "Brushed Flannel Plaid Shirt",
+              "Units in Stock": "440 pcs",
+              "Avg Age": "72 days",
+              "Unit Cost": "₹2,200",
+              "Total Exposure": "₹9.7 L",
+              "Risk Level": "Watching",
+            },
+            {
+              "Product Name": "Pima Cotton Crew Undershirt (3-Pack)",
+              "Units in Stock": "650 pcs",
+              "Avg Age": "30 days",
+              "Unit Cost": "₹1,400",
+              "Total Exposure": "₹9.1 L",
+              "Risk Level": "Optimal",
+            },
           ],
         },
       ],
@@ -380,18 +890,65 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
       benchmarkLabel: "Target Benchmark",
       benchmarkValue: 55,
       bars: [
-        { label: "Band-Collar Linen Shirt", value: 84.2, formattedValue: "84.2%", subtext: "Exceeds target by +29.2% (Viral)", color: "bg-emerald-600" },
-        { label: "French Linen Over-Shirt", value: 78.0, formattedValue: "78.0%", subtext: "Exceeds target by +23.0% (Strong)", color: "bg-emerald-500" },
-        { label: "High-Rise Utility Cargo", value: 28.0, formattedValue: "28.0%", subtext: "Lags target by -27.0% (Fit issues)", color: "bg-rose-500", isWarning: true },
-        { label: "Cropped Cargo Trouser", value: 22.0, formattedValue: "22.0%", subtext: "Lags target by -33.0% (Returns)", color: "bg-rose-600", isWarning: true },
+        {
+          label: "Band-Collar Linen Shirt",
+          value: 84.2,
+          formattedValue: "84.2%",
+          subtext: "Exceeds target by +29.2% (Viral)",
+          color: "bg-emerald-600",
+        },
+        {
+          label: "French Linen Over-Shirt",
+          value: 78.0,
+          formattedValue: "78.0%",
+          subtext: "Exceeds target by +23.0% (Strong)",
+          color: "bg-emerald-500",
+        },
+        {
+          label: "High-Rise Utility Cargo",
+          value: 28.0,
+          formattedValue: "28.0%",
+          subtext: "Lags target by -27.0% (Fit issues)",
+          color: "bg-rose-500",
+          isWarning: true,
+        },
+        {
+          label: "Cropped Cargo Trouser",
+          value: 22.0,
+          formattedValue: "22.0%",
+          subtext: "Lags target by -33.0% (Returns)",
+          color: "bg-rose-600",
+          isWarning: true,
+        },
       ],
-      takeaway: "Linen styles sold 3.2x faster than Cargo pants, which suffered high return rates from waist fitting issues.",
+      takeaway:
+        "Linen styles sold 3.2x faster than Cargo pants, which suffered high return rates from waist fitting issues.",
     },
     topProducts: [
-      { product: "Band-Collar Linen Shirt", inventory: "₹2.2 Cr", age: "18 days", salesTrend: "↑ 84%" },
-      { product: "French Linen Over-Shirt", inventory: "₹1.8 Cr", age: "18 days", salesTrend: "↑ 78%" },
-      { product: "High-Rise Utility Cargo", inventory: "₹1.4 Cr", age: "18 days", salesTrend: "↓ 28%" },
-      { product: "Cropped Cargo Trouser", inventory: "₹0.9 Cr", age: "18 days", salesTrend: "↓ 22%" },
+      {
+        product: "Band-Collar Linen Shirt",
+        inventory: "₹2.2 Cr",
+        age: "18 days",
+        salesTrend: "↑ 84%",
+      },
+      {
+        product: "French Linen Over-Shirt",
+        inventory: "₹1.8 Cr",
+        age: "18 days",
+        salesTrend: "↑ 78%",
+      },
+      {
+        product: "High-Rise Utility Cargo",
+        inventory: "₹1.4 Cr",
+        age: "18 days",
+        salesTrend: "↓ 28%",
+      },
+      {
+        product: "Cropped Cargo Trouser",
+        inventory: "₹0.9 Cr",
+        age: "18 days",
+        salesTrend: "↓ 22%",
+      },
     ],
     drivers: [
       { label: "High customer demand for Linen", value: "₹3.8 Cr" },
@@ -403,7 +960,8 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
       {
         number: "01",
         headline: "Linen is a hit, Cargo is struggling",
-        detail: "Linen shirts sold 3 times faster than expected, while Cargo pants faced sizing complaints.",
+        detail:
+          "Linen shirts sold 3 times faster than expected, while Cargo pants faced sizing complaints.",
       },
       {
         number: "02",
@@ -444,24 +1002,153 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "8,920 Invoices",
           sourceSystem: "Omnichannel Launch Sales Feed",
           citationId: "CIT-2026-LNCH-SLS",
-          description: "All sales receipts for newly launched fall silhouettes across online and offline stores.",
-          columns: ["Order ID", "Date", "Channel", "Style Name", "Units Sold", "Amount", "Sell-Through Rate"],
+          description:
+            "All sales receipts for newly launched fall silhouettes across online and offline stores.",
+          columns: [
+            "Order ID",
+            "Date",
+            "Channel",
+            "Style Name",
+            "Units Sold",
+            "Amount",
+            "Sell-Through Rate",
+          ],
           rows: [
-            { "Order ID": "ORD-LN-0192", "Date": "23 Sep 2026", "Channel": "Online Store", "Style Name": "Band-Collar Linen Shirt (Sky)", "Units Sold": "2", "Amount": "₹4,998", "Sell-Through Rate": "84.2% (Viral)" },
-            { "Order ID": "ORD-LN-0185", "Date": "23 Sep 2026", "Channel": "Mumbai Flagship", "Style Name": "French Linen Over-Shirt (Sand)", "Units Sold": "3", "Amount": "₹8,397", "Sell-Through Rate": "78.0% (Strong)" },
-            { "Order ID": "ORD-LN-0171", "Date": "22 Sep 2026", "Channel": "Bengaluru Store", "Style Name": "High-Rise Utility Cargo (Olive)", "Units Sold": "1", "Amount": "₹2,999", "Sell-Through Rate": "28.0% (Lagging)" },
-            { "Order ID": "ORD-LN-0164", "Date": "22 Sep 2026", "Channel": "Online App", "Style Name": "Cropped Cargo Trouser (Black)", "Units Sold": "1", "Amount": "₹2,799", "Sell-Through Rate": "22.0% (Lagging)" },
-            { "Order ID": "ORD-LN-0150", "Date": "21 Sep 2026", "Channel": "Delhi Flagship", "Style Name": "Band-Collar Linen Shirt (White)", "Units Sold": "4", "Amount": "₹9,996", "Sell-Through Rate": "86.5% (Stockout Risk)" },
-            { "Order ID": "ORD-LN-0142", "Date": "21 Sep 2026", "Channel": "Hyderabad Store", "Style Name": "French Linen Over-Shirt (Olive)", "Units Sold": "2", "Amount": "₹5,598", "Sell-Through Rate": "76.4% (Strong)" },
-            { "Order ID": "ORD-LN-0136", "Date": "20 Sep 2026", "Channel": "Online Store", "Style Name": "Band-Collar Linen Shirt (Navy)", "Units Sold": "5", "Amount": "₹12,495", "Sell-Through Rate": "89.0% (Stockout Risk)" },
-            { "Order ID": "ORD-LN-0129", "Date": "20 Sep 2026", "Channel": "Pune Store", "Style Name": "High-Rise Utility Cargo (Khaki)", "Units Sold": "1", "Amount": "₹2,999", "Sell-Through Rate": "26.5% (Lagging)" },
-            { "Order ID": "ORD-LN-0118", "Date": "19 Sep 2026", "Channel": "Chennai Store", "Style Name": "Relaxed Linen Pants (Ecru)", "Units Sold": "3", "Amount": "₹8,997", "Sell-Through Rate": "81.2% (Strong)" },
-            { "Order ID": "ORD-LN-0105", "Date": "19 Sep 2026", "Channel": "Online App", "Style Name": "Cropped Cargo Trouser (Olive)", "Units Sold": "1", "Amount": "₹2,799", "Sell-Through Rate": "24.0% (Lagging)" },
-            { "Order ID": "ORD-LN-0094", "Date": "18 Sep 2026", "Channel": "Kolkata Store", "Style Name": "French Linen Over-Shirt (Charcoal)", "Units Sold": "3", "Amount": "₹8,397", "Sell-Through Rate": "74.8% (Strong)" },
-            { "Order ID": "ORD-LN-0082", "Date": "18 Sep 2026", "Channel": "Online Store", "Style Name": "Band-Collar Linen Shirt (Stripe)", "Units Sold": "4", "Amount": "₹10,796", "Sell-Through Rate": "92.4% (Viral)" },
-            { "Order ID": "ORD-LN-0071", "Date": "17 Sep 2026", "Channel": "Ahmedabad Store", "Style Name": "High-Rise Utility Cargo (Black)", "Units Sold": "2", "Amount": "₹5,998", "Sell-Through Rate": "29.1% (Lagging)" },
-            { "Order ID": "ORD-LN-0060", "Date": "17 Sep 2026", "Channel": "Jaipur Store", "Style Name": "Relaxed Linen Shorts (Navy)", "Units Sold": "6", "Amount": "₹11,994", "Sell-Through Rate": "83.0% (Strong)" },
-            { "Order ID": "ORD-LN-0049", "Date": "16 Sep 2026", "Channel": "Chandigarh Store", "Style Name": "Cropped Cargo Trouser (Tan)", "Units Sold": "1", "Amount": "₹2,799", "Sell-Through Rate": "21.5% (Lagging)" },
+            {
+              "Order ID": "ORD-LN-0192",
+              Date: "23 Sep 2026",
+              Channel: "Online Store",
+              "Style Name": "Band-Collar Linen Shirt (Sky)",
+              "Units Sold": "2",
+              Amount: "₹4,998",
+              "Sell-Through Rate": "84.2% (Viral)",
+            },
+            {
+              "Order ID": "ORD-LN-0185",
+              Date: "23 Sep 2026",
+              Channel: "Mumbai Flagship",
+              "Style Name": "French Linen Over-Shirt (Sand)",
+              "Units Sold": "3",
+              Amount: "₹8,397",
+              "Sell-Through Rate": "78.0% (Strong)",
+            },
+            {
+              "Order ID": "ORD-LN-0171",
+              Date: "22 Sep 2026",
+              Channel: "Bengaluru Store",
+              "Style Name": "High-Rise Utility Cargo (Olive)",
+              "Units Sold": "1",
+              Amount: "₹2,999",
+              "Sell-Through Rate": "28.0% (Lagging)",
+            },
+            {
+              "Order ID": "ORD-LN-0164",
+              Date: "22 Sep 2026",
+              Channel: "Online App",
+              "Style Name": "Cropped Cargo Trouser (Black)",
+              "Units Sold": "1",
+              Amount: "₹2,799",
+              "Sell-Through Rate": "22.0% (Lagging)",
+            },
+            {
+              "Order ID": "ORD-LN-0150",
+              Date: "21 Sep 2026",
+              Channel: "Delhi Flagship",
+              "Style Name": "Band-Collar Linen Shirt (White)",
+              "Units Sold": "4",
+              Amount: "₹9,996",
+              "Sell-Through Rate": "86.5% (Stockout Risk)",
+            },
+            {
+              "Order ID": "ORD-LN-0142",
+              Date: "21 Sep 2026",
+              Channel: "Hyderabad Store",
+              "Style Name": "French Linen Over-Shirt (Olive)",
+              "Units Sold": "2",
+              Amount: "₹5,598",
+              "Sell-Through Rate": "76.4% (Strong)",
+            },
+            {
+              "Order ID": "ORD-LN-0136",
+              Date: "20 Sep 2026",
+              Channel: "Online Store",
+              "Style Name": "Band-Collar Linen Shirt (Navy)",
+              "Units Sold": "5",
+              Amount: "₹12,495",
+              "Sell-Through Rate": "89.0% (Stockout Risk)",
+            },
+            {
+              "Order ID": "ORD-LN-0129",
+              Date: "20 Sep 2026",
+              Channel: "Pune Store",
+              "Style Name": "High-Rise Utility Cargo (Khaki)",
+              "Units Sold": "1",
+              Amount: "₹2,999",
+              "Sell-Through Rate": "26.5% (Lagging)",
+            },
+            {
+              "Order ID": "ORD-LN-0118",
+              Date: "19 Sep 2026",
+              Channel: "Chennai Store",
+              "Style Name": "Relaxed Linen Pants (Ecru)",
+              "Units Sold": "3",
+              Amount: "₹8,997",
+              "Sell-Through Rate": "81.2% (Strong)",
+            },
+            {
+              "Order ID": "ORD-LN-0105",
+              Date: "19 Sep 2026",
+              Channel: "Online App",
+              "Style Name": "Cropped Cargo Trouser (Olive)",
+              "Units Sold": "1",
+              Amount: "₹2,799",
+              "Sell-Through Rate": "24.0% (Lagging)",
+            },
+            {
+              "Order ID": "ORD-LN-0094",
+              Date: "18 Sep 2026",
+              Channel: "Kolkata Store",
+              "Style Name": "French Linen Over-Shirt (Charcoal)",
+              "Units Sold": "3",
+              Amount: "₹8,397",
+              "Sell-Through Rate": "74.8% (Strong)",
+            },
+            {
+              "Order ID": "ORD-LN-0082",
+              Date: "18 Sep 2026",
+              Channel: "Online Store",
+              "Style Name": "Band-Collar Linen Shirt (Stripe)",
+              "Units Sold": "4",
+              Amount: "₹10,796",
+              "Sell-Through Rate": "92.4% (Viral)",
+            },
+            {
+              "Order ID": "ORD-LN-0071",
+              Date: "17 Sep 2026",
+              Channel: "Ahmedabad Store",
+              "Style Name": "High-Rise Utility Cargo (Black)",
+              "Units Sold": "2",
+              Amount: "₹5,998",
+              "Sell-Through Rate": "29.1% (Lagging)",
+            },
+            {
+              "Order ID": "ORD-LN-0060",
+              Date: "17 Sep 2026",
+              Channel: "Jaipur Store",
+              "Style Name": "Relaxed Linen Shorts (Navy)",
+              "Units Sold": "6",
+              Amount: "₹11,994",
+              "Sell-Through Rate": "83.0% (Strong)",
+            },
+            {
+              "Order ID": "ORD-LN-0049",
+              Date: "16 Sep 2026",
+              Channel: "Chandigarh Store",
+              "Style Name": "Cropped Cargo Trouser (Tan)",
+              "Units Sold": "1",
+              Amount: "₹2,799",
+              "Sell-Through Rate": "21.5% (Lagging)",
+            },
           ],
         },
         {
@@ -473,19 +1160,108 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "940 Return Slips",
           sourceSystem: "Customer Feedback & Returns Log",
           citationId: "CIT-2026-LNCH-RET",
-          description: "Granular return audit logs highlighting customer feedback reasons for launch merchandise.",
-          columns: ["Return ID", "Date", "Product Style", "Size", "Customer Complaint", "Refund Amount", "Action"],
+          description:
+            "Granular return audit logs highlighting customer feedback reasons for launch merchandise.",
+          columns: [
+            "Return ID",
+            "Date",
+            "Product Style",
+            "Size",
+            "Customer Complaint",
+            "Refund Amount",
+            "Action",
+          ],
           rows: [
-            { "Return ID": "RET-CRG-044", "Date": "23 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "30", "Customer Complaint": "Waist runs 1.5 inches too tight", "Refund Amount": "₹2,999", "Action": "Fit Grading Audit" },
-            { "Return ID": "RET-CRG-039", "Date": "22 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "32", "Customer Complaint": "Inseam length uneven", "Refund Amount": "₹2,799", "Action": "QC Pattern Check" },
-            { "Return ID": "RET-CRG-031", "Date": "21 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "28", "Customer Complaint": "Hip-to-waist ratio uncomfortable", "Refund Amount": "₹2,999", "Action": "Fit Grading Audit" },
-            { "Return ID": "RET-CRG-025", "Date": "20 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "34", "Customer Complaint": "Button snap defective", "Refund Amount": "₹2,999", "Action": "Hardware Replacement" },
-            { "Return ID": "RET-CRG-021", "Date": "20 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "30", "Customer Complaint": "Pocket placement too low", "Refund Amount": "₹2,799", "Action": "Design Review" },
-            { "Return ID": "RET-CRG-018", "Date": "19 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "32", "Customer Complaint": "Waist band stiff, no stretch", "Refund Amount": "₹2,999", "Action": "Fabric Blend Revision" },
-            { "Return ID": "RET-CRG-014", "Date": "18 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "36", "Customer Complaint": "Tight around thigh area", "Refund Amount": "₹2,799", "Action": "Fit Grading Audit" },
-            { "Return ID": "RET-CRG-009", "Date": "17 Sep 2026", "Product Style": "High-Rise Utility Cargo", "Size": "30", "Customer Complaint": "Length 2 inches longer than spec", "Refund Amount": "₹2,999", "Action": "QC Inseam Tolerance" },
-            { "Return ID": "RET-CRG-004", "Date": "16 Sep 2026", "Product Style": "Cropped Cargo Trouser", "Size": "28", "Customer Complaint": "Fly zipper sticks", "Refund Amount": "₹2,799", "Action": "Hardware Supplier Review" },
-            { "Return ID": "RET-LNN-002", "Date": "16 Sep 2026", "Product Style": "Band-Collar Linen Shirt", "Size": "XL", "Customer Complaint": "Ordered wrong size (wanted L)", "Refund Amount": "₹2,499", "Action": "Exchange Processed" },
+            {
+              "Return ID": "RET-CRG-044",
+              Date: "23 Sep 2026",
+              "Product Style": "High-Rise Utility Cargo",
+              Size: "30",
+              "Customer Complaint": "Waist runs 1.5 inches too tight",
+              "Refund Amount": "₹2,999",
+              Action: "Fit Grading Audit",
+            },
+            {
+              "Return ID": "RET-CRG-039",
+              Date: "22 Sep 2026",
+              "Product Style": "Cropped Cargo Trouser",
+              Size: "32",
+              "Customer Complaint": "Inseam length uneven",
+              "Refund Amount": "₹2,799",
+              Action: "QC Pattern Check",
+            },
+            {
+              "Return ID": "RET-CRG-031",
+              Date: "21 Sep 2026",
+              "Product Style": "High-Rise Utility Cargo",
+              Size: "28",
+              "Customer Complaint": "Hip-to-waist ratio uncomfortable",
+              "Refund Amount": "₹2,999",
+              Action: "Fit Grading Audit",
+            },
+            {
+              "Return ID": "RET-CRG-025",
+              Date: "20 Sep 2026",
+              "Product Style": "High-Rise Utility Cargo",
+              Size: "34",
+              "Customer Complaint": "Button snap defective",
+              "Refund Amount": "₹2,999",
+              Action: "Hardware Replacement",
+            },
+            {
+              "Return ID": "RET-CRG-021",
+              Date: "20 Sep 2026",
+              "Product Style": "Cropped Cargo Trouser",
+              Size: "30",
+              "Customer Complaint": "Pocket placement too low",
+              "Refund Amount": "₹2,799",
+              Action: "Design Review",
+            },
+            {
+              "Return ID": "RET-CRG-018",
+              Date: "19 Sep 2026",
+              "Product Style": "High-Rise Utility Cargo",
+              Size: "32",
+              "Customer Complaint": "Waist band stiff, no stretch",
+              "Refund Amount": "₹2,999",
+              Action: "Fabric Blend Revision",
+            },
+            {
+              "Return ID": "RET-CRG-014",
+              Date: "18 Sep 2026",
+              "Product Style": "Cropped Cargo Trouser",
+              Size: "36",
+              "Customer Complaint": "Tight around thigh area",
+              "Refund Amount": "₹2,799",
+              Action: "Fit Grading Audit",
+            },
+            {
+              "Return ID": "RET-CRG-009",
+              Date: "17 Sep 2026",
+              "Product Style": "High-Rise Utility Cargo",
+              Size: "30",
+              "Customer Complaint": "Length 2 inches longer than spec",
+              "Refund Amount": "₹2,999",
+              Action: "QC Inseam Tolerance",
+            },
+            {
+              "Return ID": "RET-CRG-004",
+              Date: "16 Sep 2026",
+              "Product Style": "Cropped Cargo Trouser",
+              Size: "28",
+              "Customer Complaint": "Fly zipper sticks",
+              "Refund Amount": "₹2,799",
+              Action: "Hardware Supplier Review",
+            },
+            {
+              "Return ID": "RET-LNN-002",
+              Date: "16 Sep 2026",
+              "Product Style": "Band-Collar Linen Shirt",
+              Size: "XL",
+              "Customer Complaint": "Ordered wrong size (wanted L)",
+              "Refund Amount": "₹2,499",
+              Action: "Exchange Processed",
+            },
           ],
         },
         {
@@ -497,13 +1273,54 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "24 Campaigns",
           sourceSystem: "Ad Engine Analytics Feed",
           citationId: "CIT-2026-MKTG-SPD",
-          description: "Ad spend distribution by category showing misallocated budget towards slow-moving pants.",
-          columns: ["Campaign ID", "Target Product", "Ad Spend", "Impressions", "Purchases", "ROAS", "Recommendation"],
+          description:
+            "Ad spend distribution by category showing misallocated budget towards slow-moving pants.",
+          columns: [
+            "Campaign ID",
+            "Target Product",
+            "Ad Spend",
+            "Impressions",
+            "Purchases",
+            "ROAS",
+            "Recommendation",
+          ],
           rows: [
-            { "Campaign ID": "CMP-META-CARGO-01", "Target Product": "High-Rise Utility Cargo", "Ad Spend": "₹38,00,000", "Impressions": "4.2M", "Purchases": "420", "ROAS": "0.9x", "Recommendation": "Pause Campaign" },
-            { "Campaign ID": "CMP-META-LINEN-02", "Target Product": "Band-Collar Linen Shirt", "Ad Spend": "₹18,00,000", "Impressions": "2.1M", "Purchases": "1,980", "ROAS": "4.8x", "Recommendation": "Scale +250%" },
-            { "Campaign ID": "CMP-GOOGLE-CRG-03", "Target Product": "Cropped Cargo Trouser", "Ad Spend": "₹16,00,000", "Impressions": "1.8M", "Purchases": "190", "ROAS": "0.7x", "Recommendation": "Reallocate Budget" },
-            { "Campaign ID": "CMP-INFLUENCER-04", "Target Product": "French Linen Over-Shirt", "Ad Spend": "₹8,00,000", "Impressions": "1.4M", "Purchases": "840", "ROAS": "3.9x", "Recommendation": "Expand Partnerships" },
+            {
+              "Campaign ID": "CMP-META-CARGO-01",
+              "Target Product": "High-Rise Utility Cargo",
+              "Ad Spend": "₹38,00,000",
+              Impressions: "4.2M",
+              Purchases: "420",
+              ROAS: "0.9x",
+              Recommendation: "Pause Campaign",
+            },
+            {
+              "Campaign ID": "CMP-META-LINEN-02",
+              "Target Product": "Band-Collar Linen Shirt",
+              "Ad Spend": "₹18,00,000",
+              Impressions: "2.1M",
+              Purchases: "1,980",
+              ROAS: "4.8x",
+              Recommendation: "Scale +250%",
+            },
+            {
+              "Campaign ID": "CMP-GOOGLE-CRG-03",
+              "Target Product": "Cropped Cargo Trouser",
+              "Ad Spend": "₹16,00,000",
+              Impressions: "1.8M",
+              Purchases: "190",
+              ROAS: "0.7x",
+              Recommendation: "Reallocate Budget",
+            },
+            {
+              "Campaign ID": "CMP-INFLUENCER-04",
+              "Target Product": "French Linen Over-Shirt",
+              "Ad Spend": "₹8,00,000",
+              Impressions: "1.4M",
+              Purchases: "840",
+              ROAS: "3.9x",
+              Recommendation: "Expand Partnerships",
+            },
           ],
         },
       ],
@@ -537,17 +1354,57 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
         { label: "Other Suppliers", value: "21.5%", percentage: 21.5, color: "bg-emerald-500" },
       ],
       bars: [
-        { label: "Denim Share of Apparel Sales", value: 42.6, formattedValue: "42.6%", subtext: "₹12.8 Cr/mo revenue contribution", color: "bg-[#0e7490]" },
-        { label: "Coimbatore Mill Sourcing Share", value: 78.5, formattedValue: "78.5%", subtext: "Safe diversification limit is 40.0%", color: "bg-rose-500", isWarning: true },
-        { label: "Repeat Denim Shoppers", value: 64.0, formattedValue: "64.0%", subtext: "Strong customer loyalty and cross-sell", color: "bg-emerald-600" },
+        {
+          label: "Denim Share of Apparel Sales",
+          value: 42.6,
+          formattedValue: "42.6%",
+          subtext: "₹12.8 Cr/mo revenue contribution",
+          color: "bg-[#0e7490]",
+        },
+        {
+          label: "Coimbatore Mill Sourcing Share",
+          value: 78.5,
+          formattedValue: "78.5%",
+          subtext: "Safe diversification limit is 40.0%",
+          color: "bg-rose-500",
+          isWarning: true,
+        },
+        {
+          label: "Repeat Denim Shoppers",
+          value: 64.0,
+          formattedValue: "64.0%",
+          subtext: "Strong customer loyalty and cross-sell",
+          color: "bg-emerald-600",
+        },
       ],
-      takeaway: "Jeans account for 43% of company sales but 78.5% of fabric comes from one mill with a 45-day turnaround.",
+      takeaway:
+        "Jeans account for 43% of company sales but 78.5% of fabric comes from one mill with a 45-day turnaround.",
     },
     topProducts: [
-      { product: "Slim Stretch Denim (Indigo)", inventory: "₹3.8 Cr", age: "45 days", salesTrend: "↑ 18%" },
-      { product: "Relaxed Vintage Denim (Light)", inventory: "₹3.1 Cr", age: "52 days", salesTrend: "↑ 14%" },
-      { product: "Classic Straight Leg Denim", inventory: "₹2.2 Cr", age: "60 days", salesTrend: "→ 2%" },
-      { product: "High-Rise Tapered Denim", inventory: "₹1.7 Cr", age: "58 days", salesTrend: "↑ 8%" },
+      {
+        product: "Slim Stretch Denim (Indigo)",
+        inventory: "₹3.8 Cr",
+        age: "45 days",
+        salesTrend: "↑ 18%",
+      },
+      {
+        product: "Relaxed Vintage Denim (Light)",
+        inventory: "₹3.1 Cr",
+        age: "52 days",
+        salesTrend: "↑ 14%",
+      },
+      {
+        product: "Classic Straight Leg Denim",
+        inventory: "₹2.2 Cr",
+        age: "60 days",
+        salesTrend: "→ 2%",
+      },
+      {
+        product: "High-Rise Tapered Denim",
+        inventory: "₹1.7 Cr",
+        age: "58 days",
+        salesTrend: "↑ 8%",
+      },
     ],
     drivers: [
       { label: "Relying on one fabric mill", value: "₹8.5 Cr" },
@@ -600,13 +1457,46 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "18,400 Invoices",
           sourceSystem: "Core POS & Customer Loyalty Feed",
           citationId: "CIT-2026-DNM-SLS",
-          description: "Monthly customer purchases across all 4 key denim styles and repeat customer buyer shares.",
+          description:
+            "Monthly customer purchases across all 4 key denim styles and repeat customer buyer shares.",
           columns: ["Invoice #", "Date", "Denim Style", "Fit", "Units", "Revenue", "Buyer Type"],
           rows: [
-            { "Invoice #": "INV-DNM-9011", "Date": "23 Sep 2026", "Denim Style": "Slim Stretch Denim", "Fit": "Dark Indigo", "Units": "2", "Revenue": "₹5,998", "Buyer Type": "Repeat Buyer (3rd time)" },
-            { "Invoice #": "INV-DNM-8984", "Date": "22 Sep 2026", "Denim Style": "Relaxed Vintage Denim", "Fit": "Light Wash", "Units": "1", "Revenue": "₹3,499", "Buyer Type": "Repeat Buyer (2nd time)" },
-            { "Invoice #": "INV-DNM-8950", "Date": "22 Sep 2026", "Denim Style": "Classic Straight Leg Denim", "Fit": "Raw Rinse", "Units": "1", "Revenue": "₹2,999", "Buyer Type": "New Buyer" },
-            { "Invoice #": "INV-DNM-8912", "Date": "21 Sep 2026", "Denim Style": "High-Rise Tapered Denim", "Fit": "Washed Blue", "Units": "2", "Revenue": "₹6,398", "Buyer Type": "Repeat Buyer (4th time)" },
+            {
+              "Invoice #": "INV-DNM-9011",
+              Date: "23 Sep 2026",
+              "Denim Style": "Slim Stretch Denim",
+              Fit: "Dark Indigo",
+              Units: "2",
+              Revenue: "₹5,998",
+              "Buyer Type": "Repeat Buyer (3rd time)",
+            },
+            {
+              "Invoice #": "INV-DNM-8984",
+              Date: "22 Sep 2026",
+              "Denim Style": "Relaxed Vintage Denim",
+              Fit: "Light Wash",
+              Units: "1",
+              Revenue: "₹3,499",
+              "Buyer Type": "Repeat Buyer (2nd time)",
+            },
+            {
+              "Invoice #": "INV-DNM-8950",
+              Date: "22 Sep 2026",
+              "Denim Style": "Classic Straight Leg Denim",
+              Fit: "Raw Rinse",
+              Units: "1",
+              Revenue: "₹2,999",
+              "Buyer Type": "New Buyer",
+            },
+            {
+              "Invoice #": "INV-DNM-8912",
+              Date: "21 Sep 2026",
+              "Denim Style": "High-Rise Tapered Denim",
+              Fit: "Washed Blue",
+              Units: "2",
+              Revenue: "₹6,398",
+              "Buyer Type": "Repeat Buyer (4th time)",
+            },
           ],
         },
         {
@@ -619,12 +1509,52 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           sourceSystem: "ERP Sourcing & Mill Allocation DB",
           citationId: "CIT-2026-SPLY-PO",
           description: "Fabric yardage orders showing severe dependency on Coimbatore Mill.",
-          columns: ["PO Number", "Issue Date", "Supplier Mill", "Fabric Type", "Meters Ordered", "PO Value", "Allocation %"],
+          columns: [
+            "PO Number",
+            "Issue Date",
+            "Supplier Mill",
+            "Fabric Type",
+            "Meters Ordered",
+            "PO Value",
+            "Allocation %",
+          ],
           rows: [
-            { "PO Number": "PO-TEX-2026-081", "Issue Date": "15 Sep 2026", "Supplier Mill": "Coimbatore Spinning Mill", "Fabric Type": "12oz Ring-Spun Stretch Denim", "Meters Ordered": "80,000 m", "PO Value": "₹3,40,00,000", "Allocation %": "78.5% (Dominant)" },
-            { "PO Number": "PO-TEX-2026-074", "Issue Date": "28 Aug 2026", "Supplier Mill": "Coimbatore Spinning Mill", "Fabric Type": "11oz Vintage Light Indigo", "Meters Ordered": "65,000 m", "PO Value": "₹2,80,00,000", "Allocation %": "78.5% (Dominant)" },
-            { "PO Number": "PO-TEX-2026-068", "Issue Date": "10 Aug 2026", "Supplier Mill": "Ahmedabad Textiles Ltd", "Fabric Type": "10oz Raw Twill Pocketing", "Meters Ordered": "25,000 m", "PO Value": "₹95,00,000", "Allocation %": "14.2% (Secondary)" },
-            { "PO Number": "PO-TEX-2026-059", "Issue Date": "22 Jul 2026", "Supplier Mill": "Surat Specialty Weaves", "Fabric Type": "Poly-Cotton Trim & Threads", "Meters Ordered": "18,000 m", "PO Value": "₹65,00,000", "Allocation %": "7.3% (Tertiary)" },
+            {
+              "PO Number": "PO-TEX-2026-081",
+              "Issue Date": "15 Sep 2026",
+              "Supplier Mill": "Coimbatore Spinning Mill",
+              "Fabric Type": "12oz Ring-Spun Stretch Denim",
+              "Meters Ordered": "80,000 m",
+              "PO Value": "₹3,40,00,000",
+              "Allocation %": "78.5% (Dominant)",
+            },
+            {
+              "PO Number": "PO-TEX-2026-074",
+              "Issue Date": "28 Aug 2026",
+              "Supplier Mill": "Coimbatore Spinning Mill",
+              "Fabric Type": "11oz Vintage Light Indigo",
+              "Meters Ordered": "65,000 m",
+              "PO Value": "₹2,80,00,000",
+              "Allocation %": "78.5% (Dominant)",
+            },
+            {
+              "PO Number": "PO-TEX-2026-068",
+              "Issue Date": "10 Aug 2026",
+              "Supplier Mill": "Ahmedabad Textiles Ltd",
+              "Fabric Type": "10oz Raw Twill Pocketing",
+              "Meters Ordered": "25,000 m",
+              "PO Value": "₹95,00,000",
+              "Allocation %": "14.2% (Secondary)",
+            },
+            {
+              "PO Number": "PO-TEX-2026-059",
+              "Issue Date": "22 Jul 2026",
+              "Supplier Mill": "Surat Specialty Weaves",
+              "Fabric Type": "Poly-Cotton Trim & Threads",
+              "Meters Ordered": "18,000 m",
+              "PO Value": "₹65,00,000",
+              "Allocation %": "7.3% (Tertiary)",
+            },
           ],
         },
         {
@@ -636,12 +1566,41 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "12 Delivery Runs",
           sourceSystem: "Inbound Supply Chain Records",
           citationId: "CIT-2026-SPLY-LDT",
-          description: "Mill manufacturing turnaround and reserve stock levels against safety buffer thresholds.",
-          columns: ["Mill Name", "Location", "Avg Lead Time", "Monthly Capacity", "Current Buffer Days", "Status"],
+          description:
+            "Mill manufacturing turnaround and reserve stock levels against safety buffer thresholds.",
+          columns: [
+            "Mill Name",
+            "Location",
+            "Avg Lead Time",
+            "Monthly Capacity",
+            "Current Buffer Days",
+            "Status",
+          ],
           rows: [
-            { "Mill Name": "Coimbatore Spinning Mill", "Location": "Coimbatore, Tamil Nadu", "Avg Lead Time": "45 Days", "Monthly Capacity": "140,000 meters", "Current Buffer Days": "12 Days (Deficit)", "Status": "Critical Single Source" },
-            { "Mill Name": "Ahmedabad Textiles Ltd", "Location": "Ahmedabad, Gujarat", "Avg Lead Time": "30 Days", "Monthly Capacity": "50,000 meters", "Current Buffer Days": "35 Days (Healthy)", "Status": "Secondary Trim Only" },
-            { "Mill Name": "Surat Specialty Weaves", "Location": "Surat, Gujarat", "Avg Lead Time": "24 Days", "Monthly Capacity": "30,000 meters", "Current Buffer Days": "40 Days (Healthy)", "Status": "Accessories Only" },
+            {
+              "Mill Name": "Coimbatore Spinning Mill",
+              Location: "Coimbatore, Tamil Nadu",
+              "Avg Lead Time": "45 Days",
+              "Monthly Capacity": "140,000 meters",
+              "Current Buffer Days": "12 Days (Deficit)",
+              Status: "Critical Single Source",
+            },
+            {
+              "Mill Name": "Ahmedabad Textiles Ltd",
+              Location: "Ahmedabad, Gujarat",
+              "Avg Lead Time": "30 Days",
+              "Monthly Capacity": "50,000 meters",
+              "Current Buffer Days": "35 Days (Healthy)",
+              Status: "Secondary Trim Only",
+            },
+            {
+              "Mill Name": "Surat Specialty Weaves",
+              Location: "Surat, Gujarat",
+              "Avg Lead Time": "24 Days",
+              "Monthly Capacity": "30,000 meters",
+              "Current Buffer Days": "40 Days (Healthy)",
+              Status: "Accessories Only",
+            },
           ],
         },
       ],
@@ -671,21 +1630,75 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
       badge: "61.2% Extreme Sizes",
       type: "distribution",
       secondaryBreakdown: [
-        { label: "Extreme Sizes (XS & XXL)", value: "5,150 pcs (61.2%)", percentage: 61.2, color: "bg-amber-500" },
-        { label: "Core Sizes (S, M, L, XL)", value: "3,270 pcs (38.8%)", percentage: 38.8, color: "bg-[#0e7490]" },
+        {
+          label: "Extreme Sizes (XS & XXL)",
+          value: "5,150 pcs (61.2%)",
+          percentage: 61.2,
+          color: "bg-amber-500",
+        },
+        {
+          label: "Core Sizes (S, M, L, XL)",
+          value: "3,270 pcs (38.8%)",
+          percentage: 38.8,
+          color: "bg-[#0e7490]",
+        },
       ],
       bars: [
-        { label: "Merino Wool Knit Polo", value: 38, formattedValue: "↓ 38%", subtext: "₹1.8 Cr stuck · 115 days old", color: "bg-rose-500", isWarning: true },
-        { label: "Thermal Waffle Henley", value: 33, formattedValue: "↓ 33%", subtext: "₹1.4 Cr stuck · 98 days old", color: "bg-rose-500", isWarning: true },
-        { label: "Ribbed Crewneck Knit", value: 29, formattedValue: "↓ 29%", subtext: "₹0.9 Cr stuck · 92 days old", color: "bg-amber-500", isWarning: true },
-        { label: "Fine Gauge Cardigan", value: 21, formattedValue: "↓ 21%", subtext: "₹0.7 Cr stuck · 84 days old", color: "bg-amber-500", isWarning: true },
+        {
+          label: "Merino Wool Knit Polo",
+          value: 38,
+          formattedValue: "↓ 38%",
+          subtext: "₹1.8 Cr stuck · 115 days old",
+          color: "bg-rose-500",
+          isWarning: true,
+        },
+        {
+          label: "Thermal Waffle Henley",
+          value: 33,
+          formattedValue: "↓ 33%",
+          subtext: "₹1.4 Cr stuck · 98 days old",
+          color: "bg-rose-500",
+          isWarning: true,
+        },
+        {
+          label: "Ribbed Crewneck Knit",
+          value: 29,
+          formattedValue: "↓ 29%",
+          subtext: "₹0.9 Cr stuck · 92 days old",
+          color: "bg-amber-500",
+          isWarning: true,
+        },
+        {
+          label: "Fine Gauge Cardigan",
+          value: 21,
+          formattedValue: "↓ 21%",
+          subtext: "₹0.7 Cr stuck · 84 days old",
+          color: "bg-amber-500",
+          isWarning: true,
+        },
       ],
-      takeaway: "Winter knitwear sales dropped 35% MoM, leaving 8,420 units primarily trapped in hard-to-sell XS and XXL sizes.",
+      takeaway:
+        "Winter knitwear sales dropped 35% MoM, leaving 8,420 units primarily trapped in hard-to-sell XS and XXL sizes.",
     },
     topProducts: [
-      { product: "Merino Wool Knit Polo", inventory: "₹1.8 Cr", age: "115 days", salesTrend: "↓ 38%" },
-      { product: "Thermal Waffle Henley", inventory: "₹1.4 Cr", age: "98 days", salesTrend: "↓ 33%" },
-      { product: "Ribbed Crewneck Knit", inventory: "₹0.9 Cr", age: "92 days", salesTrend: "↓ 29%" },
+      {
+        product: "Merino Wool Knit Polo",
+        inventory: "₹1.8 Cr",
+        age: "115 days",
+        salesTrend: "↓ 38%",
+      },
+      {
+        product: "Thermal Waffle Henley",
+        inventory: "₹1.4 Cr",
+        age: "98 days",
+        salesTrend: "↓ 33%",
+      },
+      {
+        product: "Ribbed Crewneck Knit",
+        inventory: "₹0.9 Cr",
+        age: "92 days",
+        salesTrend: "↓ 29%",
+      },
       { product: "Fine Gauge Cardigan", inventory: "₹0.7 Cr", age: "84 days", salesTrend: "↓ 21%" },
     ],
     drivers: [
@@ -739,13 +1752,49 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "8 Weeks",
           sourceSystem: "Weekly POS Audits & Category Analytics",
           citationId: "CIT-2026-WNTR-SLS",
-          description: "Week-by-week drop in knitwear sales demonstrating end-of-season lifecycle contraction.",
-          columns: ["Week Ending", "Category", "Units Sold", "Gross Revenue", "WoW Trend", "Avg Discount"],
+          description:
+            "Week-by-week drop in knitwear sales demonstrating end-of-season lifecycle contraction.",
+          columns: [
+            "Week Ending",
+            "Category",
+            "Units Sold",
+            "Gross Revenue",
+            "WoW Trend",
+            "Avg Discount",
+          ],
           rows: [
-            { "Week Ending": "23 Sep 2026", "Category": "Merino Wool Knitwear", "Units Sold": "142 pcs", "Gross Revenue": "₹4,26,000", "WoW Trend": "↓ 38.2%", "Avg Discount": "18.5%" },
-            { "Week Ending": "16 Sep 2026", "Category": "Merino Wool Knitwear", "Units Sold": "230 pcs", "Gross Revenue": "₹6,90,00,00", "WoW Trend": "↓ 29.4%", "Avg Discount": "15.0%" },
-            { "Week Ending": "09 Sep 2026", "Category": "Thermal Henleys & Fleeces", "Units Sold": "326 pcs", "Gross Revenue": "₹9,78,000", "WoW Trend": "↓ 21.0%", "Avg Discount": "10.0%" },
-            { "Week Ending": "02 Sep 2026", "Category": "Winter Outerwear", "Units Sold": "410 pcs", "Gross Revenue": "₹16,40,000", "WoW Trend": "↓ 18.5%", "Avg Discount": "5.0%" },
+            {
+              "Week Ending": "23 Sep 2026",
+              Category: "Merino Wool Knitwear",
+              "Units Sold": "142 pcs",
+              "Gross Revenue": "₹4,26,000",
+              "WoW Trend": "↓ 38.2%",
+              "Avg Discount": "18.5%",
+            },
+            {
+              "Week Ending": "16 Sep 2026",
+              Category: "Merino Wool Knitwear",
+              "Units Sold": "230 pcs",
+              "Gross Revenue": "₹6,90,00,00",
+              "WoW Trend": "↓ 29.4%",
+              "Avg Discount": "15.0%",
+            },
+            {
+              "Week Ending": "09 Sep 2026",
+              Category: "Thermal Henleys & Fleeces",
+              "Units Sold": "326 pcs",
+              "Gross Revenue": "₹9,78,000",
+              "WoW Trend": "↓ 21.0%",
+              "Avg Discount": "10.0%",
+            },
+            {
+              "Week Ending": "02 Sep 2026",
+              Category: "Winter Outerwear",
+              "Units Sold": "410 pcs",
+              "Gross Revenue": "₹16,40,000",
+              "WoW Trend": "↓ 18.5%",
+              "Avg Discount": "5.0%",
+            },
           ],
         },
         {
@@ -757,13 +1806,49 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "16 SKU Size Runs",
           sourceSystem: "WMS Inventory Breakdown",
           citationId: "CIT-2026-SIZE-RUN",
-          description: "Garment size distribution audit revealing high concentration in slow-moving XS and XXL.",
-          columns: ["SKU Code", "Product Name", "Size", "Units Remaining", "Holding Cost", "Size Run %"],
+          description:
+            "Garment size distribution audit revealing high concentration in slow-moving XS and XXL.",
+          columns: [
+            "SKU Code",
+            "Product Name",
+            "Size",
+            "Units Remaining",
+            "Holding Cost",
+            "Size Run %",
+          ],
           rows: [
-            { "SKU Code": "SKU-POLO-XS", "Product Name": "Merino Knit Polo (Rust)", "Size": "XS", "Units Remaining": "2,480 pcs", "Holding Cost": "₹44,64,000", "Size Run %": "29.4%" },
-            { "SKU Code": "SKU-POLO-XXL", "Product Name": "Merino Knit Polo (Rust)", "Size": "XXL", "Units Remaining": "2,670 pcs", "Holding Cost": "₹48,06,000", "Size Run %": "31.8%" },
-            { "SKU Code": "SKU-HEN-XS", "Product Name": "Thermal Waffle Henley", "Size": "XS", "Units Remaining": "1,450 pcs", "Holding Cost": "₹26,10,000", "Size Run %": "17.2%" },
-            { "SKU Code": "SKU-CRD-XXL", "Product Name": "Fine Gauge Cardigan", "Size": "XXL", "Units Remaining": "1,820 pcs", "Holding Cost": "₹36,40,000", "Size Run %": "21.6%" },
+            {
+              "SKU Code": "SKU-POLO-XS",
+              "Product Name": "Merino Knit Polo (Rust)",
+              Size: "XS",
+              "Units Remaining": "2,480 pcs",
+              "Holding Cost": "₹44,64,000",
+              "Size Run %": "29.4%",
+            },
+            {
+              "SKU Code": "SKU-POLO-XXL",
+              "Product Name": "Merino Knit Polo (Rust)",
+              Size: "XXL",
+              "Units Remaining": "2,670 pcs",
+              "Holding Cost": "₹48,06,000",
+              "Size Run %": "31.8%",
+            },
+            {
+              "SKU Code": "SKU-HEN-XS",
+              "Product Name": "Thermal Waffle Henley",
+              Size: "XS",
+              "Units Remaining": "1,450 pcs",
+              "Holding Cost": "₹26,10,000",
+              "Size Run %": "17.2%",
+            },
+            {
+              "SKU Code": "SKU-CRD-XXL",
+              "Product Name": "Fine Gauge Cardigan",
+              Size: "XXL",
+              "Units Remaining": "1,820 pcs",
+              "Holding Cost": "₹36,40,000",
+              "Size Run %": "21.6%",
+            },
           ],
         },
         {
@@ -775,12 +1860,45 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "420 Markdown Events",
           sourceSystem: "Store Pricing & Discount Log",
           citationId: "CIT-2026-MKDN-LOG",
-          description: "Unplanned store-level discount promotions resulting in margin dilution without clearing volume.",
-          columns: ["Markdown ID", "Store Name", "Product", "Original Price", "Clearance Price", "Discount %", "Margin Impact"],
+          description:
+            "Unplanned store-level discount promotions resulting in margin dilution without clearing volume.",
+          columns: [
+            "Markdown ID",
+            "Store Name",
+            "Product",
+            "Original Price",
+            "Clearance Price",
+            "Discount %",
+            "Margin Impact",
+          ],
           rows: [
-            { "Markdown ID": "MKD-0419", "Store Name": "Delhi Connaught", "Product": "Merino Knit Polo", "Original Price": "₹2,999", "Clearance Price": "₹2,099", "Discount %": "30%", "Margin Impact": "-₹900 / unit" },
-            { "Markdown ID": "MKD-0412", "Store Name": "Mumbai Bandra", "Product": "Thermal Waffle Henley", "Original Price": "₹2,499", "Clearance Price": "₹1,749", "Discount %": "30%", "Margin Impact": "-₹750 / unit" },
-            { "Markdown ID": "MKD-0398", "Store Name": "Bengaluru Koramangala", "Product": "Fine Gauge Cardigan", "Original Price": "₹3,499", "Clearance Price": "₹2,449", "Discount %": "30%", "Margin Impact": "-₹1,050 / unit" },
+            {
+              "Markdown ID": "MKD-0419",
+              "Store Name": "Delhi Connaught",
+              Product: "Merino Knit Polo",
+              "Original Price": "₹2,999",
+              "Clearance Price": "₹2,099",
+              "Discount %": "30%",
+              "Margin Impact": "-₹900 / unit",
+            },
+            {
+              "Markdown ID": "MKD-0412",
+              "Store Name": "Mumbai Bandra",
+              Product: "Thermal Waffle Henley",
+              "Original Price": "₹2,499",
+              "Clearance Price": "₹1,749",
+              "Discount %": "30%",
+              "Margin Impact": "-₹750 / unit",
+            },
+            {
+              "Markdown ID": "MKD-0398",
+              "Store Name": "Bengaluru Koramangala",
+              Product: "Fine Gauge Cardigan",
+              "Original Price": "₹3,499",
+              "Clearance Price": "₹2,449",
+              "Discount %": "30%",
+              "Margin Impact": "-₹1,050 / unit",
+            },
           ],
         },
       ],
@@ -810,18 +1928,67 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
       badge: "88% Exit Rate",
       type: "comparison",
       bars: [
-        { label: "Waterproof Commuter Parka", value: 100, formattedValue: "↓ 100%", subtext: "Complete stockout in sizes M & L", color: "bg-rose-600", isWarning: true },
-        { label: "Classic White Oxford Shirt", value: 65, formattedValue: "↓ 65%", subtext: "Core size M stockout at flagships", color: "bg-rose-500", isWarning: true },
-        { label: "Performance Rain Shell", value: 50, formattedValue: "↓ 50%", subtext: "Size L stockout across online doors", color: "bg-amber-500", isWarning: true },
-        { label: "Tailored Travel Chino", value: 40, formattedValue: "↓ 40%", subtext: "Size 32 waist broken size run", color: "bg-amber-500", isWarning: true },
+        {
+          label: "Waterproof Commuter Parka",
+          value: 100,
+          formattedValue: "↓ 100%",
+          subtext: "Complete stockout in sizes M & L",
+          color: "bg-rose-600",
+          isWarning: true,
+        },
+        {
+          label: "Classic White Oxford Shirt",
+          value: 65,
+          formattedValue: "↓ 65%",
+          subtext: "Core size M stockout at flagships",
+          color: "bg-rose-500",
+          isWarning: true,
+        },
+        {
+          label: "Performance Rain Shell",
+          value: 50,
+          formattedValue: "↓ 50%",
+          subtext: "Size L stockout across online doors",
+          color: "bg-amber-500",
+          isWarning: true,
+        },
+        {
+          label: "Tailored Travel Chino",
+          value: 40,
+          formattedValue: "↓ 40%",
+          subtext: "Size 32 waist broken size run",
+          color: "bg-amber-500",
+          isWarning: true,
+        },
       ],
-      takeaway: "Sizes M & L ran out in downtown flagships causing ₹8.6 Cr in lost sales while 420 surplus units sat idle in suburbs.",
+      takeaway:
+        "Sizes M & L ran out in downtown flagships causing ₹8.6 Cr in lost sales while 420 surplus units sat idle in suburbs.",
     },
     topProducts: [
-      { product: "Waterproof Commuter Parka", inventory: "₹0.0 Cr", age: "0 in stock", salesTrend: "↓ 100%" },
-      { product: "Classic White Oxford Shirt", inventory: "₹0.2 Cr", age: "Sizes M/L out", salesTrend: "↓ 65%" },
-      { product: "Tailored Travel Chino", inventory: "₹0.4 Cr", age: "Size 32 out", salesTrend: "↓ 40%" },
-      { product: "Performance Rain Shell", inventory: "₹0.1 Cr", age: "Size L out", salesTrend: "↓ 50%" },
+      {
+        product: "Waterproof Commuter Parka",
+        inventory: "₹0.0 Cr",
+        age: "0 in stock",
+        salesTrend: "↓ 100%",
+      },
+      {
+        product: "Classic White Oxford Shirt",
+        inventory: "₹0.2 Cr",
+        age: "Sizes M/L out",
+        salesTrend: "↓ 65%",
+      },
+      {
+        product: "Tailored Travel Chino",
+        inventory: "₹0.4 Cr",
+        age: "Size 32 out",
+        salesTrend: "↓ 40%",
+      },
+      {
+        product: "Performance Rain Shell",
+        inventory: "₹0.1 Cr",
+        age: "Size L out",
+        salesTrend: "↓ 50%",
+      },
     ],
     drivers: [
       { label: "Shipping delays from overseas (+15 days)", value: "₹4.4 Cr" },
@@ -838,12 +2005,14 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
       {
         number: "02",
         headline: "Shoppers bought from competitors",
-        detail: "Over 4,100 online shoppers searched for these sizes, saw they were gone, and left.",
+        detail:
+          "Over 4,100 online shoppers searched for these sizes, saw they were gone, and left.",
       },
       {
         number: "03",
         headline: "Suburban stores have extra stock",
-        detail: "Nearby suburban stores have 420 extra pieces of the exact sizes that downtown stores need.",
+        detail:
+          "Nearby suburban stores have 420 extra pieces of the exact sizes that downtown stores need.",
       },
     ],
     businessImpact:
@@ -874,13 +2043,54 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "4,120 Search Logs",
           sourceSystem: "E-Commerce Search Engine Logs",
           citationId: "CIT-2026-OOS-LOG",
-          description: "Direct log of user search queries returning zero results for core garments and sizes.",
-          columns: ["Search Query ID", "Timestamp", "Channel", "Searched SKU", "Size", "Stock Status", "Customer Action"],
+          description:
+            "Direct log of user search queries returning zero results for core garments and sizes.",
+          columns: [
+            "Search Query ID",
+            "Timestamp",
+            "Channel",
+            "Searched SKU",
+            "Size",
+            "Stock Status",
+            "Customer Action",
+          ],
           rows: [
-            { "Search Query ID": "SRCH-88219", "Timestamp": "23 Sep 11:42", "Channel": "Mobile App", "Searched SKU": "Waterproof Commuter Parka", "Size": "M", "Stock Status": "0 In Stock", "Customer Action": "Abandoned Cart (Exit)" },
-            { "Search Query ID": "SRCH-88204", "Timestamp": "23 Sep 11:38", "Channel": "Web Store", "Searched SKU": "Waterproof Commuter Parka", "Size": "L", "Stock Status": "0 In Stock", "Customer Action": "Abandoned Cart (Exit)" },
-            { "Search Query ID": "SRCH-88190", "Timestamp": "23 Sep 11:29", "Channel": "Mobile App", "Searched SKU": "Classic White Oxford Shirt", "Size": "M", "Stock Status": "0 In Stock", "Customer Action": "Abandoned Cart (Exit)" },
-            { "Search Query ID": "SRCH-88162", "Timestamp": "23 Sep 11:15", "Channel": "Web Store", "Searched SKU": "Tailored Travel Chino", "Size": "32", "Stock Status": "0 In Stock", "Customer Action": "Viewed alternate, no buy" },
+            {
+              "Search Query ID": "SRCH-88219",
+              Timestamp: "23 Sep 11:42",
+              Channel: "Mobile App",
+              "Searched SKU": "Waterproof Commuter Parka",
+              Size: "M",
+              "Stock Status": "0 In Stock",
+              "Customer Action": "Abandoned Cart (Exit)",
+            },
+            {
+              "Search Query ID": "SRCH-88204",
+              Timestamp: "23 Sep 11:38",
+              Channel: "Web Store",
+              "Searched SKU": "Waterproof Commuter Parka",
+              Size: "L",
+              "Stock Status": "0 In Stock",
+              "Customer Action": "Abandoned Cart (Exit)",
+            },
+            {
+              "Search Query ID": "SRCH-88190",
+              Timestamp: "23 Sep 11:29",
+              Channel: "Mobile App",
+              "Searched SKU": "Classic White Oxford Shirt",
+              Size: "M",
+              "Stock Status": "0 In Stock",
+              "Customer Action": "Abandoned Cart (Exit)",
+            },
+            {
+              "Search Query ID": "SRCH-88162",
+              Timestamp: "23 Sep 11:15",
+              Channel: "Web Store",
+              "Searched SKU": "Tailored Travel Chino",
+              Size: "32",
+              "Stock Status": "0 In Stock",
+              "Customer Action": "Viewed alternate, no buy",
+            },
           ],
         },
         {
@@ -893,12 +2103,52 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           sourceSystem: "ERP Store Inventory Balances",
           citationId: "CIT-2026-STR-BAL",
           description: "Comparison of downtown flagship stockouts versus suburban excess holding.",
-          columns: ["Store Code", "Store Name", "Location Type", "Parka Size M", "Parka Size L", "Oxford Shirt Size M", "Balance Status"],
+          columns: [
+            "Store Code",
+            "Store Name",
+            "Location Type",
+            "Parka Size M",
+            "Parka Size L",
+            "Oxford Shirt Size M",
+            "Balance Status",
+          ],
           rows: [
-            { "Store Code": "STR-DL-01", "Store Name": "Delhi Connaught Flagship", "Location Type": "High-Footfall Downtown", "Parka Size M": "0 pcs (Stockout)", "Parka Size L": "0 pcs (Stockout)", "Oxford Shirt Size M": "0 pcs (Stockout)", "Balance Status": "Severe Deficit" },
-            { "Store Code": "STR-MH-04", "Store Name": "Mumbai Palladium Flagship", "Location Type": "High-Footfall Downtown", "Parka Size M": "0 pcs (Stockout)", "Parka Size L": "0 pcs (Stockout)", "Oxford Shirt Size M": "0 pcs (Stockout)", "Balance Status": "Severe Deficit" },
-            { "Store Code": "STR-UP-12", "Store Name": "Noida Sector 18 Store", "Location Type": "Suburban Mall", "Parka Size M": "140 pcs", "Parka Size L": "110 pcs", "Oxford Shirt Size M": "95 pcs", "Balance Status": "Excess Idle Stock" },
-            { "Store Code": "STR-HR-08", "Store Name": "Gurugram CyberHub Store", "Location Type": "Suburban Hub", "Parka Size M": "85 pcs", "Parka Size L": "85 pcs", "Oxford Shirt Size M": "70 pcs", "Balance Status": "Excess Idle Stock" },
+            {
+              "Store Code": "STR-DL-01",
+              "Store Name": "Delhi Connaught Flagship",
+              "Location Type": "High-Footfall Downtown",
+              "Parka Size M": "0 pcs (Stockout)",
+              "Parka Size L": "0 pcs (Stockout)",
+              "Oxford Shirt Size M": "0 pcs (Stockout)",
+              "Balance Status": "Severe Deficit",
+            },
+            {
+              "Store Code": "STR-MH-04",
+              "Store Name": "Mumbai Palladium Flagship",
+              "Location Type": "High-Footfall Downtown",
+              "Parka Size M": "0 pcs (Stockout)",
+              "Parka Size L": "0 pcs (Stockout)",
+              "Oxford Shirt Size M": "0 pcs (Stockout)",
+              "Balance Status": "Severe Deficit",
+            },
+            {
+              "Store Code": "STR-UP-12",
+              "Store Name": "Noida Sector 18 Store",
+              "Location Type": "Suburban Mall",
+              "Parka Size M": "140 pcs",
+              "Parka Size L": "110 pcs",
+              "Oxford Shirt Size M": "95 pcs",
+              "Balance Status": "Excess Idle Stock",
+            },
+            {
+              "Store Code": "STR-HR-08",
+              "Store Name": "Gurugram CyberHub Store",
+              "Location Type": "Suburban Hub",
+              "Parka Size M": "85 pcs",
+              "Parka Size L": "85 pcs",
+              "Oxford Shirt Size M": "70 pcs",
+              "Balance Status": "Excess Idle Stock",
+            },
           ],
         },
         {
@@ -910,11 +2160,28 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           recordCount: "4 Inbound POs",
           sourceSystem: "Inbound Freight Logistics",
           citationId: "CIT-2026-RPL-PIPE",
-          description: "Emergency factory replenishment orders in transit to restore baseline availability.",
+          description:
+            "Emergency factory replenishment orders in transit to restore baseline availability.",
           columns: ["Shipment PO", "Origin", "Destination Hub", "Units", "Mode", "ETA", "Status"],
           rows: [
-            { "Shipment PO": "SHP-AIR-2026-19", "Origin": "Hanoi Central Factory", "Destination Hub": "Delhi Central Distribution", "Units": "1,200 pcs (Parkas M/L)", "Mode": "Expedited Air Cargo", "ETA": "26 Sep 2026", "Status": "In Flight" },
-            { "Shipment PO": "SHP-AIR-2026-22", "Origin": "Dhaka Weaving Facility", "Destination Hub": "Mumbai Distribution Center", "Units": "800 pcs (Oxford Shirts)", "Mode": "Expedited Air Cargo", "ETA": "27 Sep 2026", "Status": "Customs Clearance" },
+            {
+              "Shipment PO": "SHP-AIR-2026-19",
+              Origin: "Hanoi Central Factory",
+              "Destination Hub": "Delhi Central Distribution",
+              Units: "1,200 pcs (Parkas M/L)",
+              Mode: "Expedited Air Cargo",
+              ETA: "26 Sep 2026",
+              Status: "In Flight",
+            },
+            {
+              "Shipment PO": "SHP-AIR-2026-22",
+              Origin: "Dhaka Weaving Facility",
+              "Destination Hub": "Mumbai Distribution Center",
+              Units: "800 pcs (Oxford Shirts)",
+              Mode: "Expedited Air Cargo",
+              ETA: "27 Sep 2026",
+              Status: "Customs Clearance",
+            },
           ],
         },
       ],
@@ -939,10 +2206,20 @@ export function getDriverSummaryText(caseId?: string, reportTitle?: string): str
   if (id.includes("case-2") || normTitle.includes("launch") || normTitle.includes("newly")) {
     return "Launch underperformance is primarily driven by sizing return friction on cargo lines and misallocated ad spending away from fast-selling linen.";
   }
-  if (id.includes("case-3") || normTitle.includes("mill") || normTitle.includes("revenue") || normTitle.includes("dependent")) {
+  if (
+    id.includes("case-3") ||
+    normTitle.includes("mill") ||
+    normTitle.includes("revenue") ||
+    normTitle.includes("dependent")
+  ) {
     return "Supply chain vulnerability is driven by single-supplier concentration with a Coimbatore mill supplying over 78% of all denim yardage.";
   }
-  if (id.includes("case-4") || normTitle.includes("decline") || normTitle.includes("lifecycle") || normTitle.includes("markdown")) {
+  if (
+    id.includes("case-4") ||
+    normTitle.includes("decline") ||
+    normTitle.includes("lifecycle") ||
+    normTitle.includes("markdown")
+  ) {
     return "Margin dilution is driven by heavy clearance discounts and steady volume decline across aging knit polo collections sitting on store racks.";
   }
   if (id.includes("case-5") || normTitle.includes("stockout") || normTitle.includes("loss")) {
@@ -961,6 +2238,23 @@ export interface AgentPlanItem {
   isCustom?: boolean;
 }
 
+/**
+ * A specialist the orchestrator thinks this question needs but that is not in
+ * the standing roster. Opt-in: nothing runs until the user approves it.
+ */
+export interface SuggestedAgentItem {
+  id: string;
+  name: string;
+  role: string;
+  icon: string;
+  /** What this agent would do, and why the orchestrator proposed it. */
+  description: string;
+  /** Why this question needs a specialist that isn't already on the plan. */
+  rationale?: string;
+  /** User approval. Always starts false — the user opts in. */
+  isApproved: boolean;
+}
+
 export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
   const q = query.toLowerCase();
   if (q.includes("launch") || q.includes("newly") || q.includes("linen") || q.includes("cargo")) {
@@ -970,7 +2264,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Sales Billing Agent",
         role: "Omnichannel POS & Web Invoices",
         icon: "🛍️",
-        description: "Will ingest store sales receipts and e-commerce cart transactions across the initial 18-day launch window to benchmark sell-through velocity.",
+        description:
+          "Will ingest store sales receipts and e-commerce cart transactions across the initial 18-day launch window to benchmark sell-through velocity.",
         isEnabled: true,
       },
       {
@@ -978,7 +2273,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Returns & Fitment Agent",
         role: "Customer Ticket Reason Audit",
         icon: "🔄",
-        description: "Will audit customer return tickets, exchange logs, and sizing feedback to detect fit or quality friction on lagging styles.",
+        description:
+          "Will audit customer return tickets, exchange logs, and sizing feedback to detect fit or quality friction on lagging styles.",
         isEnabled: true,
       },
       {
@@ -986,7 +2282,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Campaign ROI Agent",
         role: "Ad Budget vs Sell-Through Rate",
         icon: "📊",
-        description: "Will evaluate digital marketing spend and ad impressions against footfall and conversions to measure promotional efficiency.",
+        description:
+          "Will evaluate digital marketing spend and ad impressions against footfall and conversions to measure promotional efficiency.",
         isEnabled: true,
       },
       {
@@ -994,7 +2291,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Allocation Strategy Agent",
         role: "Actionable Turnaround Playbook",
         icon: "👔",
-        description: "Will formulate an actionable inventory strategy, detailing budget reallocation toward top sellers and clearance schedules for slow-moving lines.",
+        description:
+          "Will formulate an actionable inventory strategy, detailing budget reallocation toward top sellers and clearance schedules for slow-moving lines.",
         isEnabled: true,
       },
     ];
@@ -1007,7 +2305,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Sales Billing Agent",
       role: "POS Invoices & Store Velocity",
       icon: "🛍️",
-      description: "Will extract and analyze 90-day store billing transactions across all 42 retail doors to benchmark sell-through velocity and detect demand drop-offs.",
+      description:
+        "Will extract and analyze 90-day store billing transactions across all 42 retail doors to benchmark sell-through velocity and detect demand drop-offs.",
       isEnabled: true,
     },
     {
@@ -1015,7 +2314,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Inventory & Warehouse Agent",
       role: "Stock Aging & Depot Balances",
       icon: "📦",
-      description: "Will scan central warehouse ledgers and store depot levels to flag SKUs with holding age >60 days and stock cover exceeding safe thresholds.",
+      description:
+        "Will scan central warehouse ledgers and store depot levels to flag SKUs with holding age >60 days and stock cover exceeding safe thresholds.",
       isEnabled: true,
     },
     {
@@ -1023,7 +2323,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Finance & Exposure Agent",
       role: "Working Capital & Returns Deduction",
       icon: "💰",
-      description: "Will calculate working capital tied up in slow-moving inventory and audit customer return deductions to quantify net financial exposure.",
+      description:
+        "Will calculate working capital tied up in slow-moving inventory and audit customer return deductions to quantify net financial exposure.",
       isEnabled: true,
     },
     {
@@ -1031,7 +2332,8 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Executive Strategy Agent",
       role: "Synthesis & Turnaround Playbook",
       icon: "👔",
-      description: "Will synthesize findings across all agent analyses into an executive turnaround plan with prioritized markdown timelines and stock redistribution.",
+      description:
+        "Will synthesize findings across all agent analyses into an executive turnaround plan with prioritized markdown timelines and stock redistribution.",
       isEnabled: true,
     },
   ];
@@ -1134,6 +2436,7 @@ export interface GeminiMessageItem {
   feedback?: "up" | "down" | null;
   revealedSections?: number;
   agentPlan?: AgentPlanItem[];
+  suggestedAgents?: SuggestedAgentItem[];
   dataRepos?: DataRepoItem[];
   customInstructions?: string;
 }
@@ -1143,28 +2446,50 @@ export const getCaseDetailsForQuery = (query: string): GeminiMessageItem => {
   let matchedId = "case-1";
   let matchedTitle = "Products are creating the highest inventory exposure";
   let matchedAgent = "Merchandising & Inventory Intelligence";
-  let matchedBody = "Heavyweight wool overcoats and faux-shearling jackets hold ₹18.4 Cr in excess inventory across 42 products with 87 days average inventory age.";
+  let matchedBody =
+    "Heavyweight wool overcoats and faux-shearling jackets hold ₹18.4 Cr in excess inventory across 42 products with 87 days average inventory age.";
 
   if (lower.includes("launch") || lower.includes("linen") || lower.includes("cargo")) {
     matchedId = "case-2";
     matchedTitle = "Newly launched products performing, and which ones need attention.";
     matchedAgent = "Product Performance & Launch Agent";
-    matchedBody = "Spring Linen Blend shirts are at 84% full-price sell-through, while High-Rise Utility Cargo pants lag at 28% sell-through needing immediate promotional re-targeting.";
-  } else if (lower.includes("revenue") || lower.includes("share") || lower.includes("denim") || lower.includes("mill")) {
+    matchedBody =
+      "Spring Linen Blend shirts are at 84% full-price sell-through, while High-Rise Utility Cargo pants lag at 28% sell-through needing immediate promotional re-targeting.";
+  } else if (
+    lower.includes("revenue") ||
+    lower.includes("share") ||
+    lower.includes("denim") ||
+    lower.includes("mill")
+  ) {
     matchedId = "case-3";
-    matchedTitle = "Generate the largest share of revenue, and how dependent is the business on them.";
+    matchedTitle =
+      "Generate the largest share of revenue, and how dependent is the business on them.";
     matchedAgent = "Revenue Cycle & Portfolio Agent";
-    matchedBody = "Top 4 core denim lines drive 42.6% of monthly gross apparel revenue, posing high supplier concentration risk.";
-  } else if (lower.includes("decline") || lower.includes("lifecycle") || lower.includes("markdown") || lower.includes("polo")) {
+    matchedBody =
+      "Top 4 core denim lines drive 42.6% of monthly gross apparel revenue, posing high supplier concentration risk.";
+  } else if (
+    lower.includes("decline") ||
+    lower.includes("lifecycle") ||
+    lower.includes("markdown") ||
+    lower.includes("polo")
+  ) {
     matchedId = "case-4";
-    matchedTitle = "Products are entering the decline stage of their lifecycle, and what actions should be considered";
+    matchedTitle =
+      "Products are entering the decline stage of their lifecycle, and what actions should be considered";
     matchedAgent = "Lifecycle & Markdown Strategy Agent";
-    matchedBody = "Merino knit polo shirts and thermal henleys show consecutive 35% MoM sales drops; recommended phased markdown from 20% to 40% clearance.";
-  } else if (lower.includes("stockout") || lower.includes("loss") || lower.includes("demand") || lower.includes("parka")) {
+    matchedBody =
+      "Merino knit polo shirts and thermal henleys show consecutive 35% MoM sales drops; recommended phased markdown from 20% to 40% clearance.";
+  } else if (
+    lower.includes("stockout") ||
+    lower.includes("loss") ||
+    lower.includes("demand") ||
+    lower.includes("parka")
+  ) {
     matchedId = "case-5";
     matchedTitle = "Stockouts caused the greatest loss in sales or customer demand";
     matchedAgent = "Supply Chain & Stockout Radar";
-    matchedBody = "Size M and L stockouts in Waterproof Commuter Parkas and White Oxford Shirts resulted in ₹8.6 Cr lost demand across flagship stores and e-commerce.";
+    matchedBody =
+      "Size M and L stockouts in Waterproof Commuter Parkas and White Oxford Shirts resulted in ₹8.6 Cr lost demand across flagship stores and e-commerce.";
   }
 
   const caseItem: ActiveCaseItem = {
@@ -1208,7 +2533,11 @@ export const getCaseDetailsForQuery = (query: string): GeminiMessageItem => {
       keyFinding:
         "Full Q1 baseline recorded ₹14.8 Cr tied up in 36 products.\nTop 10 lines accounted for ₹9.4 Cr with an average age of 76 days.\nSeasonal transition at quarter-end initiated early markdown pressures.",
     };
-  } else if (lower.includes("flagship") || lower.includes("top 10 store") || lower.includes("stores only")) {
+  } else if (
+    lower.includes("flagship") ||
+    lower.includes("top 10 store") ||
+    lower.includes("stores only")
+  ) {
     structuredAnswer = {
       ...baseAnswer,
       reportTitle: `${baseAnswer.reportTitle} (Top 10 Flagship Doors)`,
@@ -1223,7 +2552,11 @@ export const getCaseDetailsForQuery = (query: string): GeminiMessageItem => {
       keyFinding:
         "Top 10 metro flagships hold ₹8.9 Cr of total exposure across 22 styles.\nFootfall conversion in downtown flagships was 1.8x higher than suburban outlets.\nStock reallocation to suburban doors is recommended for extreme sizes.",
     };
-  } else if (lower.includes("yoy") || lower.includes("previous year") || lower.includes("last year")) {
+  } else if (
+    lower.includes("yoy") ||
+    lower.includes("previous year") ||
+    lower.includes("last year")
+  ) {
     structuredAnswer = {
       ...baseAnswer,
       reportTitle: `${baseAnswer.reportTitle} (YoY Comparison)`,
@@ -1278,7 +2611,8 @@ export const initialActiveCases: ActiveCaseItem[] = [
   },
   {
     age: "5 hrs ago",
-    title: "Products are entering the decline stage of their lifecycle, and what actions should be considered",
+    title:
+      "Products are entering the decline stage of their lifecycle, and what actions should be considered",
     body: "Merino knit polo shirts and thermal henleys show consecutive 35% MoM sales drops; recommended phased markdown from 20% to 40% clearance.",
     isLive: false,
     agent: "Lifecycle & Markdown Strategy Agent",
@@ -1309,7 +2643,8 @@ const suggestedCasesList: SuggestedCase[] = [
     category: "Inventory",
     department: "Outerwear & Tailoring",
     title: "Overcoat Excess Inventory in Warm Regional Stores",
-    description: "Southern distribution hubs holding 82% of double-breasted wool overcoats with negligible sell-through.",
+    description:
+      "Southern distribution hubs holding 82% of double-breasted wool overcoats with negligible sell-through.",
     impactMetric: "$165,600 trapped cash",
     severity: "High",
     signal: "Detected 1 hr ago",
@@ -1319,7 +2654,8 @@ const suggestedCasesList: SuggestedCase[] = [
     category: "Merchandising",
     department: "Woven Tops & Shirts",
     title: "Spring Linen Velocity Surge & Stockout Threat",
-    description: "Band-collar linen shirts trending 3.2x above initial sales forecasts with stock depletion in 7 days.",
+    description:
+      "Band-collar linen shirts trending 3.2x above initial sales forecasts with stock depletion in 7 days.",
     impactMetric: "+$94,000 revenue upside",
     severity: "Medium",
     signal: "Detected 3 hrs ago",
@@ -1329,7 +2665,8 @@ const suggestedCasesList: SuggestedCase[] = [
     category: "Revenue",
     department: "Denim & Bottoms",
     title: "Single-Mill Yarn Reliance in Core Stretch Denim",
-    description: "78.5% of raw fabric supplied by Coimbatore spinning mill posing bottleneck risk for top denim lines.",
+    description:
+      "78.5% of raw fabric supplied by Coimbatore spinning mill posing bottleneck risk for top denim lines.",
     impactMetric: "$1.28M monthly exposure",
     severity: "High",
     signal: "Detected yesterday",
@@ -1339,7 +2676,8 @@ const suggestedCasesList: SuggestedCase[] = [
     category: "Supply Chain",
     department: "Omnichannel Logistics",
     title: "Size Break Stockout in Metropolitan Flagships",
-    description: "Sizes Medium and Large in commuter parkas out of stock across New York and Chicago flagship doors.",
+    description:
+      "Sizes Medium and Large in commuter parkas out of stock across New York and Chicago flagship doors.",
     impactMetric: "-$86,400 unfulfilled demand",
     severity: "High",
     signal: "Detected 2 hrs ago",
@@ -1349,7 +2687,8 @@ const suggestedCasesList: SuggestedCase[] = [
     category: "Merchandising",
     department: "Knitwear & Basics",
     title: "Decline Stage Clearance for Heavy Thermal Waffles",
-    description: "Customer purchasing shifted to lightweight modal knits; 8,420 thermal henley units idling.",
+    description:
+      "Customer purchasing shifted to lightweight modal knits; 8,420 thermal henley units idling.",
     impactMetric: "$52,000 cash recovery",
     severity: "Medium",
     signal: "Detected 4 hrs ago",
@@ -1439,7 +2778,8 @@ const getInitialPending = (): { pendingCase: ActiveCaseItem | null; shouldLoad: 
     return { pendingCase: sharedPendingCase, shouldLoad: true };
   }
   try {
-    const stored = typeof window !== "undefined" ? sessionStorage.getItem("pending_inbox_case") : null;
+    const stored =
+      typeof window !== "undefined" ? sessionStorage.getItem("pending_inbox_case") : null;
     if (stored) {
       const parsed = JSON.parse(stored) as ActiveCaseItem;
       sharedPendingCase = parsed;
@@ -1449,250 +2789,18 @@ const getInitialPending = (): { pendingCase: ActiveCaseItem | null; shouldLoad: 
       }
       return { pendingCase: parsed, shouldLoad: true };
     }
-  } catch { }
+  } catch {}
   return { pendingCase: null, shouldLoad: false };
 };
 
-const createDefaultSessionHistory = (): HistorySession[] => {
-  const deep1 = getCaseDetailsForQuery("Products are creating the highest inventory exposure");
-  deep1.revealedSections = 7;
-
-  const deep2 = getCaseDetailsForQuery("Newly launched products performing, and which ones need attention.");
-  deep2.revealedSections = 7;
-
-  const deep3 = getCaseDetailsForQuery("Generate the largest share of revenue, and how dependent is the business on them.");
-  deep3.revealedSections = 7;
-
-  const deep4 = getCaseDetailsForQuery("Products are entering the decline stage of their lifecycle, and what actions should be considered");
-  deep4.revealedSections = 7;
-
-  const deep5 = getCaseDetailsForQuery("Stockouts caused the greatest loss in sales or customer demand");
-  deep5.revealedSections = 7;
-
-  const chatMsg1: GeminiMessageItem = {
-    id: "msg-chat-1",
-    query: "What is the current DOS on core denim lines?",
-    timestamp: "11:20 AM",
-    caseId: "case-3",
-    caseItem: {
-      age: "Today",
-      title: "What is the current DOS on core denim lines?",
-      body: "Core denim lines hold an average 48 Days of Supply (DOS) against the 35-day safety threshold.",
-      agent: "Merchandising Intelligence",
-    },
-    structuredAnswer: {
-      reportTitle: "Core Denim Lines — Days of Supply (DOS) Summary",
-      reportDate: "Today",
-      kpiStats: [
-        { value: "48 Days", label: "Current DOS" },
-        { value: "35 Days", label: "Target Benchmark" },
-        { value: "4", label: "Core Styles" },
-        { value: "$1.28M", label: "Inventory Value" },
-      ],
-      keyFinding:
-        "The current Days of Supply (DOS) across the 4 core denim lines is 48 days, which exceeds our healthy 35-day threshold.\n\n• Slim Stretch Denim holds 52 DOS ($142,000 inventory).\n• Relaxed Vintage Denim is healthy at 28 DOS with 84% sell-through.\n\nRecommended Action: Pause new factory purchase orders on Slim Stretch for 3 weeks until depot stock realigns.",
-      topProducts: [],
-      drivers: [],
-      insights: [],
-      businessImpact: "Excess working capital tied up in Slim Stretch denim.",
-      focusAreas: ["Pause factory purchase orders", "Promote in Northern stores"],
-    },
-  };
-
-  const chatMsg2: GeminiMessageItem = {
-    id: "msg-chat-2",
-    query: "Summarize August EBITDA drop in two bullet points",
-    timestamp: "09:40 AM",
-    caseId: "case-1",
-    caseItem: {
-      age: "Today",
-      title: "Summarize August EBITDA drop in two bullet points",
-      body: "August EBITDA margin dropped from 14.2% down to 9.8% driven by stockouts and footfall drop.",
-      agent: "Finance & Exposure Agent",
-    },
-    structuredAnswer: {
-      reportTitle: "August EBITDA Compression — 2-Point Executive Brief",
-      reportDate: "August 2026",
-      kpiStats: [
-        { value: "-11.4%", label: "MoM Revenue" },
-        { value: "9.8%", label: "August EBITDA" },
-        { value: "14.2%", label: "Baseline EBITDA" },
-        { value: "$142K", label: "Lost Conversions" },
-      ],
-      keyFinding:
-        "• High-velocity chronic stockouts caused an estimated $142,000 in lost basket conversions at flagship doors.\n• Competing 10-minute delivery services triggered a 19% drop in walk-in footfall, lowering average basket items from 3.4 to 2.6.",
-      topProducts: [],
-      drivers: [],
-      insights: [],
-      businessImpact: "EBITDA compressed by 4.4 percentage points.",
-      focusAreas: ["Replenish flagship doors", "Counter 10-minute delivery app churn"],
-    },
-  };
-
-  const chatMsg3: GeminiMessageItem = {
-    id: "msg-chat-3",
-    query: "Which retail doors have excess wool overcoats?",
-    timestamp: "Yesterday",
-    caseId: "case-1",
-    caseItem: {
-      age: "Yesterday",
-      title: "Which retail doors have excess wool overcoats?",
-      body: "Warm regional retail hubs in Southern regions hold 82% of heavy wool overcoats with slow sell-through.",
-      agent: "Supply Chain & Inventory Radar",
-    },
-    structuredAnswer: {
-      reportTitle: "Wool Overcoat Regional Stock Distribution",
-      reportDate: "Yesterday",
-      kpiStats: [
-        { value: "82%", label: "Trapped in South" },
-        { value: "14 Doors", label: "Affected Stores" },
-        { value: "$165K", label: "Locked Capital" },
-        { value: "124 Days", label: "Holding Age" },
-      ],
-      keyFinding:
-        "Southern warm-climate stores hold 82% of the double-breasted wool overcoat inventory where seasonal temperatures remain above 28°C.\n\n• Top affected doors: Chennai Express Mall (340 units) and Bengaluru Central (280 units).\n• Northern doors (Delhi, Chandigarh) are running critically low with under 12 units each.\n\nRecommended Action: Initiate immediate inter-store stock balancing transfers to Northern doors within 48 hours.",
-      topProducts: [],
-      drivers: [],
-      insights: [],
-      businessImpact: "$165,600 trapped in non-selling warm-climate locations.",
-      focusAreas: ["Auto-transfer to Northern doors", "Markdown slow units in South"],
-    },
-  };
-
-  const chatMsg4: GeminiMessageItem = {
-    id: "msg-chat-4",
-    query: "Draft supplier inquiry for Gujarat denim mills",
-    timestamp: "3 days ago",
-    caseId: "case-3",
-    caseItem: {
-      age: "3 days ago",
-      title: "Draft supplier inquiry for Gujarat denim mills",
-      body: "Inquiry letter requesting production schedule acceleration for Autumn denim lines.",
-      agent: "Supply Chain & Procurement",
-    },
-    structuredAnswer: {
-      reportTitle: "Procurement Notice: Gujarat Denim Mills Assortment",
-      reportDate: "3 days ago",
-      kpiStats: [
-        { value: "42.6%", label: "Revenue Share" },
-        { value: "3 Weeks", label: "Lead Time Buffer" },
-        { value: "4 Lines", label: "Affected Styles" },
-        { value: "100%", label: "Audit Complete" },
-      ],
-      keyFinding:
-        "Draft Notice Prepared:\n\n'Dear Gujarat Denim Mills Operations Team,\n\nIn reference to Purchase Orders #DM-8821 through #DM-8824 (Slim Stretch & Relaxed Vintage denim fabrics), please confirm whether the revised delivery date of October 12th remains firm. Current depot inventory has reached 48 DOS.\n\nPlease expedite batch #2 dispatch notices by this Friday.\n\nSincerely,\nASTYLE Merchandising & Sourcing Team'",
-      topProducts: [],
-      drivers: [],
-      insights: [],
-      businessImpact: "Protects $1.28M monthly gross revenue against mill delays.",
-      focusAreas: ["Send procurement letter", "Follow up with logistics team"],
-    },
-  };
-
-  return [
-    {
-      id: "sess-1",
-      title: "Products creating highest inventory exposure",
-      timestamp: "Today, 08:30 AM",
-      group: "Today",
-      agentName: "Merchandising Intelligence",
-      category: "Outerwear & Tailoring",
-      summarySnippet: "Heavyweight wool overcoats hold ₹18.4 Cr across 42 styles with 87 days average age.",
-      impactMetric: "₹18.4 Cr exposure",
-      messages: [deep1],
-    },
-    {
-      id: "sess-2",
-      title: "New launch performance & items needing attention",
-      timestamp: "Today, 07:15 AM",
-      group: "Today",
-      agentName: "Product Launch Agent",
-      category: "Woven Tops & Pants",
-      summarySnippet: "Spring Linen shirts at 84% sell-through; Cargo pants lag at 28% requiring re-targeting.",
-      impactMetric: "84% vs 28% velocity",
-      messages: [deep2],
-    },
-    {
-      id: "sess-3",
-      title: "What is the current DOS on core denim lines?",
-      timestamp: "Today, 11:20 AM",
-      group: "Today",
-      agentName: "Merchandising Chat",
-      category: "Denim Portfolio",
-      summarySnippet: "Core denim holds 48 DOS vs 35-day safety benchmark. Slim Stretch holds 52 DOS.",
-      impactMetric: "48 DOS (High)",
-      messages: [chatMsg1],
-    },
-    {
-      id: "sess-4",
-      title: "Top revenue generators & mill dependency",
-      timestamp: "Yesterday, 04:20 PM",
-      group: "Yesterday",
-      agentName: "Revenue Portfolio Agent",
-      category: "Core Denim",
-      summarySnippet: "Top 4 core denim lines drive 42.6% of monthly gross revenue, posing single-mill risk.",
-      impactMetric: "42.6% concentration",
-      messages: [deep3],
-    },
-    {
-      id: "sess-5",
-      title: "Which retail doors have excess wool overcoats?",
-      timestamp: "Yesterday, 02:15 PM",
-      group: "Yesterday",
-      agentName: "Store Logistics",
-      category: "Regional Stock",
-      summarySnippet: "Southern stores hold 82% of overcoats in warm temperatures. Rebalance to North.",
-      impactMetric: "14 Doors Affected",
-      messages: [chatMsg3],
-    },
-    {
-      id: "sess-6",
-      title: "Summarize August EBITDA drop in two bullet points",
-      timestamp: "Yesterday, 09:40 AM",
-      group: "Yesterday",
-      agentName: "Finance Brief",
-      category: "Executive Brief",
-      summarySnippet: "Acute prescription stockouts ($142K lost) + 19% drop in walk-in footfall from quick-commerce.",
-      impactMetric: "-4.4% Margin",
-      messages: [chatMsg2],
-    },
-    {
-      id: "sess-7",
-      title: "Products entering decline stage of lifecycle",
-      timestamp: "2 days ago, 11:45 AM",
-      group: "Previous 7 Days",
-      agentName: "Lifecycle Markdown Agent",
-      category: "Knitwear & Polos",
-      summarySnippet: "Merino knit polo shirts show consecutive 35% MoM sales drop; phased markdown needed.",
-      impactMetric: "-35% MoM sales",
-      messages: [deep4],
-    },
-    {
-      id: "sess-8",
-      title: "Stockouts causing greatest loss in sales",
-      timestamp: "3 days ago, 02:10 PM",
-      group: "Previous 7 Days",
-      agentName: "Stockout Radar Agent",
-      category: "Supply Chain",
-      summarySnippet: "Sizes M & L stockouts in parkas and oxford shirts resulted in ₹8.6 Cr lost demand.",
-      impactMetric: "₹8.6 Cr lost demand",
-      messages: [deep5],
-    },
-    {
-      id: "sess-9",
-      title: "Draft supplier inquiry for Gujarat denim mills",
-      timestamp: "3 days ago, 04:50 PM",
-      group: "Previous 7 Days",
-      agentName: "Procurement Ops",
-      category: "Supplier Draft",
-      summarySnippet: "Prepared inquiry letter for PO #DM-8821 through #DM-8824 requesting October 12 schedule.",
-      impactMetric: "PO Expedite",
-      messages: [chatMsg4],
-    },
-  ];
-};
-
-export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | "inbox" }) {
+export function CxoDashboard({
+  initialView = "chat",
+  initialSessions = [],
+}: {
+  initialView?: "chat" | "inbox";
+  /** Session history from the API. The sidebar has no other source. */
+  initialSessions?: HistorySession[];
+}) {
   const navigate = useNavigate();
 
   // Active view: "chat" (Ask Astyle) or "inbox" (Inbox for CXO)
@@ -1722,15 +2830,26 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
   // Gemini Chat session state on Home Page
   const [geminiMessages, setGeminiMessages] = useState<GeminiMessageItem[]>([]);
   const [isGeminiLoading, setIsGeminiLoading] = useState(false);
+  /** The run we are waiting on a socket reply for, or null when idle. */
+  const [pendingRun, setPendingRun] = useState<{ sessionId: string; mode: AnalysisMode } | null>(
+    null,
+  );
+  /**
+   * Conversation id shared by every prompt in the current session. Null means
+   * the next prompt opens a new session (`new_session: true`).
+   */
+  const runSessionIdRef = useRef<string | null>(null);
   const [streamingQuery, setStreamingQuery] = useState("");
-  const [geminiLoadingStage, setGeminiLoadingStage] = useState("Agent Sales is looking for data...");
+  const [geminiLoadingStage, setGeminiLoadingStage] = useState(
+    "Agent Sales is looking for data...",
+  );
   const geminiTimersRef = useRef<NodeJS.Timeout[]>([]);
   const conversationStreamRef = useRef<HTMLDivElement>(null);
 
   // Session History Sidebar state
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [sessionHistoryList, setSessionHistoryList] = useState<HistorySession[]>(() => createDefaultSessionHistory());
+  const [sessionHistoryList, setSessionHistoryList] = useState<HistorySession[]>(initialSessions);
 
   const handleSelectSession = (session: HistorySession) => {
     setActiveSessionId(session.id);
@@ -1808,9 +2927,30 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
       prev.map((m) => {
         if (m.id !== msgId) return m;
         const plan = m.agentPlan || getDefaultAgentPlan(m.query);
-        const updatedPlan = plan.map((a) => (a.id === agentId ? { ...a, isEnabled: !a.isEnabled } : a));
+        const updatedPlan = plan.map((a) =>
+          a.id === agentId ? { ...a, isEnabled: !a.isEnabled } : a,
+        );
         return { ...m, agentPlan: updatedPlan };
-      })
+      }),
+    );
+  };
+
+  /**
+   * Approve or un-approve a suggested specialist. Approving only marks it —
+   * the run picks up approved suggestions when it is submitted.
+   */
+  const handleToggleSuggestedAgent = (msgId: string, agentId: string) => {
+    setGeminiMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId) return m;
+        const suggested = m.suggestedAgents ?? [];
+        return {
+          ...m,
+          suggestedAgents: suggested.map((a) =>
+            a.id === agentId ? { ...a, isApproved: !a.isApproved } : a,
+          ),
+        };
+      }),
     );
   };
 
@@ -1825,10 +2965,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
         if (m.id !== msgId) return m;
         const plan = m.agentPlan || getDefaultAgentPlan(m.query);
         const updatedPlan = plan.map((a) =>
-          a.id === agentId ? { ...a, description: editedTaskText.trim() || a.description } : a
+          a.id === agentId ? { ...a, description: editedTaskText.trim() || a.description } : a,
         );
         return { ...m, agentPlan: updatedPlan };
-      })
+      }),
     );
     setEditingAgentId(null);
     setEditedTaskText("");
@@ -1841,7 +2981,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
       name: newAgentName.trim(),
       role: newAgentRole.trim() || "Custom Merchandising Task",
       icon: "⚡",
-      description: newAgentTask.trim() || `Will conduct specialized merchandising analysis as directed for ${newAgentName.trim()}.`,
+      description:
+        newAgentTask.trim() ||
+        `Will conduct specialized merchandising analysis as directed for ${newAgentName.trim()}.`,
       isEnabled: true,
       isCustom: true,
     };
@@ -1850,7 +2992,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
         if (m.id !== msgId) return m;
         const plan = m.agentPlan || getDefaultAgentPlan(m.query);
         return { ...m, agentPlan: [...plan, newAgent] };
-      })
+      }),
     );
     setIsAddingAgentMsgId(null);
     setNewAgentName("");
@@ -1863,9 +3005,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
       prev.map((m) => {
         if (m.id !== msgId) return m;
         const repos = m.dataRepos || getDefaultDataRepos(m.query);
-        const updatedRepos = repos.map((r) => (r.id === repoId ? { ...r, isEnabled: !r.isEnabled } : r));
+        const updatedRepos = repos.map((r) =>
+          r.id === repoId ? { ...r, isEnabled: !r.isEnabled } : r,
+        );
         return { ...m, dataRepos: updatedRepos };
-      })
+      }),
     );
   };
 
@@ -1885,7 +3029,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
         if (m.id !== msgId) return m;
         const repos = m.dataRepos || getDefaultDataRepos(m.query);
         return { ...m, dataRepos: [...repos, newRepo] };
-      })
+      }),
     );
     setIsAddingRepoMsgId(null);
     setNewRepoName("");
@@ -1893,8 +3037,12 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
   };
 
   const handleRerunWithCustomPlan = (msg: GeminiMessageItem) => {
-    const activeAgents = (msg.agentPlan || getDefaultAgentPlan(msg.query)).filter((a) => a.isEnabled);
-    const activeRepos = (msg.dataRepos || getDefaultDataRepos(msg.query)).filter((r) => r.isEnabled);
+    const activeAgents = (msg.agentPlan || getDefaultAgentPlan(msg.query)).filter(
+      (a) => a.isEnabled,
+    );
+    const activeRepos = (msg.dataRepos || getDefaultDataRepos(msg.query)).filter(
+      (r) => r.isEnabled,
+    );
     const customInst = (instructionDraftMap[msg.id] ?? msg.customInstructions ?? "").trim();
     if (activeAgents.length === 0) return;
 
@@ -1915,9 +3063,12 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
     // Then cycle through each active agent executing their assigned mandate
     activeAgents.forEach((agent, idx) => {
-      const t = setTimeout(() => {
-        setGeminiLoadingStage(`${agent.name} is executing: ${agent.description.slice(0, 52)}...`);
-      }, baseOffset + idx * 600);
+      const t = setTimeout(
+        () => {
+          setGeminiLoadingStage(`${agent.name} is executing: ${agent.description.slice(0, 52)}...`);
+        },
+        baseOffset + idx * 600,
+      );
       geminiTimersRef.current.push(t);
     });
 
@@ -1927,7 +3078,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
       setGeminiMessages((prev) =>
         prev.map((m) => {
           if (m.id !== msg.id) return m;
-          const instructionNote = customInst ? ` • Custom Instruction: "${customInst.slice(0, 48)}..."` : "";
+          const instructionNote = customInst
+            ? ` • Custom Instruction: "${customInst.slice(0, 48)}..."`
+            : "";
           return {
             ...m,
             revealedSections: 7,
@@ -1937,7 +3090,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
               basedOnData: `Regenerated using ${activeAgents.length} agents across ${activeRepos.length} data repos${instructionNote}`,
             },
           };
-        })
+        }),
       );
       setIsGeminiLoading(false);
       setStreamingQuery("");
@@ -1946,7 +3099,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
   };
   const [expandedHowFound, setExpandedHowFound] = useState<Record<string, boolean>>({});
   const [openProductTable, setOpenProductTable] = useState<Record<string, boolean>>({});
-  const [activeEvidenceDataset, setActiveEvidenceDataset] = useState<CxoEvidenceDataset | null>(null);
+  const [activeEvidenceDataset, setActiveEvidenceDataset] = useState<CxoEvidenceDataset | null>(
+    null,
+  );
   const [datasetSearchQuery, setDatasetSearchQuery] = useState("");
   const [datasetGroupBy, setDatasetGroupBy] = useState<string>("");
   const [datasetFilterCol, setDatasetFilterCol] = useState<string>("");
@@ -1954,12 +3109,14 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   // Ask AI Chatbox inside Full Screen Dataset View
-  const [datasetChatMessages, setDatasetChatMessages] = useState<{
-    id: string;
-    sender: "user" | "ai";
-    content: string;
-    timestamp: string;
-  }[]>([]);
+  const [datasetChatMessages, setDatasetChatMessages] = useState<
+    {
+      id: string;
+      sender: "user" | "ai";
+      content: string;
+      timestamp: string;
+    }[]
+  >([]);
   const [datasetChatInput, setDatasetChatInput] = useState("");
   const [isDatasetChatLoading, setIsDatasetChatLoading] = useState(false);
   const datasetChatScrollRef = useRef<HTMLDivElement>(null);
@@ -2006,13 +3163,33 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
       if (lower.includes("store") || lower.includes("location") || lower.includes("where")) {
         aiResponse = `Analyzing store locations in this dataset:\n\n• Top billing was recorded at **Delhi Flagship (DL-01)** and **Mumbai Phoenix**, accounting for the largest transaction shares.\n• Suburban outlets show excess inventory units sitting with slower velocity compared to downtown high-footfall flagships.`;
-      } else if (lower.includes("return") || lower.includes("reason") || lower.includes("fit") || lower.includes("size")) {
+      } else if (
+        lower.includes("return") ||
+        lower.includes("reason") ||
+        lower.includes("fit") ||
+        lower.includes("size")
+      ) {
         aiResponse = `Customer returns and fit analysis for this dataset:\n\n• Sizing & Fit Issues: Represent **68%** of all logged return tickets, primarily focused on tight waist fits and sleeve lengths.\n• Top SKU affected: **Utility Cargo Pants** and **Men's Denim Jacket** recorded the highest return refund amounts (${activeEvidenceDataset.totalSum} total impact).`;
-      } else if (lower.includes("sum") || lower.includes("total") || lower.includes("revenue") || lower.includes("amount") || lower.includes("cost")) {
+      } else if (
+        lower.includes("sum") ||
+        lower.includes("total") ||
+        lower.includes("revenue") ||
+        lower.includes("amount") ||
+        lower.includes("cost")
+      ) {
         aiResponse = `Financial data reconciliation:\n\n• Total Calculated Sum: **${activeEvidenceDataset.totalSum}**\n• Audited Record Count: **${activeEvidenceDataset.recordCount}**\n• Source System: **${activeEvidenceDataset.sourceSystem}**\n\nAll aggregated entries reconcile 100% with the high-level executive report.`;
-      } else if (lower.includes("highest") || lower.includes("top") || lower.includes("outlier") || lower.includes("worst") || lower.includes("trend")) {
+      } else if (
+        lower.includes("highest") ||
+        lower.includes("top") ||
+        lower.includes("outlier") ||
+        lower.includes("worst") ||
+        lower.includes("trend")
+      ) {
         const firstRow = rows[0];
-        const productKey = Object.keys(firstRow || {}).find((k) => k.toLowerCase().includes("product") || k.toLowerCase().includes("style")) || "Product";
+        const productKey =
+          Object.keys(firstRow || {}).find(
+            (k) => k.toLowerCase().includes("product") || k.toLowerCase().includes("style"),
+          ) || "Product";
         const topItem = firstRow ? firstRow[productKey] : "Core item";
         aiResponse = `Key outlier identified in this dataset:\n\n• The single largest driver is **${topItem}**, representing the highest exposure in the sample records.\n• Recommended immediate action: Review safety stock buffer and reallocate inventory to high-velocity doors.`;
       } else {
@@ -2070,7 +3247,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
     if (datasetSearchQuery.trim()) {
       const q = datasetSearchQuery.toLowerCase();
       rows = rows.filter((row) =>
-        Object.values(row).some((val) => String(val).toLowerCase().includes(q))
+        Object.values(row).some((val) => String(val).toLowerCase().includes(q)),
       );
     }
     return rows;
@@ -2097,7 +3274,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
   const handleExportCsv = (dataset: CxoEvidenceDataset) => {
     const header = dataset.columns.join(",");
     const rows = dataset.rows.map((row) =>
-      dataset.columns.map((col) => `"${(row[col] ?? "").replace(/"/g, '""')}"`).join(",")
+      dataset.columns.map((col) => `"${(row[col] ?? "").replace(/"/g, '""')}"`).join(","),
     );
     const csvContent = "data:text/csv;charset=utf-8," + [header, ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -2125,32 +3302,37 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
         if (msg.id === messageId) {
           const nextState = !msg.addedToInbox;
           if (nextState) {
-            sharedCasesList = [msg.caseItem, ...sharedCasesList.filter((c) => c.title !== msg.caseItem.title)];
+            sharedCasesList = [
+              msg.caseItem,
+              ...sharedCasesList.filter((c) => c.title !== msg.caseItem.title),
+            ];
             setCasesList(sharedCasesList);
             setSuggestedNotice(`Added "${msg.caseItem.title}" to CXO Inbox`);
           }
           return { ...msg, addedToInbox: nextState };
         }
         return msg;
-      })
+      }),
     );
   };
 
   const handleCopyAnswer = (messageId: string, text: string) => {
     navigator.clipboard.writeText(text);
     setGeminiMessages((prev) =>
-      prev.map((m) => (m.id === messageId ? { ...m, isCopied: true } : m))
+      prev.map((m) => (m.id === messageId ? { ...m, isCopied: true } : m)),
     );
     setTimeout(() => {
       setGeminiMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, isCopied: false } : m))
+        prev.map((m) => (m.id === messageId ? { ...m, isCopied: false } : m)),
       );
     }, 2000);
   };
 
   const handleFeedback = (messageId: string, type: "up" | "down") => {
     setGeminiMessages((prev) =>
-      prev.map((m) => (m.id === messageId ? { ...m, feedback: m.feedback === type ? null : type } : m))
+      prev.map((m) =>
+        m.id === messageId ? { ...m, feedback: m.feedback === type ? null : type } : m,
+      ),
     );
   };
 
@@ -2170,7 +3352,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
       title,
       age: "Just now",
       agent: newCaseAgent.trim() || "Inventory Planning & Allocation",
-      body: newCaseSummary.trim() || `Autonomous merchandising investigation initiated for ${title}. Live telemetry connectors synchronized across ERP and Store POS balances.`,
+      body:
+        newCaseSummary.trim() ||
+        `Autonomous merchandising investigation initiated for ${title}. Live telemetry connectors synchronized across ERP and Store POS balances.`,
       isLive: true,
       newFindingsCount: 1,
     };
@@ -2242,7 +3426,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
     return -1;
   });
   const [selectedActiveCase, setSelectedActiveCase] = useState<ActiveCaseItem | null>(() => {
-    if (initialPendingInfo.shouldLoad && initialPendingInfo.pendingCase) return initialPendingInfo.pendingCase;
+    if (initialPendingInfo.shouldLoad && initialPendingInfo.pendingCase)
+      return initialPendingInfo.pendingCase;
     return null;
   });
   const [mobileActiveView, setMobileActiveView] = useState<"list" | "detail">(() => {
@@ -2282,7 +3467,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
           sharedPendingCase = null;
           try {
             sessionStorage.removeItem("pending_inbox_case");
-          } catch { }
+          } catch {}
         }, 1200);
       }
     }
@@ -2318,11 +3503,26 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
   const mapTitleToCaseId = (title: string, index: number) => {
     const t = title.toLowerCase();
     if (t.includes("fever") || t.includes("pediatric")) return "case-fever";
-    if (t.includes("inventory exposure") || t.includes("exposure") || t.includes("overcoat")) return "case-1";
-    if (t.includes("newly launched") || t.includes("launched") || t.includes("linen") || t.includes("cargo")) return "case-2";
-    if (t.includes("largest share") || t.includes("revenue") || t.includes("denim")) return "case-3";
-    if (t.includes("decline stage") || t.includes("lifecycle") || t.includes("markdown") || t.includes("polo")) return "case-4";
-    if (t.includes("stockout") || t.includes("loss in sales") || t.includes("demand")) return "case-5";
+    if (t.includes("inventory exposure") || t.includes("exposure") || t.includes("overcoat"))
+      return "case-1";
+    if (
+      t.includes("newly launched") ||
+      t.includes("launched") ||
+      t.includes("linen") ||
+      t.includes("cargo")
+    )
+      return "case-2";
+    if (t.includes("largest share") || t.includes("revenue") || t.includes("denim"))
+      return "case-3";
+    if (
+      t.includes("decline stage") ||
+      t.includes("lifecycle") ||
+      t.includes("markdown") ||
+      t.includes("polo")
+    )
+      return "case-4";
+    if (t.includes("stockout") || t.includes("loss in sales") || t.includes("demand"))
+      return "case-5";
     return `case-${((index >= 0 ? index : 0) % 5) + 1}`;
   };
 
@@ -2342,7 +3542,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
     if (activeView === "inbox") {
       // In inbox view, load directly into inbox split-view
       const newMsg = getCaseDetailsForQuery(q);
-      sharedCasesList = [newMsg.caseItem, ...sharedCasesList.filter((c) => c.title !== newMsg.caseItem.title)];
+      sharedCasesList = [
+        newMsg.caseItem,
+        ...sharedCasesList.filter((c) => c.title !== newMsg.caseItem.title),
+      ];
       setCasesList(sharedCasesList);
       setSelectedActiveCase(newMsg.caseItem);
       setSelectedCaseIndex(0);
@@ -2353,81 +3556,38 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
       return;
     }
 
-    // Multi-Agent Analysis with Live Rotating Logo & Shimmer Loader
+    // Dispatch the run. The workflow answers over the chat socket, so there is
+    // nothing to await here beyond the acknowledgement that it was sent.
+    const mode: AnalysisMode = isReportFormatMode ? "deep-insights" : "chat";
+    const isNewSession = runSessionIdRef.current === null;
+    const runSessionId = runSessionIdRef.current ?? crypto.randomUUID();
+    runSessionIdRef.current = runSessionId;
+
     setStreamingQuery(q);
+    setPendingRun({ sessionId: runSessionId, mode });
     setIsGeminiLoading(true);
     setChatQuery("");
 
     geminiTimersRef.current.forEach((t) => clearTimeout(t));
     geminiTimersRef.current = [];
 
-    // Stage 1: Initial agent activity
-    setGeminiLoadingStage("Agent Sales is querying store billing invoices...");
-
-    // Smoothly scroll to the top of the loader so the top header and rotating logo are fully visible
     setTimeout(() => {
-      const loaderEl = document.getElementById("gemini-loader");
-      if (loaderEl) {
-        loaderEl.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      document
+        .getElementById("gemini-loader")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 60);
 
-    // Stage 2: Inventory Agent
-    const t2 = setTimeout(() => {
-      setGeminiLoadingStage("Agent Inventory is scanning 90-day SKU velocity & warehouse aging ledgers...");
-    }, 800);
-    geminiTimersRef.current.push(t2);
-
-    // Stage 3: Finance Agent
-    const t3 = setTimeout(() => {
-      setGeminiLoadingStage("Agent Finance is computing capital exposure & deducting returns...");
-    }, 1600);
-    geminiTimersRef.current.push(t3);
-
-    // Stage 4: Executive Agent
-    const t4 = setTimeout(() => {
-      setGeminiLoadingStage("Agent Executive is synthesizing final report & recommendations...");
-    }, 2400);
-    geminiTimersRef.current.push(t4);
-
-    // Complete: Generate full report and smoothly scroll to it
-    const tFinal = setTimeout(() => {
-      const newMsg = getCaseDetailsForQuery(q);
-      newMsg.revealedSections = 7;
-
-      // Prepend to active cases list so it's readily available in CXO Inbox
-      sharedCasesList = [newMsg.caseItem, ...sharedCasesList.filter((c) => c.title !== newMsg.caseItem.title)];
-      setCasesList(sharedCasesList);
-
-      setGeminiMessages((prev) => [...prev, newMsg]);
+    void startAnalysis({
+      data: { mode, prompt: q, sessionId: runSessionId, newSession: isNewSession },
+    }).catch((error: unknown) => {
+      // Only a dispatch failure lands here; workflow timeouts are expected and
+      // swallowed server-side. Without a dispatch there is no socket reply
+      // coming, so stop waiting rather than spin forever.
+      console.error("[analysis] could not dispatch run", error);
       setIsGeminiLoading(false);
+      setPendingRun(null);
       setStreamingQuery("");
-
-      // Automatically add to session history
-      const newSession: HistorySession = {
-        id: `session-${Date.now()}`,
-        title: q,
-        timestamp: "Just now",
-        group: "Today",
-        agentName: newMsg.caseItem.agent || "Intelligence Agent",
-        category: "General Analysis",
-        summarySnippet: newMsg.structuredAnswer.keyFinding.slice(0, 110) + "...",
-        impactMetric: newMsg.structuredAnswer.kpiStats?.[0]?.value,
-        messages: [newMsg],
-      };
-      setSessionHistoryList((prev) => [newSession, ...prev]);
-      setActiveSessionId(newSession.id);
-
-      setTimeout(() => {
-        const msgEl = document.getElementById(`msg-${newMsg.id}`);
-        if (msgEl) {
-          msgEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else {
-          scrollStreamToBottom(true);
-        }
-      }, 100);
-    }, 3100);
-    geminiTimersRef.current.push(tFinal);
+    });
   };
 
   const handleVoiceModeClick = () => {
@@ -2480,26 +3640,34 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
             <div className="w-full space-y-2.5 text-left border-t border-slate-100 pt-4">
               <div className="flex items-center gap-3 text-xs sm:text-sm">
                 <div
-                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${connectingStep >= 1
-                    ? "bg-emerald-500 text-white shadow-2xs"
-                    : "bg-slate-100 text-slate-400 border border-slate-200"
-                    }`}
+                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                    connectingStep >= 1
+                      ? "bg-emerald-500 text-white shadow-2xs"
+                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                  }`}
                 >
-                  {connectingStep >= 1 ? <Check className="size-3 stroke-[3]" /> : <Loader2 className="size-3 animate-spin text-teal-600" />}
+                  {connectingStep >= 1 ? (
+                    <Check className="size-3 stroke-[3]" />
+                  ) : (
+                    <Loader2 className="size-3 animate-spin text-teal-600" />
+                  )}
                 </div>
-                <span className={connectingStep >= 1 ? "text-slate-800 font-medium" : "text-slate-400"}>
+                <span
+                  className={connectingStep >= 1 ? "text-slate-800 font-medium" : "text-slate-400"}
+                >
                   Analyzing apparel inventory & merchandising query...
                 </span>
               </div>
 
               <div className="flex items-center gap-3 text-xs sm:text-sm">
                 <div
-                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${connectingStep >= 2
-                    ? "bg-emerald-500 text-white shadow-2xs"
-                    : connectingStep === 1
-                      ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
-                    }`}
+                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                    connectingStep >= 2
+                      ? "bg-emerald-500 text-white shadow-2xs"
+                      : connectingStep === 1
+                        ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
+                        : "bg-slate-100 text-slate-400 border border-slate-200"
+                  }`}
                 >
                   {connectingStep >= 2 ? (
                     <Check className="size-3 stroke-[3]" />
@@ -2509,19 +3677,28 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                     <span className="size-1.5 rounded-full bg-slate-300" />
                   )}
                 </div>
-                <span className={connectingStep >= 2 ? "text-slate-800 font-medium" : connectingStep === 1 ? "text-slate-700 font-medium" : "text-slate-400"}>
+                <span
+                  className={
+                    connectingStep >= 2
+                      ? "text-slate-800 font-medium"
+                      : connectingStep === 1
+                        ? "text-slate-700 font-medium"
+                        : "text-slate-400"
+                  }
+                >
                   Routing to Merchandising & Inventory Agents...
                 </span>
               </div>
 
               <div className="flex items-center gap-3 text-xs sm:text-sm">
                 <div
-                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${connectingStep >= 3
-                    ? "bg-emerald-500 text-white shadow-2xs"
-                    : connectingStep === 2
-                      ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
-                    }`}
+                  className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                    connectingStep >= 3
+                      ? "bg-emerald-500 text-white shadow-2xs"
+                      : connectingStep === 2
+                        ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
+                        : "bg-slate-100 text-slate-400 border border-slate-200"
+                  }`}
                 >
                   {connectingStep >= 3 ? (
                     <Check className="size-3 stroke-[3]" />
@@ -2531,7 +3708,15 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                     <span className="size-1.5 rounded-full bg-slate-300" />
                   )}
                 </div>
-                <span className={connectingStep >= 3 ? "text-slate-800 font-medium" : connectingStep === 2 ? "text-slate-700 font-medium" : "text-slate-400"}>
+                <span
+                  className={
+                    connectingStep >= 3
+                      ? "text-slate-800 font-medium"
+                      : connectingStep === 2
+                        ? "text-slate-700 font-medium"
+                        : "text-slate-400"
+                  }
+                >
                   Synthesizing SKU sell-through, stock & store telemetry...
                 </span>
               </div>
@@ -2585,10 +3770,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
               <button
                 type="button"
                 onClick={() => setIsCategoryFilterOpen((prev) => !prev)}
-                className={`h-8 inline-flex items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition cursor-pointer ${selectedSuggestedCategory !== "All"
-                  ? "border-sky-400/50 bg-sky-500/25 text-white ring-1 ring-sky-400/30"
-                  : "border-sky-400/20 bg-sky-950/40 text-sky-200/80 hover:bg-sky-900/50 hover:text-white"
-                  }`}
+                className={`h-8 inline-flex items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition cursor-pointer ${
+                  selectedSuggestedCategory !== "All"
+                    ? "border-sky-400/50 bg-sky-500/25 text-white ring-1 ring-sky-400/30"
+                    : "border-sky-400/20 bg-sky-950/40 text-sky-200/80 hover:bg-sky-900/50 hover:text-white"
+                }`}
                 title="Filter category"
               >
                 <Filter className="size-3.5 text-sky-300" />
@@ -2596,8 +3782,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                   {selectedSuggestedCategory === "All" ? "Filter" : selectedSuggestedCategory}
                 </span>
                 <ChevronDown
-                  className={`size-3 text-sky-300/80 transition-transform duration-200 ${isCategoryFilterOpen ? "rotate-180" : ""
-                    }`}
+                  className={`size-3 text-sky-300/80 transition-transform duration-200 ${
+                    isCategoryFilterOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
@@ -2617,10 +3804,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                             setSelectedSuggestedCategory(cat.id);
                             setIsCategoryFilterOpen(false);
                           }}
-                          className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition cursor-pointer ${isSelected
-                            ? "bg-tile text-brand-blue font-semibold"
-                            : "text-foreground hover:bg-tile/60"
-                            }`}
+                          className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition cursor-pointer ${
+                            isSelected
+                              ? "bg-tile text-brand-blue font-semibold"
+                              : "text-foreground hover:bg-tile/60"
+                          }`}
                         >
                           <span>{cat.label}</span>
                           {isSelected && <Check className="size-3 text-brand-blue" />}
@@ -2658,10 +3846,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
               type="button"
               onClick={() => switchView("chat")}
               aria-label="ASTYLE"
-              className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${activeView === "chat"
-                ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground hover:bg-tile"
-                }`}
+              className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
+                activeView === "chat"
+                  ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tile"
+              }`}
             >
               <MessageSquare className="size-5" />
             </button>
@@ -2677,10 +3866,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
               type="button"
               onClick={() => switchView("inbox")}
               aria-label="Inbox"
-              className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${activeView === "inbox"
-                ? "bg-chip-active text-chip-active-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground hover:bg-tile"
-                }`}
+              className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
+                activeView === "inbox"
+                  ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tile"
+              }`}
             >
               <Inbox className="size-5" />
               {/* Show the count */}
@@ -2734,8 +3924,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                 <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
 
-                <div className={`w-full flex flex-col items-center text-center z-10 my-auto py-2 transition-all duration-300 ease-out ${isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
-                  }`}>
+                <div
+                  className={`w-full flex flex-col items-center text-center z-10 my-auto py-2 transition-all duration-300 ease-out ${
+                    isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
+                  }`}
+                >
                   {/* Flower Logo above title */}
                   <div className="flex items-center justify-center mb-3 sm:mb-4 group">
                     <img
@@ -2768,10 +3961,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                         <button
                           type="button"
                           onClick={() => setIsReportFormatMode(true)}
-                          className={`text-xs sm:text-sm transition-all cursor-pointer ${isReportFormatMode
-                            ? "font-semibold text-[#0e7490]"
-                            : "font-normal text-slate-500 hover:text-slate-800"
-                            }`}
+                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
+                            isReportFormatMode
+                              ? "font-semibold text-[#0e7490]"
+                              : "font-normal text-slate-500 hover:text-slate-800"
+                          }`}
                         >
                           Deep Insights
                         </button>
@@ -2782,21 +3976,25 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                           aria-checked={!isReportFormatMode}
                           onClick={() => setIsReportFormatMode((prev) => !prev)}
                           className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-slate-200 border border-slate-300 transition-colors duration-200 ease-in-out focus:outline-hidden"
-                          title={isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"}
+                          title={
+                            isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"
+                          }
                         >
                           <span
-                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
-                              }`}
+                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${
+                              isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
+                            }`}
                           />
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setIsReportFormatMode(false)}
-                          className={`text-xs sm:text-sm transition-all cursor-pointer ${!isReportFormatMode
-                            ? "font-semibold text-[#0e7490]"
-                            : "font-normal text-slate-500 hover:text-slate-800"
-                            }`}
+                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
+                            !isReportFormatMode
+                              ? "font-semibold text-[#0e7490]"
+                              : "font-normal text-slate-500 hover:text-slate-800"
+                          }`}
                         >
                           Chat Mode
                         </button>
@@ -2850,10 +4048,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                       <button
                         type="button"
                         onClick={handleVoiceModeClick}
-                        className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${isVoiceActive
-                          ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
-                          : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
-                          }`}
+                        className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${
+                          isVoiceActive
+                            ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
+                            : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
+                        }`}
                       >
                         <Mic className="size-3.5 sm:size-4 text-white" />
                         <span>{isVoiceActive ? "Listening..." : "Voice Mode"}</span>
@@ -2890,10 +4089,17 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                 <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
 
                 {/* Scrollable Conversation Stream */}
-                <div ref={conversationStreamRef} className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-6 pb-28 z-10">
+                <div
+                  ref={conversationStreamRef}
+                  className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-6 pb-28 z-10"
+                >
                   <div className="max-w-3xl mx-auto space-y-6 pb-6">
                     {geminiMessages.map((msg) => (
-                      <div key={msg.id} id={`msg-${msg.id}`} className="space-y-4 animate-in fade-in duration-300">
+                      <div
+                        key={msg.id}
+                        id={`msg-${msg.id}`}
+                        className="space-y-4 animate-in fade-in duration-300"
+                      >
                         {/* USER QUERY BUBBLE */}
                         <div className="flex justify-end">
                           <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
@@ -2911,7 +4117,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                             </div>
                             <div className="flex-1 max-w-2xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs p-4 sm:p-5 text-slate-800 text-sm space-y-3">
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                                <h3 className="font-bold text-slate-900 text-base">{msg.structuredAnswer.reportTitle}</h3>
+                                <h3 className="font-bold text-slate-900 text-base">
+                                  {msg.structuredAnswer.reportTitle}
+                                </h3>
                               </div>
                               <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                                 {msg.structuredAnswer.keyFinding}
@@ -2932,7 +4140,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                     const repos = msg.dataRepos || getDefaultDataRepos(msg.query);
                                     const isCollapsed = collapsedPlanMap[msg.id] ?? false;
                                     const activeCount = plan.filter((a) => a.isEnabled).length;
-                                    const activeReposCount = repos.filter((r) => r.isEnabled).length;
+                                    const activeReposCount = repos.filter(
+                                      (r) => r.isEnabled,
+                                    ).length;
                                     const isAddingAgent = isAddingAgentMsgId === msg.id;
                                     const isAddingRepo = isAddingRepoMsgId === msg.id;
 
@@ -2944,14 +4154,15 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             Report Generation Plan
                                           </h3>
                                           <p className="text-sm text-slate-600 mt-1 font-normal">
-                                            This plan outlines how specialized merchandising agents will analyze data and synthesize findings to generate your report.
+                                            This plan outlines how specialized merchandising agents
+                                            will analyze data and synthesize findings to generate
+                                            your report.
                                           </p>
                                         </div>
 
                                         <div className="space-y-5 pt-1">
                                           {/* 1. AGENTS - SIMPLE LIST VIEW (Minimum 14px font size) */}
                                           <div className="space-y-2.5">
-
                                             <div className="divide-y divide-slate-200/80 rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
                                               {plan.map((agent, index) => {
                                                 const isEditing = editingAgentId === agent.id;
@@ -2959,10 +4170,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                 return (
                                                   <div
                                                     key={agent.id}
-                                                    className={`p-4 sm:p-5 transition-colors ${agent.isEnabled
-                                                      ? "bg-white hover:bg-slate-50/60"
-                                                      : "bg-slate-50/50 opacity-60"
-                                                      }`}
+                                                    className={`p-4 sm:p-5 transition-colors ${
+                                                      agent.isEnabled
+                                                        ? "bg-white hover:bg-slate-50/60"
+                                                        : "bg-slate-50/50 opacity-60"
+                                                    }`}
                                                   >
                                                     <div className="flex items-start justify-between gap-4">
                                                       <div className="flex items-start gap-3.5 min-w-0 flex-1">
@@ -2985,21 +4197,30 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                               <textarea
                                                                 rows={2}
                                                                 value={editedTaskText}
-                                                                onChange={(e) => setEditedTaskText(e.target.value)}
+                                                                onChange={(e) =>
+                                                                  setEditedTaskText(e.target.value)
+                                                                }
                                                                 className="w-full text-sm p-3 rounded-xl border-2 border-[#0e7490] bg-white outline-none text-slate-900 resize-none shadow-inner leading-relaxed"
                                                                 placeholder="Customize what this agent will do in this plan..."
                                                               />
                                                               <div className="flex items-center justify-end gap-2.5">
                                                                 <button
                                                                   type="button"
-                                                                  onClick={() => setEditingAgentId(null)}
+                                                                  onClick={() =>
+                                                                    setEditingAgentId(null)
+                                                                  }
                                                                   className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
                                                                 >
                                                                   Cancel
                                                                 </button>
                                                                 <button
                                                                   type="button"
-                                                                  onClick={() => handleSaveEditAgent(msg.id, agent.id)}
+                                                                  onClick={() =>
+                                                                    handleSaveEditAgent(
+                                                                      msg.id,
+                                                                      agent.id,
+                                                                    )
+                                                                  }
                                                                   className="px-4 py-1.5 text-sm font-semibold text-white bg-[#0e7490] hover:bg-[#0c627a] rounded-lg transition cursor-pointer shadow-2xs"
                                                                 >
                                                                   Save
@@ -3015,7 +4236,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                         {!isEditing && (
                                                           <button
                                                             type="button"
-                                                            onClick={() => handleStartEditAgent(agent)}
+                                                            onClick={() =>
+                                                              handleStartEditAgent(agent)
+                                                            }
                                                             className="text-sm font-medium text-[#0e7490] hover:text-[#0c627a] hover:underline cursor-pointer flex items-center gap-1.5"
                                                             title="Edit agent plan"
                                                           >
@@ -3029,14 +4252,26 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                           type="button"
                                                           role="switch"
                                                           aria-checked={agent.isEnabled}
-                                                          onClick={() => handleToggleAgent(msg.id, agent.id)}
-                                                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${agent.isEnabled ? "bg-[#0e7490]" : "bg-slate-300"
-                                                            }`}
-                                                          title={agent.isEnabled ? "Disable Agent" : "Enable Agent"}
+                                                          onClick={() =>
+                                                            handleToggleAgent(msg.id, agent.id)
+                                                          }
+                                                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${
+                                                            agent.isEnabled
+                                                              ? "bg-[#0e7490]"
+                                                              : "bg-slate-300"
+                                                          }`}
+                                                          title={
+                                                            agent.isEnabled
+                                                              ? "Disable Agent"
+                                                              : "Enable Agent"
+                                                          }
                                                         >
                                                           <span
-                                                            className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out mt-0.5 ${agent.isEnabled ? "translate-x-5.5" : "translate-x-0.5"
-                                                              }`}
+                                                            className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out mt-0.5 ${
+                                                              agent.isEnabled
+                                                                ? "translate-x-5.5"
+                                                                : "translate-x-0.5"
+                                                            }`}
                                                           />
                                                         </button>
                                                       </div>
@@ -3095,6 +4330,80 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             </div>
                                           )}
 
+                                          {/* SUGGESTED NEW SPECIALIST AGENTS — opt-in, nothing runs until approved */}
+                                          {(msg.suggestedAgents ?? []).length > 0 && (
+                                            <div className="space-y-2.5 pt-2">
+                                              <div className="flex items-center justify-between px-1">
+                                                <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                                                  Suggested New Specialist Agents
+                                                </span>
+                                                <span className="text-xs font-medium text-slate-500">
+                                                  {
+                                                    (msg.suggestedAgents ?? []).filter(
+                                                      (a) => a.isApproved,
+                                                    ).length
+                                                  }{" "}
+                                                  of {(msg.suggestedAgents ?? []).length} approved
+                                                </span>
+                                              </div>
+                                              <p className="text-sm text-slate-600 px-1">
+                                                Not part of your standing roster. Approve the ones
+                                                you want this report to use.
+                                              </p>
+
+                                              <div className="divide-y divide-amber-200/70 rounded-xl border border-amber-200 bg-amber-50/40 overflow-hidden">
+                                                {(msg.suggestedAgents ?? []).map((agent) => (
+                                                  <div
+                                                    key={agent.id}
+                                                    className="flex items-start gap-3 p-3.5"
+                                                  >
+                                                    <div className="size-9 shrink-0 rounded-lg bg-white border border-amber-200 flex items-center justify-center text-base">
+                                                      {agent.icon}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <div className="text-sm font-semibold text-slate-900">
+                                                        {agent.name}
+                                                      </div>
+                                                      <div className="text-sm text-slate-600">
+                                                        {agent.role}
+                                                      </div>
+                                                      <p className="text-sm text-slate-600 mt-1">
+                                                        {agent.description}
+                                                      </p>
+                                                      {agent.rationale ? (
+                                                        <p className="text-xs text-amber-800 mt-1.5">
+                                                          Why: {agent.rationale}
+                                                        </p>
+                                                      ) : null}
+                                                    </div>
+                                                    <button
+                                                      type="button"
+                                                      role="switch"
+                                                      aria-checked={agent.isApproved}
+                                                      aria-label={`Approve ${agent.name}`}
+                                                      onClick={() =>
+                                                        handleToggleSuggestedAgent(msg.id, agent.id)
+                                                      }
+                                                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                                                        agent.isApproved
+                                                          ? "bg-[#0e7490]"
+                                                          : "bg-slate-300"
+                                                      }`}
+                                                    >
+                                                      <span
+                                                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow-sm transition duration-200 ${
+                                                          agent.isApproved
+                                                            ? "translate-x-4"
+                                                            : "translate-x-0.5"
+                                                        }`}
+                                                      />
+                                                    </button>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+
                                           {/* 2. ADDITIONAL INSTRUCTIONS PROVIDING OPTION (Minimum 14px font size) */}
                                           <div className="space-y-2 pt-2">
                                             <div className="text-sm font-bold text-slate-800 uppercase tracking-wider px-1">
@@ -3102,7 +4411,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             </div>
                                             <textarea
                                               rows={2}
-                                              value={instructionDraftMap[msg.id] ?? (msg.customInstructions || "")}
+                                              value={
+                                                instructionDraftMap[msg.id] ??
+                                                (msg.customInstructions || "")
+                                              }
                                               onChange={(e) =>
                                                 setInstructionDraftMap((prev) => ({
                                                   ...prev,
@@ -3169,7 +4481,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                           className="text-xs sm:text-sm text-slate-700/90 leading-relaxed font-light"
                                         >
                                           {msg.structuredAnswer.basedOnData ||
-                                            (msg.structuredAnswer.howAnswerFound?.evidenceDatasets?.[0]?.period
+                                            (msg.structuredAnswer.howAnswerFound
+                                              ?.evidenceDatasets?.[0]?.period
                                               ? `based on the data from ${msg.structuredAnswer.howAnswerFound.evidenceDatasets[0].period}`
                                               : "based on the data form 19 may 08 to 21 march 24")}
                                         </p>
@@ -3177,7 +4490,6 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                     </div>
 
                                     <div className="p-5 sm:p-6 space-y-5 text-slate-900">
-
                                       {/* Section 2: Key Findings */}
                                       {revealed >= 2 ? (
                                         <div className="space-y-2.5 pt-0.5 animate-in fade-in duration-300">
@@ -3230,13 +4542,16 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             <button
                                               type="button"
                                               onClick={() => {
-                                                const datasets = msg.structuredAnswer.howAnswerFound?.evidenceDatasets || [];
-                                                const foundDs = datasets.find(
-                                                  (d) =>
-                                                    d.id.includes("inventory") ||
-                                                    d.name.toLowerCase().includes("inventory") ||
-                                                    d.name.toLowerCase().includes("product")
-                                                ) || datasets[0];
+                                                const datasets =
+                                                  msg.structuredAnswer.howAnswerFound
+                                                    ?.evidenceDatasets || [];
+                                                const foundDs =
+                                                  datasets.find(
+                                                    (d) =>
+                                                      d.id.includes("inventory") ||
+                                                      d.name.toLowerCase().includes("inventory") ||
+                                                      d.name.toLowerCase().includes("product"),
+                                                  ) || datasets[0];
 
                                                 if (foundDs) {
                                                   setDatasetSearchQuery("");
@@ -3245,25 +4560,43 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                   setDatasetFilterVal("");
                                                   setCollapsedGroups({});
                                                   setActiveEvidenceDataset(foundDs);
-                                                } else if (msg.structuredAnswer.topProducts?.length) {
+                                                } else if (
+                                                  msg.structuredAnswer.topProducts?.length
+                                                ) {
                                                   const customDs: CxoEvidenceDataset = {
                                                     id: `${msg.id}-products`,
                                                     name: `${msg.structuredAnswer.reportTitle} - Products Master Table`,
                                                     badge: "Products Table",
-                                                    period: msg.structuredAnswer.reportDate || "Current Period",
-                                                    totalSum: msg.structuredAnswer.kpiStats?.[0]?.value || "₹18.4 Cr",
+                                                    period:
+                                                      msg.structuredAnswer.reportDate ||
+                                                      "Current Period",
+                                                    totalSum:
+                                                      msg.structuredAnswer.kpiStats?.[0]?.value ||
+                                                      "₹18.4 Cr",
                                                     recordCount: `${msg.structuredAnswer.topProducts.length} Products`,
-                                                    sourceSystem: "Store POS & Warehouse ERP Balances",
+                                                    sourceSystem:
+                                                      "Store POS & Warehouse ERP Balances",
                                                     citationId: `CIT-${msg.caseId || "DATA"}-PROD`,
                                                     description: `Complete item-level inventory valuation and sales performance records for ${msg.structuredAnswer.reportTitle}.`,
-                                                    columns: ["Product", "Inventory Value", "Inventory Age", "Sales Trend", "Status"],
-                                                    rows: msg.structuredAnswer.topProducts.map((p, idx) => ({
-                                                      "Product": p.product,
-                                                      "Inventory Value": p.inventory,
-                                                      "Inventory Age": p.age,
-                                                      "Sales Trend": p.salesTrend,
-                                                      "Status": idx < 2 ? "Critical Exposure" : "Moderate Risk",
-                                                    })),
+                                                    columns: [
+                                                      "Product",
+                                                      "Inventory Value",
+                                                      "Inventory Age",
+                                                      "Sales Trend",
+                                                      "Status",
+                                                    ],
+                                                    rows: msg.structuredAnswer.topProducts.map(
+                                                      (p, idx) => ({
+                                                        Product: p.product,
+                                                        "Inventory Value": p.inventory,
+                                                        "Inventory Age": p.age,
+                                                        "Sales Trend": p.salesTrend,
+                                                        Status:
+                                                          idx < 2
+                                                            ? "Critical Exposure"
+                                                            : "Moderate Risk",
+                                                      }),
+                                                    ),
                                                   };
                                                   setDatasetSearchQuery("");
                                                   setDatasetGroupBy("");
@@ -3287,20 +4620,25 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             {msg.structuredAnswer.topProducts.map((p, pIdx) => (
                                               <div
                                                 key={pIdx}
-                                                className={`flex items-center justify-between gap-3 py-2.5 hover:bg-slate-50/80 transition text-sm ${pIdx > 0 ? "pt-2.5" : ""
-                                                  }`}
+                                                className={`flex items-center justify-between gap-3 py-2.5 hover:bg-slate-50/80 transition text-sm ${
+                                                  pIdx > 0 ? "pt-2.5" : ""
+                                                }`}
                                               >
                                                 <div className="flex items-center gap-3 min-w-0">
                                                   <span className="size-6 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0">
                                                     {pIdx + 1}
                                                   </span>
-                                                  <span className="font-semibold text-slate-900 truncate text-sm sm:text-[15px]">{p.product}</span>
+                                                  <span className="font-semibold text-slate-900 truncate text-sm sm:text-[15px]">
+                                                    {p.product}
+                                                  </span>
                                                 </div>
                                                 <div className="flex items-center gap-3 sm:gap-4 shrink-0">
                                                   <span className="font-bold text-slate-950 font-['Archivo'] tabular-nums text-sm sm:text-base">
                                                     {p.inventory}
                                                   </span>
-                                                  <span className="text-xs sm:text-sm text-slate-500 hidden sm:inline">{p.age}</span>
+                                                  <span className="text-xs sm:text-sm text-slate-500 hidden sm:inline">
+                                                    {p.age}
+                                                  </span>
                                                   <span className="text-xs sm:text-sm font-bold text-rose-600 font-['Archivo'] tabular-nums">
                                                     {p.salesTrend}
                                                   </span>
@@ -3320,7 +4658,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                           </div>
                                           <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 space-y-3 shadow-2xs">
                                             {[1, 2, 3].map((i) => (
-                                              <div key={i} className="flex items-center justify-between gap-3">
+                                              <div
+                                                key={i}
+                                                className="flex items-center justify-between gap-3"
+                                              >
                                                 <div className="flex items-center gap-3">
                                                   <div className="size-6 rounded-full bg-slate-200" />
                                                   <div className="h-4 bg-slate-200 rounded w-36 sm:w-48" />
@@ -3336,21 +4677,22 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                       )}
 
                                       {/* Section 4: Chart */}
-                                      {msg.structuredAnswer.findingChart && (
-                                        revealed >= 4 ? (
+                                      {msg.structuredAnswer.findingChart &&
+                                        (revealed >= 4 ? (
                                           (() => {
                                             const chart = msg.structuredAnswer.findingChart!;
                                             const maxVal = Math.max(
                                               ...chart.bars.map((b) => b.value),
                                               chart.benchmarkValue || 0,
-                                              1
+                                              1,
                                             );
 
                                             return (
                                               <div className="space-y-2 animate-in fade-in duration-300">
                                                 <div>
                                                   <span className="inline-flex items-center rounded-full text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1">
-                                                    {chart.title || "Inventory Exposure Concentration"}
+                                                    {chart.title ||
+                                                      "Inventory Exposure Concentration"}
                                                   </span>
                                                 </div>
 
@@ -3366,7 +4708,13 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                         </div>
 
                                                         {chart.bars.map((bar, bIdx) => {
-                                                          const colHeightPercent = Math.min(100, Math.max(15, (bar.value / maxVal) * 100));
+                                                          const colHeightPercent = Math.min(
+                                                            100,
+                                                            Math.max(
+                                                              15,
+                                                              (bar.value / maxVal) * 100,
+                                                            ),
+                                                          );
 
                                                           return (
                                                             <div
@@ -3378,7 +4726,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                               </div>
 
                                                               <div
-                                                                style={{ height: `${colHeightPercent}%` }}
+                                                                style={{
+                                                                  height: `${colHeightPercent}%`,
+                                                                }}
                                                                 className="w-10 sm:w-14 rounded-t-lg transition-all duration-500 shadow-xs relative flex flex-col justify-start overflow-hidden bg-gradient-to-t from-[#0e7490] via-[#0891b2] to-cyan-400 border-t border-x border-cyan-200"
                                                               >
                                                                 <div className="h-1 w-full bg-white/40 rounded-t-lg" />
@@ -3430,8 +4780,7 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                               <div className="w-12 bg-slate-200 rounded-t-lg h-12" />
                                             </div>
                                           </div>
-                                        )
-                                      )}
+                                        ))}
 
                                       {/* Section 5: What is driving the exposure? */}
                                       {revealed >= 5 ? (
@@ -3442,7 +4791,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             </span>
                                           </div>
                                           <p className="text-sm text-slate-700 leading-relaxed font-normal">
-                                            {getDriverSummaryText(msg.caseId, msg.structuredAnswer.reportTitle)}
+                                            {getDriverSummaryText(
+                                              msg.caseId,
+                                              msg.structuredAnswer.reportTitle,
+                                            )}
                                           </p>
                                           <div className="border border-slate-200 rounded-xl bg-white divide-y divide-slate-100 overflow-hidden shadow-2xs">
                                             <div className="px-3.5 py-2.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs sm:text-sm font-bold text-slate-800">
@@ -3452,10 +4804,13 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             {msg.structuredAnswer.drivers.map((d, dIdx) => (
                                               <div
                                                 key={dIdx}
-                                                className={`px-3.5 py-2.5 flex items-center justify-between text-xs sm:text-sm ${dIdx % 2 === 0 ? "bg-white" : "bg-slate-50/70"
-                                                  }`}
+                                                className={`px-3.5 py-2.5 flex items-center justify-between text-xs sm:text-sm ${
+                                                  dIdx % 2 === 0 ? "bg-white" : "bg-slate-50/70"
+                                                }`}
                                               >
-                                                <span className="font-bold text-slate-900">{d.label}</span>
+                                                <span className="font-bold text-slate-900">
+                                                  {d.label}
+                                                </span>
                                                 <span className="font-bold text-slate-950 font-['Archivo'] tabular-nums">
                                                   {d.value}
                                                 </span>
@@ -3495,8 +4850,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                             </h3>
                                             <div className="flex items-center justify-center size-8 rounded-full group-hover:bg-slate-100 text-slate-500 group-hover:text-blue-600 transition-colors shrink-0">
                                               <ChevronDown
-                                                className={`size-4.5 transition-transform duration-200 ${expandedHowFound[msg.id] !== false ? "rotate-180 text-blue-600" : ""
-                                                  }`}
+                                                className={`size-4.5 transition-transform duration-200 ${
+                                                  expandedHowFound[msg.id] !== false
+                                                    ? "rotate-180 text-blue-600"
+                                                    : ""
+                                                }`}
                                               />
                                             </div>
                                           </button>
@@ -3510,9 +4868,15 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                               <ReportPipelineDiagram
                                                 caseId={msg.caseId}
                                                 reportTitle={msg.structuredAnswer.reportTitle}
-                                                datasets={msg.structuredAnswer.howAnswerFound?.evidenceDatasets || []}
+                                                datasets={
+                                                  msg.structuredAnswer.howAnswerFound
+                                                    ?.evidenceDatasets || []
+                                                }
                                                 onSelectDataset={(datasetId) => {
-                                                  const ds = msg.structuredAnswer.howAnswerFound?.evidenceDatasets?.find((d) => d.id === datasetId);
+                                                  const ds =
+                                                    msg.structuredAnswer.howAnswerFound?.evidenceDatasets?.find(
+                                                      (d) => d.id === datasetId,
+                                                    );
                                                   if (ds) {
                                                     setDatasetSearchQuery("");
                                                     setDatasetGroupBy("");
@@ -3543,12 +4907,17 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                                     KEY EVIDENCE
                                                   </h4>
                                                   <ul className="space-y-2">
-                                                    {msg.structuredAnswer.howAnswerFound.findings.map((f, fIdx) => (
-                                                      <li key={fIdx} className="flex items-start gap-2.5 text-sm text-slate-900 leading-relaxed">
-                                                        <span className="size-2 rounded-full bg-blue-600 shrink-0 mt-2" />
-                                                        <span>{f}</span>
-                                                      </li>
-                                                    ))}
+                                                    {msg.structuredAnswer.howAnswerFound.findings.map(
+                                                      (f, fIdx) => (
+                                                        <li
+                                                          key={fIdx}
+                                                          className="flex items-start gap-2.5 text-sm text-slate-900 leading-relaxed"
+                                                        >
+                                                          <span className="size-2 rounded-full bg-blue-600 shrink-0 mt-2" />
+                                                          <span>{f}</span>
+                                                        </li>
+                                                      ),
+                                                    )}
                                                   </ul>
                                                 </div>
                                               )}
@@ -3586,15 +4955,18 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                       <div className="divide-y divide-slate-100">
                                         {[
                                           {
-                                            label: "Change date period to last 30 days & regenerate",
+                                            label:
+                                              "Change date period to last 30 days & regenerate",
                                             query: `Change date period to last 30 days and regenerate report for ${msg.structuredAnswer.reportTitle}`,
                                           },
                                           {
-                                            label: "Change date period to previous quarter (Q1) & regenerate",
+                                            label:
+                                              "Change date period to previous quarter (Q1) & regenerate",
                                             query: `Change date period to previous quarter Q1 and regenerate report for ${msg.structuredAnswer.reportTitle}`,
                                           },
                                           {
-                                            label: "Filter by top 10 flagship stores only & recalculate",
+                                            label:
+                                              "Filter by top 10 flagship stores only & recalculate",
                                             query: `Filter by top 10 flagship stores only and recalculate ${msg.structuredAnswer.reportTitle}`,
                                           },
                                           {
@@ -3610,7 +4982,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                           >
                                             <span className="flex items-center gap-2.5">
                                               <span className="size-2 rounded-full bg-slate-300 group-hover:bg-blue-600 transition shrink-0" />
-                                              <span className="font-medium text-slate-900 group-hover:text-blue-700 group-hover:underline underline-offset-2">{sug.label}</span>
+                                              <span className="font-medium text-slate-900 group-hover:text-blue-700 group-hover:underline underline-offset-2">
+                                                {sug.label}
+                                              </span>
                                             </span>
                                             <ArrowRight className="size-4 text-slate-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition shrink-0" />
                                           </button>
@@ -3621,7 +4995,6 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                                 </>
                               );
                             })()}
-
                           </>
                         )}
                       </div>
@@ -3629,7 +5002,10 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
                     {/* STREAMING / THINKING SHIMMER */}
                     {isGeminiLoading && (
-                      <div id="gemini-loader" className="space-y-4 animate-in fade-in duration-200 scroll-mt-6">
+                      <div
+                        id="gemini-loader"
+                        className="space-y-4 animate-in fade-in duration-200 scroll-mt-6"
+                      >
                         {/* User Query Bubble */}
                         <div className="flex justify-end">
                           <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
@@ -3640,79 +5016,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                           </div>
                         </div>
 
-                        {/* AI Loading Card with Rotating Logo, Agent Description on Right & Shimmer Below */}
-                        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm space-y-5">
-                          {/* Rotating Logo + Agent Status on Right */}
-                          <div className="flex items-center gap-3.5 pb-2 border-b border-slate-100">
-                            <div className="size-10 rounded-xl bg-white shadow-xs border border-slate-200 flex items-center justify-center p-2 shrink-0">
-                              <img
-                                src="/flower-logo.png"
-                                alt="AI Analysis"
-                                className="size-full object-contain animate-spin"
-                                style={{ animationDuration: "2.4s" }}
-                              />
-                            </div>
-                            <div className="flex items-center gap-2.5 text-sm sm:text-[15px] text-slate-800 font-semibold min-w-0">
-                              <span key={geminiLoadingStage} className="transition-all duration-300 animate-in fade-in truncate">
-                                {geminiLoadingStage}
-                              </span>
-                              <span className="inline-flex gap-1 shrink-0">
-                                <span className="size-1.5 rounded-full bg-[#0e7490] animate-bounce [animation-delay:-0.3s]" />
-                                <span className="size-1.5 rounded-full bg-[#0e7490] animate-bounce [animation-delay:-0.15s]" />
-                                <span className="size-1.5 rounded-full bg-[#0e7490] animate-bounce" />
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Shimmer Effect Below */}
-                          <div className="space-y-4 pt-1">
-                            {/* Date, Title & Data Source Shimmer */}
-                            <div className="space-y-2">
-                              <div className="h-3.5 w-32 bg-slate-200/80 rounded-md shimmer-effect" />
-                              <div className="h-6 w-3/4 sm:w-2/3 bg-slate-200/90 rounded-lg shimmer-effect" />
-                              <div className="h-3.5 w-52 bg-slate-200/70 rounded-md shimmer-effect" />
-                            </div>
-
-                            {/* 4 KPI Metric Cards Shimmer */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                              {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/70 space-y-2 shimmer-effect">
-                                  <div className="h-5 w-20 bg-slate-200/85 rounded" />
-                                  <div className="h-3 w-24 bg-slate-200/65 rounded" />
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Key Findings Shimmer */}
-                            <div className="space-y-2.5 pt-1">
-                              <div className="h-5 w-28 bg-blue-100/80 rounded-full shimmer-effect" />
-                              <div className="space-y-2">
-                                <div className="h-3.5 w-11/12 bg-slate-200/75 rounded shimmer-effect" />
-                                <div className="h-3.5 w-4/5 bg-slate-200/75 rounded shimmer-effect" />
-                                <div className="h-3.5 w-3/5 bg-slate-200/65 rounded shimmer-effect" />
-                              </div>
-                            </div>
-
-                            {/* Products / Chart Skeleton Shimmer */}
-                            <div className="space-y-2 pt-1">
-                              <div className="h-5 w-32 bg-blue-100/80 rounded-full shimmer-effect" />
-                              <div className="rounded-xl border border-slate-200/70 bg-slate-50/50 p-4 space-y-3 shimmer-effect">
-                                {[1, 2, 3].map((row) => (
-                                  <div key={row} className="flex items-center justify-between gap-3 py-1.5">
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="size-5 rounded-full bg-slate-200/80" />
-                                      <div className="h-4 w-36 sm:w-48 bg-slate-200/80 rounded" />
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-4 w-16 bg-slate-200/80 rounded" />
-                                      <div className="h-4 w-12 bg-slate-200/70 rounded" />
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        {/* Mode-specific waiting state. Stays up until a socket
+                            event for this run arrives — nothing here is on a timer. */}
+                        {pendingRun?.mode === "chat" ? <ChatSkeleton /> : <PlanSkeleton />}
                       </div>
                     )}
 
@@ -3722,8 +5028,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
                 {/* FLOATING BOTTOM SEARCH BAR WITH SEAMLESS GRADIENT FADE */}
                 <div className="absolute bottom-0 inset-x-0 pointer-events-none bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 via-55% to-transparent pt-14 pb-4 px-4 sm:px-6 z-30">
-                  <div className={`mx-auto flex items-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
-                    }`}>
+                  <div
+                    className={`mx-auto flex items-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${
+                      isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
+                    }`}
+                  >
                     <form
                       onFocus={() => setIsSearchFocused(true)}
                       onBlur={(e) => {
@@ -3760,10 +5069,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                       <button
                         type="button"
                         onClick={handleVoiceModeClick}
-                        className={`size-9 rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${isVoiceActive
-                          ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
-                          : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
-                          }`}
+                        className={`size-9 rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${
+                          isVoiceActive
+                            ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
+                            : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
+                        }`}
                         title={isVoiceActive ? "Listening... Click to stop" : "Voice input"}
                         aria-label="Voice input"
                       >
@@ -3798,13 +5108,16 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
             <div className="flex-1 flex min-w-0 h-full overflow-hidden">
               {/* LEFT COLUMN: OUTLOOK-STYLE CASE & AGENT LIST (380px width) */}
               <aside
-                className={`w-full lg:w-[380px] shrink-0 border-r-2 border-border dark:border-zinc-800 bg-surface flex flex-col h-full overflow-hidden ${mobileActiveView === "detail" ? "hidden lg:flex" : "flex"
-                  }`}
+                className={`w-full lg:w-[380px] shrink-0 border-r-2 border-border dark:border-zinc-800 bg-surface flex flex-col h-full overflow-hidden ${
+                  mobileActiveView === "detail" ? "hidden lg:flex" : "flex"
+                }`}
               >
                 {/* Header of Active Cases */}
                 <div className="px-5 py-3.5 border-b border-border/80 flex items-center justify-between bg-surface shrink-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-foreground tracking-tight">Active Cases</h3>
+                    <h3 className="text-sm font-semibold text-foreground tracking-tight">
+                      Active Cases
+                    </h3>
                     <span className="px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-xs font-bold">
                       {displayedCases.length}
                     </span>
@@ -3875,16 +5188,20 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                             handleSelectCase(c, i);
                           }
                         }}
-                        className={`w-full text-left p-5 sm:p-5.5 transition-all cursor-pointer relative group border-l-4 border-b border-border/80 dark:border-zinc-800 ${isSelected
-                          ? "border-l-brand-blue bg-blue-50/80 dark:bg-blue-950/45 shadow-xs"
-                          : "border-l-transparent hover:bg-tile/75"
-                          }`}
+                        className={`w-full text-left p-5 sm:p-5.5 transition-all cursor-pointer relative group border-l-4 border-b border-border/80 dark:border-zinc-800 ${
+                          isSelected
+                            ? "border-l-brand-blue bg-blue-50/80 dark:bg-blue-950/45 shadow-xs"
+                            : "border-l-transparent hover:bg-tile/75"
+                        }`}
                       >
                         {/* Top Line: Age / Timestamp + 3 Count for 3rd Item */}
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2 min-w-0">
                             {c.isLive && c.age !== "Just now" && (
-                              <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live Continuous Monitoring" />
+                              <span
+                                className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0"
+                                title="Live Continuous Monitoring"
+                              />
                             )}
                             <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
                               {c.age}
@@ -3893,7 +5210,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
                           <div className="flex items-center gap-2 shrink-0">
                             {/* 3 count right side to represent new 3 findings (only for the third item) */}
-                            {(c.newFindingsCount || c.title.includes("largest share") || i === 2) && (
+                            {(c.newFindingsCount ||
+                              c.title.includes("largest share") ||
+                              i === 2) && (
                               <span
                                 className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-brand-blue text-white text-xs font-bold shadow-2xs shrink-0"
                                 title="3 new findings"
@@ -3939,8 +5258,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
 
               {/* RIGHT COLUMN: OUTLOOK-STYLE READING PANE */}
               <section
-                className={`flex-1 min-w-0 h-full overflow-hidden flex flex-col bg-surface-tint ${mobileActiveView === "list" ? "hidden lg:flex" : "flex"
-                  }`}
+                className={`flex-1 min-w-0 h-full overflow-hidden flex flex-col bg-surface-tint ${
+                  mobileActiveView === "list" ? "hidden lg:flex" : "flex"
+                }`}
               >
                 {isCaseLoading ? (
                   <div className="flex-1 flex flex-col h-full bg-surface-tint overflow-hidden animate-in fade-in duration-150">
@@ -3998,7 +5318,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                           style={{ color: "#41485e" }}
                           className="text-[11px] sm:text-xs text-[#41485e]/80 dark:text-slate-400/75 leading-relaxed"
                         >
-                          Choose an item from the left pane to view its executive summary and evidence records.
+                          Choose an item from the left pane to view its executive summary and
+                          evidence records.
                         </p>
                       </div>
                     </div>
@@ -4038,7 +5359,12 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                     {activeEvidenceDataset.name}
                   </h1>
                   <p className="text-xs sm:text-sm text-sky-200/80 truncate hidden sm:block">
-                    Source: <span className="text-white font-medium">{activeEvidenceDataset.sourceSystem}</span> · Period: <span className="text-white font-medium">{activeEvidenceDataset.period}</span>
+                    Source:{" "}
+                    <span className="text-white font-medium">
+                      {activeEvidenceDataset.sourceSystem}
+                    </span>{" "}
+                    · Period:{" "}
+                    <span className="text-white font-medium">{activeEvidenceDataset.period}</span>
                   </p>
                 </div>
               </div>
@@ -4189,7 +5515,11 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
               </div>
 
               <div className="text-sm text-slate-500 font-normal whitespace-nowrap ml-auto">
-                Showing <strong className="text-slate-900 font-semibold">{filteredEvidenceRows.length}</strong> of {activeEvidenceDataset.rows.length} records
+                Showing{" "}
+                <strong className="text-slate-900 font-semibold">
+                  {filteredEvidenceRows.length}
+                </strong>{" "}
+                of {activeEvidenceDataset.rows.length} records
               </div>
             </div>
 
@@ -4200,83 +5530,97 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                   <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs font-bold sticky top-0 uppercase tracking-wider z-10">
                     <tr>
                       {activeEvidenceDataset.columns.map((col, idx) => (
-                        <th key={idx} className="py-2.5 px-3.5 whitespace-nowrap bg-slate-100 font-bold text-slate-700 text-xs sm:text-[13px]">
+                        <th
+                          key={idx}
+                          className="py-2.5 px-3.5 whitespace-nowrap bg-slate-100 font-bold text-slate-700 text-xs sm:text-[13px]"
+                        >
                           {col}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-800 text-[14px]">
-                    {groupedEvidenceRows ? (
-                      Object.entries(groupedEvidenceRows).map(([groupKey, groupRows]) => {
-                        const isCollapsed = collapsedGroups[groupKey];
-                        return (
-                          <Fragment key={groupKey}>
-                            {/* Group Header Row */}
-                            <tr
-                              onClick={() => toggleGroupCollapse(groupKey)}
-                              className="bg-slate-100/90 hover:bg-slate-200/80 transition-colors cursor-pointer border-y border-slate-200 select-none"
-                            >
-                              <td
-                                colSpan={activeEvidenceDataset.columns.length}
-                                className="py-2 px-3.5 font-semibold text-[14px] text-slate-900"
+                    {groupedEvidenceRows
+                      ? Object.entries(groupedEvidenceRows).map(([groupKey, groupRows]) => {
+                          const isCollapsed = collapsedGroups[groupKey];
+                          return (
+                            <Fragment key={groupKey}>
+                              {/* Group Header Row */}
+                              <tr
+                                onClick={() => toggleGroupCollapse(groupKey)}
+                                className="bg-slate-100/90 hover:bg-slate-200/80 transition-colors cursor-pointer border-y border-slate-200 select-none"
                               >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <ChevronRight
-                                      className={`size-3.5 text-slate-600 transition-transform duration-150 ${isCollapsed ? "" : "rotate-90 text-[#0e7490]"
+                                <td
+                                  colSpan={activeEvidenceDataset.columns.length}
+                                  className="py-2 px-3.5 font-semibold text-[14px] text-slate-900"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <ChevronRight
+                                        className={`size-3.5 text-slate-600 transition-transform duration-150 ${
+                                          isCollapsed ? "" : "rotate-90 text-[#0e7490]"
                                         }`}
-                                    />
-                                    <span className="text-slate-500 text-[11px] uppercase tracking-wider font-bold">
-                                      {datasetGroupBy}:
-                                    </span>
-                                    <span className="text-slate-900 font-bold text-[14px]">{groupKey}</span>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-slate-700 border border-slate-200 shadow-2xs">
-                                      {groupRows.length} records
+                                      />
+                                      <span className="text-slate-500 text-[11px] uppercase tracking-wider font-bold">
+                                        {datasetGroupBy}:
+                                      </span>
+                                      <span className="text-slate-900 font-bold text-[14px]">
+                                        {groupKey}
+                                      </span>
+                                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-slate-700 border border-slate-200 shadow-2xs">
+                                        {groupRows.length} records
+                                      </span>
+                                    </div>
+                                    <span className="text-xs text-slate-400 font-normal">
+                                      {isCollapsed ? "Click to expand" : "Click to collapse"}
                                     </span>
                                   </div>
-                                  <span className="text-xs text-slate-400 font-normal">
-                                    {isCollapsed ? "Click to expand" : "Click to collapse"}
-                                  </span>
-                                </div>
-                              </td>
-                            </tr>
+                                </td>
+                              </tr>
 
-                            {/* Group Items */}
-                            {!isCollapsed &&
-                              groupRows.map((row, rIdx) => (
-                                <tr
-                                  key={rIdx}
-                                  className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
-                                >
-                                  {activeEvidenceDataset.columns.map((col, cIdx) => (
-                                    <td key={cIdx} className="py-2.5 px-3.5 whitespace-nowrap font-normal text-slate-800 text-[14px]">
-                                      {row[col] ?? "—"}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                          </Fragment>
-                        );
-                      })
-                    ) : (
-                      filteredEvidenceRows.map((row, rIdx) => (
-                        <tr
-                          key={rIdx}
-                          className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
-                        >
-                          {activeEvidenceDataset.columns.map((col, cIdx) => (
-                            <td key={cIdx} className="py-2.5 px-3.5 whitespace-nowrap font-normal text-slate-800 text-[14px]">
-                              {row[col] ?? "—"}
-                            </td>
-                          ))}
-                        </tr>
-                      ))
-                    )}
+                              {/* Group Items */}
+                              {!isCollapsed &&
+                                groupRows.map((row, rIdx) => (
+                                  <tr
+                                    key={rIdx}
+                                    className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
+                                  >
+                                    {activeEvidenceDataset.columns.map((col, cIdx) => (
+                                      <td
+                                        key={cIdx}
+                                        className="py-2.5 px-3.5 whitespace-nowrap font-normal text-slate-800 text-[14px]"
+                                      >
+                                        {row[col] ?? "—"}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                            </Fragment>
+                          );
+                        })
+                      : filteredEvidenceRows.map((row, rIdx) => (
+                          <tr
+                            key={rIdx}
+                            className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
+                          >
+                            {activeEvidenceDataset.columns.map((col, cIdx) => (
+                              <td
+                                key={cIdx}
+                                className="py-2.5 px-3.5 whitespace-nowrap font-normal text-slate-800 text-[14px]"
+                              >
+                                {row[col] ?? "—"}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
                     {filteredEvidenceRows.length === 0 && (
                       <tr>
-                        <td colSpan={activeEvidenceDataset.columns.length} className="py-12 text-center text-[14px] text-slate-500">
-                          No matching records found{datasetSearchQuery ? ` for "${datasetSearchQuery}"` : ""}.
+                        <td
+                          colSpan={activeEvidenceDataset.columns.length}
+                          className="py-12 text-center text-[14px] text-slate-500"
+                        >
+                          No matching records found
+                          {datasetSearchQuery ? ` for "${datasetSearchQuery}"` : ""}.
                         </td>
                       </tr>
                     )}
@@ -4284,7 +5628,8 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                 </table>
               </div>
               <p className="mt-2 text-[11px] text-slate-500 italic">
-                * {activeEvidenceDataset.description} Citations cross-reconciled against live warehouse and POS feeds.
+                * {activeEvidenceDataset.description} Citations cross-reconciled against live
+                warehouse and POS feeds.
               </p>
             </div>
           </div>
@@ -4302,7 +5647,9 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Add New Active Case</h3>
-                  <p className="text-xs text-slate-500">Initiate an autonomous garment & merchandising investigation</p>
+                  <p className="text-xs text-slate-500">
+                    Initiate an autonomous garment & merchandising investigation
+                  </p>
                 </div>
               </div>
               <button
@@ -4340,11 +5687,21 @@ export function CxoDashboard({ initialView = "chat" }: { initialView?: "chat" | 
                   onChange={(e) => setNewCaseAgent(e.target.value)}
                   className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/20 outline-none text-slate-900 bg-white"
                 >
-                  <option value="Inventory Planning & Allocation">Inventory Planning & Allocation</option>
-                  <option value="Revenue & Markdown Optimization">Revenue & Markdown Optimization</option>
-                  <option value="Supply Chain & Stockout Guard">Supply Chain & Stockout Guard</option>
-                  <option value="Launch & Seasonal Sell-Through">Launch & Seasonal Sell-Through</option>
-                  <option value="Store POS & Regional Performance">Store POS & Regional Performance</option>
+                  <option value="Inventory Planning & Allocation">
+                    Inventory Planning & Allocation
+                  </option>
+                  <option value="Revenue & Markdown Optimization">
+                    Revenue & Markdown Optimization
+                  </option>
+                  <option value="Supply Chain & Stockout Guard">
+                    Supply Chain & Stockout Guard
+                  </option>
+                  <option value="Launch & Seasonal Sell-Through">
+                    Launch & Seasonal Sell-Through
+                  </option>
+                  <option value="Store POS & Regional Performance">
+                    Store POS & Regional Performance
+                  </option>
                 </select>
               </div>
 

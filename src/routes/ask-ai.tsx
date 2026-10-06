@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouteContext } from "@tanstack/react-router";
 import { CxoDashboard } from "../components/CxoDashboard";
 
 export const Route = createFileRoute("/ask-ai")({
@@ -22,5 +22,7 @@ export const Route = createFileRoute("/ask-ai")({
 });
 
 function AskAiPage() {
-  return <CxoDashboard initialView="chat" />;
+  const { sessions } = useRouteContext({ from: "__root__" });
+
+  return <CxoDashboard initialView="chat" initialSessions={sessions} />;
 }

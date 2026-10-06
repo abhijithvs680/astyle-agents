@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouteContext } from "@tanstack/react-router";
 import { CxoDashboard } from "../components/CxoDashboard";
 
 export const Route = createFileRoute("/inbox")({
@@ -22,5 +22,7 @@ export const Route = createFileRoute("/inbox")({
 });
 
 function InboxPage() {
-  return <CxoDashboard initialView="inbox" />;
+  const { sessions } = useRouteContext({ from: "__root__" });
+
+  return <CxoDashboard initialView="inbox" initialSessions={sessions} />;
 }

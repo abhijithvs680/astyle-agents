@@ -3,6 +3,7 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  redirect,
   useRouter,
   HeadContent,
   Scripts,
@@ -10,7 +11,13 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { establishSession } from "../api/auth";
+import { fetchInitialData } from "../api/initial-data";
+import { InvalidConfiguration } from "../components/InvalidConfiguration";
+import { SocketProvider } from "../components/SocketProvider";
+import { TOKEN_SEARCH_PARAM } from "../config";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { toHistorySessions } from "../lib/sessions";
 
 function NotFoundComponent() {
   return (
@@ -73,6 +80,38 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // The token may arrive on any route, not just "/", so it is parsed here.
+  validateSearch: (search: Record<string, unknown>): { token?: string } => {
+    const raw = search[TOKEN_SEARCH_PARAM];
+    const token = typeof raw === "string" ? raw.trim() : "";
+    return token === "" ? {} : { token };
+  },
+  // Gates every route: validates the token, seals the session, and loads the
+  // bootstrap data the sidebar renders on whichever page the user landed on.
+  beforeLoad: async ({ search, location }) => {
+    const auth = await establishSession({ data: { token: search.token ?? "" } });
+
+    // Once the token is sealed into the cookie the URL copy is redundant, and a
+    // credential in the address bar leaks into history, bookmarks and Referer
+    // headers. Drop it while staying on the current page. A rejected token is
+    // left in place so the error page can stay specific.
+    if (search.token !== undefined && auth.status === "authenticated") {
+      throw redirect({ href: location.pathname, replace: true });
+    }
+
+    if (auth.status !== "authenticated") {
+      return { auth, sessions: [] };
+    }
+
+    // Fail soft: a bootstrap hiccup shouldn't lock the user out of an app they
+    // are authenticated for — the sidebar just starts empty.
+    const sessions = await fetchInitialData().catch((error: unknown) => {
+      console.error("[initial-data] failed to load session history", error);
+      return [];
+    });
+
+    return { auth, sessions: toHistorySessions(sessions) };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -121,12 +160,18 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient, auth } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {auth.status === "invalid" ? (
+        <InvalidConfiguration reason={auth.reason} />
+      ) : (
+        <SocketProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </SocketProvider>
+      )}
     </QueryClientProvider>
   );
 }
