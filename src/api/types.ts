@@ -96,6 +96,8 @@ export type ConversationEntry = {
        * editing instead of rendering as settled history.
        */
       approvedStatus: string;
+      /** ApprovedData records the roster actually sent when Continue was pressed. */
+      approvedData?: string;
       /**
        * Whether the card should print the prompt the plan echoes back. False
        * once the session also stores the user's own turn, so the question is

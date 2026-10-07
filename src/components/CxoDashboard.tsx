@@ -1,11 +1,9 @@
 import { useState, useRef, useEffect, useMemo, useCallback, Fragment } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Inbox,
   Home,
-  Bot,
   FileText,
-  Server,
   Sparkles,
   Archive,
   ChevronDown,
@@ -40,7 +38,6 @@ import {
   FileSpreadsheet,
   Download,
   ShieldCheck,
-  BarChart3,
   Pencil,
   RotateCcw,
   SlidersHorizontal,
@@ -77,13 +74,16 @@ import { continueReport } from "../api/report";
 import type { ConversationEntry } from "../api/types";
 import type { AnalysisMode } from "../api/types";
 
-const railIcons = [
-  { icon: Inbox, label: "Inbox", to: "/inbox" },
-  { icon: Bot, label: "Agents", to: "/cases" },
-  { icon: FileText, label: "Files", to: "/files" },
-  { icon: Server, label: "Data Center", to: "/data-center" },
-  { icon: BarChart3, label: "Charts", to: "/charts" },
-];
+type PastTurn = {
+  id: string;
+  query: string;
+  plan: ReportPlan | null;
+  report: Report | null;
+  awaitingPlan: boolean;
+  awaitingReport: boolean;
+  continueStage: ContinueStage;
+  creatingAgentCount: number;
+};
 
 export interface ActiveCaseItem {
   age: string;
@@ -2831,7 +2831,9 @@ const getInitialPending = (): { pendingCase: ActiveCaseItem | null; shouldLoad: 
       }
       return { pendingCase: parsed, shouldLoad: true };
     }
-  } catch {}
+  } catch {
+    // Ignore an invalid saved case and leave the inbox unchanged.
+  }
   return { pendingCase: null, shouldLoad: false };
 };
 
@@ -2908,6 +2910,7 @@ export function CxoDashboard({
     setReportPlan(null);
     setContinueStage("idle");
     setReport(null);
+    setPastTurns([]);
     setOpenedSessionId(session.id);
 
     setIsLoadingConversations(true);
@@ -2942,10 +2945,6 @@ export function CxoDashboard({
       .finally(() => {
         setIsLoadingConversations(false);
       });
-
-    setTimeout(() => {
-      scrollStreamToBottom(false);
-    }, 60);
   };
 
   const handleNewSession = () => {
@@ -2963,6 +2962,7 @@ export function CxoDashboard({
     setOpenedSessionId(null);
     setConversationEntries([]);
     setReportPlan(null);
+    setPastTurns([]);
   };
 
   /**
@@ -2987,15 +2987,6 @@ export function CxoDashboard({
       geminiTimersRef.current.forEach((t) => clearTimeout(t));
     };
   }, []);
-
-  const scrollStreamToBottom = (smooth = true) => {
-    if (conversationStreamRef.current) {
-      conversationStreamRef.current.scrollTo({
-        top: conversationStreamRef.current.scrollHeight,
-        behavior: smooth ? "smooth" : "auto",
-      });
-    }
-  };
 
   const [isReportFormatMode, setIsReportFormatMode] = useState(true);
   const [logoRotation, setLogoRotation] = useState(0);
@@ -3068,6 +3059,21 @@ export function CxoDashboard({
       // Ignore plans for other runs — the socket is per-user, not per-session.
       if (plan.sessionId !== runSessionIdRef.current) return;
 
+      const waiting = pastTurnsRef.current.findIndex(
+        (turn) => turn.awaitingPlan && turn.query === plan.prompt,
+      );
+      if (waiting !== -1) {
+        setPastTurns((prev) =>
+          prev.map((turn, index) =>
+            index === waiting ? { ...turn, plan, awaitingPlan: false } : turn,
+          ),
+        );
+        if (plan.sessionTitle !== undefined) {
+          applySessionTitle(plan.sessionId, plan.sessionTitle);
+        }
+        return;
+      }
+
       setReportPlan(plan);
       setIsGeminiLoading(false);
       setPendingRun(null);
@@ -3088,6 +3094,29 @@ export function CxoDashboard({
 
       // The socket is per-user, not per-session.
       if (next.sessionId !== runSessionIdRef.current) return;
+
+      // Prefer the plan id when two reports in this session are in flight.
+      // Older payloads without one fall back to the last waiting turn.
+      const waitingById = pastTurnsRef.current.findIndex(
+        (turn) =>
+          turn.awaitingReport &&
+          next.conversationId !== undefined &&
+          turn.plan?.conversationId === next.conversationId,
+      );
+      const waiting =
+        waitingById !== -1
+          ? waitingById
+          : continueStageRef.current === "idle"
+            ? pastTurnsRef.current.map((turn) => turn.awaitingReport).lastIndexOf(true)
+            : -1;
+      if (waiting !== -1) {
+        setPastTurns((prev) =>
+          prev.map((turn, index) =>
+            index === waiting ? { ...turn, report: next, awaitingReport: false } : turn,
+          ),
+        );
+        return;
+      }
 
       setReport(next);
       // The report is the answer to the Continue click, so the waiting state
@@ -3115,6 +3144,37 @@ export function CxoDashboard({
    * back to the landing screen makes the click look like it did nothing.
    */
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null);
+  /**
+   * Turns sent earlier in this visit. A new prompt moves the live turn here so
+   * it stays in place above the new one, instead of being overwritten.
+   */
+  const [pastTurns, setPastTurns] = useState<Array<PastTurn>>([]);
+  // Mirrors for the socket handlers, which are registered once and would
+  // otherwise read stale state.
+  const continueStageRef = useRef<ContinueStage>("idle");
+  continueStageRef.current = continueStage;
+  const pastTurnsRef = useRef<Array<PastTurn>>([]);
+  pastTurnsRef.current = pastTurns;
+
+  // Keep the latest message visible when a prompt or socket response adds content.
+  const planArrivalKey = reportPlan?.conversationId ?? reportPlan?.planTitle ?? null;
+  useEffect(() => {
+    const stream = conversationStreamRef.current;
+    if (stream === null) return;
+    const frame = requestAnimationFrame(() => {
+      stream.scrollTo({ top: stream.scrollHeight, behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    streamingQuery,
+    isGeminiLoading,
+    planArrivalKey,
+    continueStage,
+    report,
+    pastTurns,
+    conversationEntries,
+    isLoadingConversations,
+  ]);
 
   const handleEditPlanAgentPrompt = useCallback((agentId: string, text: string) => {
     setReportPlan((prev) =>
@@ -3774,7 +3834,9 @@ export function CxoDashboard({
           sharedPendingCase = null;
           try {
             sessionStorage.removeItem("pending_inbox_case");
-          } catch {}
+          } catch {
+            // Session storage can be unavailable; the in-memory case is cleared above.
+          }
         }, 1200);
       }
     }
@@ -3870,6 +3932,26 @@ export function CxoDashboard({
     const runSessionId = runSessionIdRef.current ?? crypto.randomUUID();
     runSessionIdRef.current = runSessionId;
 
+    // Finish the visible turn before starting another one. Otherwise the new
+    // loader is rendered above the old plan/report, and the old reply is lost.
+    if (streamingQuery !== "" || reportPlan !== null || report !== null || isGeminiLoading) {
+      setPastTurns((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          query: streamingQuery,
+          plan: reportPlan,
+          report,
+          awaitingPlan: isGeminiLoading && pendingRun?.mode === "deep-insights",
+          awaitingReport: continueStage !== "idle" && report === null,
+          continueStage,
+          creatingAgentCount,
+        },
+      ]);
+    }
+    setReportPlan(null);
+    setReport(null);
+    setContinueStage("idle");
     setStreamingQuery(q);
     setPendingRun({ sessionId: runSessionId, mode });
     setIsGeminiLoading(true);
@@ -3895,12 +3977,6 @@ export function CxoDashboard({
 
     geminiTimersRef.current.forEach((t) => clearTimeout(t));
     geminiTimersRef.current = [];
-
-    setTimeout(() => {
-      document
-        .getElementById("gemini-loader")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 60);
 
     void startAnalysis({
       data: { mode, prompt: q, sessionId: runSessionId, newSession: isNewSession },
@@ -4208,22 +4284,6 @@ export function CxoDashboard({
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
             </div>
           </div>
-
-          {railIcons.slice(1).map(({ icon: Icon, label, to }) => (
-            <div key={label} className="relative group flex items-center justify-center">
-              <Link
-                to={to}
-                aria-label={label}
-                className="relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-tile"
-              >
-                <Icon className="size-5" />
-              </Link>
-              <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
-                {label}
-                <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
-              </div>
-            </div>
-          ))}
         </nav>
 
         {/* Session History Sidebar (between Nav Rail and Workspace when on chat view) */}
@@ -4245,6 +4305,8 @@ export function CxoDashboard({
             geminiMessages.length === 0 &&
             !isGeminiLoading &&
             reportPlan === null &&
+            report === null &&
+            pastTurns.length === 0 &&
             openedSessionId === null ? (
               /* ASK ASTYLE CHAT HERO VIEW - NO SCROLLBARS */
               <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] text-foreground relative overflow-hidden px-4 py-4 sm:py-6">
@@ -4422,6 +4484,16 @@ export function CxoDashboard({
                   className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-6 pb-28 z-10"
                 >
                   <div className="max-w-3xl mx-auto space-y-6 pb-6">
+                    {/* Stored messages are always older than turns created in
+                        this visit, including a follow-up to an opened session. */}
+                    {openedSessionId !== null && (
+                      <div className="mb-5">
+                        <ConversationList
+                          entries={conversationEntries}
+                          isLoading={isLoadingConversations}
+                        />
+                      </div>
+                    )}
                     {geminiMessages.map((msg) => (
                       <div
                         key={msg.id}
@@ -5328,6 +5400,51 @@ export function CxoDashboard({
                       </div>
                     ))}
 
+                    {pastTurns.map((turn) => (
+                      <div key={turn.id} className="space-y-4">
+                        {turn.query !== "" && (
+                          <div className="flex justify-end">
+                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                              <span>{turn.query}</span>
+                              <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                                <User className="size-3.5" />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {turn.awaitingPlan && <PlanSkeleton />}
+                        {turn.plan !== null && (
+                          <ReportPlanCard
+                            plan={turn.plan}
+                            onToggleAgent={() => {}}
+                            onToggleSuggested={() => {}}
+                            onEditAgentPrompt={() => {}}
+                            onEditSuggestedPrompt={() => {}}
+                            onContinue={() => {}}
+                            continueStage="idle"
+                            readOnly
+                          />
+                        )}
+                        {(turn.awaitingReport || turn.report !== null) && (
+                          <div className="flex justify-end">
+                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                              <span>Continue</span>
+                              <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                                <User className="size-3.5" />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {turn.awaitingReport &&
+                          (turn.continueStage === "creating-agents" ? (
+                            <AgentCreationLoader count={turn.creatingAgentCount} />
+                          ) : (
+                            <ReportSkeleton />
+                          ))}
+                        {turn.report !== null && <ReportView report={turn.report} />}
+                      </div>
+                    ))}
+
                     {/* STREAMING / THINKING SHIMMER */}
                     {isGeminiLoading && (
                       <div
@@ -5347,16 +5464,6 @@ export function CxoDashboard({
                         {/* Mode-specific waiting state. Stays up until a socket
                             event for this run arrives — nothing here is on a timer. */}
                         {pendingRun?.mode === "chat" ? <ChatSkeleton /> : <PlanSkeleton />}
-                      </div>
-                    )}
-
-                    {/* Messages of a session opened from the sidebar. */}
-                    {openedSessionId !== null && (
-                      <div className="mb-5">
-                        <ConversationList
-                          entries={conversationEntries}
-                          isLoading={isLoadingConversations}
-                        />
                       </div>
                     )}
 
@@ -5520,9 +5627,7 @@ export function CxoDashboard({
                     <button
                       type="button"
                       onClick={() => {
-                        setGeminiMessages([]);
-                        setIsGeminiLoading(false);
-                        setStreamingQuery("");
+                        handleNewSession();
                       }}
                       className="size-10 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0e7490] text-slate-600 hover:text-[#0e7490] shadow-md flex items-center justify-center transition cursor-pointer shrink-0"
                       title="New Query / Reset"

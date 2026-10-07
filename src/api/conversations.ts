@@ -96,6 +96,7 @@ function toEntry(row: unknown, index: number): ConversationEntry | null {
           kind: "plan",
           planJson: content,
           approvedStatus: str(row["ApprovedStatus"]).toLowerCase(),
+          ...(str(row["ApprovedData"]) !== "" ? { approvedData: str(row["ApprovedData"]) } : {}),
           // Only the real column — `id` above falls back to `rowID`, which is
           // not what the report workflow expects.
           ...(str(row["ConversationID"]) !== ""

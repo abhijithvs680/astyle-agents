@@ -2,8 +2,7 @@
  * Renders a generated report.
  *
  * Every block in `docs/report-template.json` has a component here, and the
- * visual language follows the `/charts` reference page so a report looks like
- * the rest of the product.
+ * visual language follows the rest of the product.
  *
  * Colour is owned here, never by the agent: blocks carry a `tone`, and this
  * file decides what that looks like. Agent-chosen hex values would drift

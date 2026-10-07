@@ -12,13 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiToolsRouteImport } from './routes/ai-tools'
 import { Route as AskAiRouteImport } from './routes/ask-ai'
-import { Route as CasesRouteImport } from './routes/cases'
-import { Route as ChartsRouteImport } from './routes/charts'
 import { Route as ConnectRouteImport } from './routes/connect'
-import { Route as DataCenterRouteImport } from './routes/data-center'
 import { Route as DetailsRouteImport } from './routes/details'
 import { Route as ExploreRouteImport } from './routes/explore'
-import { Route as FilesRouteImport } from './routes/files'
 import { Route as FoldersRouteImport } from './routes/folders'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as WelcomeRouteImport } from './routes/welcome'
@@ -38,24 +34,9 @@ const AskAiRoute = AskAiRouteImport.update({
   path: '/ask-ai',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CasesRoute = CasesRouteImport.update({
-  id: '/cases',
-  path: '/cases',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChartsRoute = ChartsRouteImport.update({
-  id: '/charts',
-  path: '/charts',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ConnectRoute = ConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DataCenterRoute = DataCenterRouteImport.update({
-  id: '/data-center',
-  path: '/data-center',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetailsRoute = DetailsRouteImport.update({
@@ -66,11 +47,6 @@ const DetailsRoute = DetailsRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FilesRoute = FilesRouteImport.update({
-  id: '/files',
-  path: '/files',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FoldersRoute = FoldersRouteImport.update({
@@ -93,13 +69,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
   '/ask-ai': typeof AskAiRoute
-  '/cases': typeof CasesRoute
-  '/charts': typeof ChartsRoute
   '/connect': typeof ConnectRoute
-  '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
-  '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
   '/welcome': typeof WelcomeRoute
@@ -108,13 +80,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
   '/ask-ai': typeof AskAiRoute
-  '/cases': typeof CasesRoute
-  '/charts': typeof ChartsRoute
   '/connect': typeof ConnectRoute
-  '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
-  '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
   '/welcome': typeof WelcomeRoute
@@ -124,13 +92,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/ai-tools': typeof AiToolsRoute
   '/ask-ai': typeof AskAiRoute
-  '/cases': typeof CasesRoute
-  '/charts': typeof ChartsRoute
   '/connect': typeof ConnectRoute
-  '/data-center': typeof DataCenterRoute
   '/details': typeof DetailsRoute
   '/explore': typeof ExploreRoute
-  '/files': typeof FilesRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
   '/welcome': typeof WelcomeRoute
@@ -141,13 +105,9 @@ export interface FileRouteTypes {
     | '/'
     | '/ai-tools'
     | '/ask-ai'
-    | '/cases'
-    | '/charts'
     | '/connect'
-    | '/data-center'
     | '/details'
     | '/explore'
-    | '/files'
     | '/folders'
     | '/inbox'
     | '/welcome'
@@ -156,13 +116,9 @@ export interface FileRouteTypes {
     | '/'
     | '/ai-tools'
     | '/ask-ai'
-    | '/cases'
-    | '/charts'
     | '/connect'
-    | '/data-center'
     | '/details'
     | '/explore'
-    | '/files'
     | '/folders'
     | '/inbox'
     | '/welcome'
@@ -171,13 +127,9 @@ export interface FileRouteTypes {
     | '/'
     | '/ai-tools'
     | '/ask-ai'
-    | '/cases'
-    | '/charts'
     | '/connect'
-    | '/data-center'
     | '/details'
     | '/explore'
-    | '/files'
     | '/folders'
     | '/inbox'
     | '/welcome'
@@ -187,13 +139,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AiToolsRoute: typeof AiToolsRoute
   AskAiRoute: typeof AskAiRoute
-  CasesRoute: typeof CasesRoute
-  ChartsRoute: typeof ChartsRoute
   ConnectRoute: typeof ConnectRoute
-  DataCenterRoute: typeof DataCenterRoute
   DetailsRoute: typeof DetailsRoute
   ExploreRoute: typeof ExploreRoute
-  FilesRoute: typeof FilesRoute
   FoldersRoute: typeof FoldersRoute
   InboxRoute: typeof InboxRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -222,32 +170,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AskAiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cases': {
-      id: '/cases'
-      path: '/cases'
-      fullPath: '/cases'
-      preLoaderRoute: typeof CasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/charts': {
-      id: '/charts'
-      path: '/charts'
-      fullPath: '/charts'
-      preLoaderRoute: typeof ChartsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/connect': {
       id: '/connect'
       path: '/connect'
       fullPath: '/connect'
       preLoaderRoute: typeof ConnectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/data-center': {
-      id: '/data-center'
-      path: '/data-center'
-      fullPath: '/data-center'
-      preLoaderRoute: typeof DataCenterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/details': {
@@ -262,13 +189,6 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/files': {
-      id: '/files'
-      path: '/files'
-      fullPath: '/files'
-      preLoaderRoute: typeof FilesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/folders': {
@@ -299,13 +219,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiToolsRoute: AiToolsRoute,
   AskAiRoute: AskAiRoute,
-  CasesRoute: CasesRoute,
-  ChartsRoute: ChartsRoute,
   ConnectRoute: ConnectRoute,
-  DataCenterRoute: DataCenterRoute,
   DetailsRoute: DetailsRoute,
   ExploreRoute: ExploreRoute,
-  FilesRoute: FilesRoute,
   FoldersRoute: FoldersRoute,
   InboxRoute: InboxRoute,
   WelcomeRoute: WelcomeRoute,

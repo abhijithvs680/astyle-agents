@@ -2,9 +2,6 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Home,
-  Bot,
-  FileText,
-  Server,
   Sparkles,
   Send,
   RotateCcw,
@@ -32,9 +29,6 @@ export const Route = createFileRoute("/ai-tools")({
 
 const railIcons = [
   { icon: Home, label: "Home", to: "/" },
-  { icon: Bot, label: "Agents", to: "/cases" },
-  { icon: FileText, label: "Files", to: "/files" },
-  { icon: Server, label: "Data Center", to: "/data-center" },
   { icon: Sparkles, label: "AI Assistant", to: "/ai-tools", active: true },
 ];
 

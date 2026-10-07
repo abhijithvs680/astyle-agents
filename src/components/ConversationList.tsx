@@ -10,7 +10,7 @@
  */
 import type { ConversationEntry } from "../api/types";
 import { toReport } from "../lib/report";
-import { toReportPlan } from "../lib/report-plan";
+import { applyApprovedData, toReportPlan } from "../lib/report-plan";
 import { ReportPlanCard } from "./ReportPlanCard";
 import { ReportView } from "./ReportView";
 
@@ -55,8 +55,9 @@ export function ConversationList({
         }
 
         if (entry.kind === "plan") {
-          const plan = toReportPlan(safeParse(entry.planJson));
-          if (plan === null) return null;
+          const storedPlan = toReportPlan(safeParse(entry.planJson));
+          if (storedPlan === null) return null;
+          const plan = applyApprovedData(storedPlan, entry.approvedStatus, entry.approvedData);
 
           return (
             <div key={entry.id}>

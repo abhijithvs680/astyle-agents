@@ -263,3 +263,83 @@ export function toReportPlan(
     ...(error !== undefined ? { error } : {}),
   };
 }
+
+/**
+ * A saved plan is the proposal, while ApprovedData is the roster that actually
+ * ran. Newly approved specialists receive catalog IDs, so match their original
+ * suggestions by name when the IDs no longer match.
+ */
+export function applyApprovedData(
+  plan: ReportPlan,
+  approvedStatus: string,
+  approvedData: unknown,
+): ReportPlan {
+  if (approvedStatus !== "approved") return plan;
+
+  let data = approvedData;
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return plan;
+    }
+  }
+
+  const payloads = Array.isArray(data) ? data : [data];
+  const payload = payloads.find((item) => isRecord(item) && Array.isArray(item["agents"]));
+  if (!isRecord(payload) || !Array.isArray(payload["agents"])) return plan;
+
+  const roster = payload["agents"].filter(isRecord).map((agent) => ({
+    id: matchKey(agent["id"]),
+    name: matchKey(agent["name"]),
+  }));
+  if (payload["agents"].length > 0 && roster.every((agent) => !agent.id && !agent.name)) {
+    return plan;
+  }
+
+  const enabled = plan.agents.map(() => false);
+  const approved = plan.suggestedAgents.map(() => false);
+  for (const selected of roster) {
+    let index = selected.id
+      ? plan.agents.findIndex((agent) => matchKey(agent.id) === selected.id)
+      : -1;
+    if (index !== -1) {
+      enabled[index] = true;
+      continue;
+    }
+
+    index = selected.id
+      ? plan.suggestedAgents.findIndex((agent) => matchKey(agent.id) === selected.id)
+      : -1;
+    if (index !== -1) {
+      approved[index] = true;
+      continue;
+    }
+
+    index = selected.name
+      ? plan.suggestedAgents.findIndex((agent) => matchKey(agent.name) === selected.name)
+      : -1;
+    if (index !== -1) {
+      approved[index] = true;
+      continue;
+    }
+
+    index = selected.name
+      ? plan.agents.findIndex((agent) => matchKey(agent.name) === selected.name)
+      : -1;
+    if (index !== -1) enabled[index] = true;
+  }
+
+  return {
+    ...plan,
+    agents: plan.agents.map((agent, index) => ({ ...agent, isEnabled: enabled[index] ?? false })),
+    suggestedAgents: plan.suggestedAgents.map((agent, index) => ({
+      ...agent,
+      isApproved: approved[index] ?? false,
+    })),
+  };
+}
+
+function matchKey(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase().replace(/\s+/g, " ") : "";
+}
