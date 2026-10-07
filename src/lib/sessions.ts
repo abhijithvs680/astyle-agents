@@ -40,8 +40,25 @@ function timestampFor(iso: string | null): string {
   });
 }
 
+function timeValue(iso: string | null): number | null {
+  if (iso === null) return null;
+  const when = new Date(iso).getTime();
+  return Number.isNaN(when) ? null : when;
+}
+
 export function toHistorySessions(sessions: Array<SessionSummary>): Array<HistorySession> {
-  return sessions.map((session) => {
+  // Newest first. The API returns rows in no particular order, and a row
+  // without a usable date keeps its original position rather than sorting to
+  // an arbitrary end.
+  const ordered = sessions.map((session, index) => ({ session, index }));
+  ordered.sort((a, b) => {
+    const ta = timeValue(a.session.updatedOn ?? a.session.createdOn);
+    const tb = timeValue(b.session.updatedOn ?? b.session.createdOn);
+    if (ta !== null && tb !== null && ta !== tb) return tb - ta;
+    return a.index - b.index;
+  });
+
+  return ordered.map(({ session }) => {
     const when = session.updatedOn ?? session.createdOn;
 
     return {

@@ -12,6 +12,16 @@ import {
   Calendar,
 } from "lucide-react";
 import type { GeminiMessageItem } from "./CxoDashboard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 
 export interface HistorySession {
   id: string;
@@ -32,7 +42,8 @@ interface SessionHistorySidebarProps {
   onSelectSession: (session: HistorySession) => void;
   onNewSession: () => void;
   historySessions: HistorySession[];
-  onDeleteSession?: (sessionId: string) => void;
+  /** Runs only after the user confirms. Rejects if the delete fails. */
+  onDeleteSession?: (sessionId: string) => Promise<void> | void;
 }
 
 export function SessionHistorySidebar({
@@ -45,6 +56,11 @@ export function SessionHistorySidebar({
   onDeleteSession,
 }: SessionHistorySidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  /** The session awaiting confirmation. Deleting cannot be undone, so it is
+   *  never done on the click itself. */
+  const [pendingDelete, setPendingDelete] = useState<HistorySession | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Filter sessions by search query across all sessions (unified, no mode split)
   const filteredSessions = useMemo(() => {
@@ -55,17 +71,18 @@ export function SessionHistorySidebar({
         session.title.toLowerCase().includes(q) ||
         session.summarySnippet.toLowerCase().includes(q) ||
         (session.agentName && session.agentName.toLowerCase().includes(q)) ||
-        (session.category && session.category.toLowerCase().includes(q))
+        (session.category && session.category.toLowerCase().includes(q)),
     );
   }, [historySessions, searchQuery]);
 
   // Group sessions by date
   const groupedSessions = useMemo(() => {
-    const groups: { group: "Today" | "Yesterday" | "Previous 7 Days"; items: HistorySession[] }[] = [
-      { group: "Today", items: [] },
-      { group: "Yesterday", items: [] },
-      { group: "Previous 7 Days", items: [] },
-    ];
+    const groups: { group: "Today" | "Yesterday" | "Previous 7 Days"; items: HistorySession[] }[] =
+      [
+        { group: "Today", items: [] },
+        { group: "Yesterday", items: [] },
+        { group: "Previous 7 Days", items: [] },
+      ];
 
     filteredSessions.forEach((session) => {
       const g = groups.find((grp) => grp.group === session.group);
@@ -102,7 +119,11 @@ export function SessionHistorySidebar({
           type="button"
           onClick={onToggleExpand}
           className="size-8 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition cursor-pointer shadow-2xs shrink-0"
-          title={isExpanded ? "Collapse session history sidebar (<-)" : "Expand session history sidebar (->)"}
+          title={
+            isExpanded
+              ? "Collapse session history sidebar (<-)"
+              : "Expand session history sidebar (->)"
+          }
           aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
         >
           {isExpanded ? (
@@ -172,7 +193,9 @@ export function SessionHistorySidebar({
                       <div className="flex items-start justify-between gap-1.5">
                         <h4
                           className={`text-xs font-semibold leading-snug line-clamp-2 ${
-                            isActive ? "text-[#0e7490]" : "text-slate-800 group-hover:text-slate-900"
+                            isActive
+                              ? "text-[#0e7490]"
+                              : "text-slate-800 group-hover:text-slate-900"
                           }`}
                         >
                           {session.title}
@@ -184,7 +207,8 @@ export function SessionHistorySidebar({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onDeleteSession(session.id);
+                              setDeleteError(null);
+                              setPendingDelete(session);
                             }}
                             className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer shrink-0"
                             title="Delete this session"
@@ -236,7 +260,10 @@ export function SessionHistorySidebar({
                           </div>
 
                           <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-100">
-                            <span>{session.messages.length} message{session.messages.length > 1 ? "s" : ""}</span>
+                            <span>
+                              {session.messages.length} message
+                              {session.messages.length > 1 ? "s" : ""}
+                            </span>
                             <span>{session.timestamp}</span>
                           </div>
                         </div>
@@ -256,6 +283,72 @@ export function SessionHistorySidebar({
           ASTYLE Session History &middot; {historySessions.length} Sessions
         </p>
       </div>
+
+      {/* Deleting is permanent, so it is always confirmed. The session is
+          named in the prompt: with several similar titles in the list, "this
+          session" is not enough to act on. */}
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setPendingDelete(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete === null ? null : (
+                <>
+                  <span className="font-semibold text-slate-900">{pendingDelete.title}</span> and
+                  every message in it will be permanently deleted. This cannot be retrieved.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {deleteError !== null ? (
+            <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {deleteError}
+            </p>
+          ) : null}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              className="bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-600"
+              onClick={(event) => {
+                // The dialog closes itself on action; hold it open until the
+                // delete has actually succeeded, so a failure stays visible.
+                event.preventDefault();
+                if (pendingDelete === null || onDeleteSession === undefined) return;
+
+                setIsDeleting(true);
+                setDeleteError(null);
+                void Promise.resolve(onDeleteSession(pendingDelete.id))
+                  .then(() => {
+                    setPendingDelete(null);
+                  })
+                  .catch((error: unknown) => {
+                    setDeleteError(
+                      error instanceof Error
+                        ? `It could not be deleted: ${error.message}`
+                        : "It could not be deleted. Nothing was removed.",
+                    );
+                  })
+                  .finally(() => {
+                    setIsDeleting(false);
+                  });
+              }}
+            >
+              {isDeleting ? "Deleting…" : "Delete session"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

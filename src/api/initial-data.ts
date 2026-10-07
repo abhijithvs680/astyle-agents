@@ -35,8 +35,11 @@ type InitialDataRow = {
 };
 
 function toSessionSummary(row: InitialDataRow, index: number): SessionSummary {
-  const id =
-    row.rowID ?? (row.SessionID !== undefined ? String(row.SessionID) : `session-${index}`);
+  // `SessionID` is the id every other endpoint keys on — `getConversations`
+  // in particular. `rowID` identifies the history row, not the session, so it
+  // is only a last resort for keying the list.
+  const sessionId = row.SessionID !== undefined ? String(row.SessionID).trim() : "";
+  const id = sessionId !== "" ? sessionId : (row.rowID ?? `session-${index}`);
 
   return {
     id,

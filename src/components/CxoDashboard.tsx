@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, Fragment } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, Fragment } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Inbox,
@@ -57,8 +57,24 @@ import {
 } from "./CaseDetailsView";
 import { ReportPipelineDiagram } from "./ReportPipelineDiagram";
 import { SessionHistorySidebar, type HistorySession } from "./SessionHistorySidebar";
-import { ChatSkeleton, PlanSkeleton } from "./AnalysisLoaders";
+import { AgentCreationLoader, ChatSkeleton, PlanSkeleton, ReportSkeleton } from "./AnalysisLoaders";
+import { ConversationList } from "./ConversationList";
+import { ReportPlanCard, type ContinueStage } from "./ReportPlanCard";
+import { ReportView } from "./ReportView";
+import { useSocket } from "./SocketProvider";
+import { parseReportEvent, REPORT_EVENT, type Report } from "../lib/report";
+import {
+  parseReportPlanEvent,
+  REPORT_PLAN_EVENT,
+  toReportPlan,
+  type ReportPlan,
+} from "../lib/report-plan";
 import { startAnalysis } from "../api/analysis";
+import { fetchConversations } from "../api/conversations";
+import { createAgents } from "../api/agents";
+import { deleteSession } from "../api/delete-session";
+import { continueReport } from "../api/report";
+import type { ConversationEntry } from "../api/types";
 import type { AnalysisMode } from "../api/types";
 
 const railIcons = [
@@ -2233,7 +2249,15 @@ export interface AgentPlanItem {
   name: string;
   role: string;
   icon: string;
-  description: string;
+  /**
+   * The instruction the orchestrator will send to this agent for THIS query.
+   * It is what the user reads and edits in the plan card, so editing it has to
+   * change what the agent is actually told — this is not a display blurb.
+   *
+   * Distinct from the catalog's stored `Prompt` column, which is the agent's
+   * standing system prompt and never leaves the server.
+   */
+  runtimePrompt: string;
   isEnabled: boolean;
   isCustom?: boolean;
 }
@@ -2247,8 +2271,13 @@ export interface SuggestedAgentItem {
   name: string;
   role: string;
   icon: string;
-  /** What this agent would do, and why the orchestrator proposed it. */
+  /** One line on what this agent would do. */
   description: string;
+  /**
+   * The instruction this agent would be sent if approved. Editable, like
+   * `AgentPlanItem.runtimePrompt` — the edited text is what gets sent.
+   */
+  runtimePrompt: string;
   /** Why this question needs a specialist that isn't already on the plan. */
   rationale?: string;
   /** User approval. Always starts false — the user opts in. */
@@ -2264,7 +2293,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Sales Billing Agent",
         role: "Omnichannel POS & Web Invoices",
         icon: "🛍️",
-        description:
+        runtimePrompt:
           "Will ingest store sales receipts and e-commerce cart transactions across the initial 18-day launch window to benchmark sell-through velocity.",
         isEnabled: true,
       },
@@ -2273,7 +2302,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Returns & Fitment Agent",
         role: "Customer Ticket Reason Audit",
         icon: "🔄",
-        description:
+        runtimePrompt:
           "Will audit customer return tickets, exchange logs, and sizing feedback to detect fit or quality friction on lagging styles.",
         isEnabled: true,
       },
@@ -2282,7 +2311,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Campaign ROI Agent",
         role: "Ad Budget vs Sell-Through Rate",
         icon: "📊",
-        description:
+        runtimePrompt:
           "Will evaluate digital marketing spend and ad impressions against footfall and conversions to measure promotional efficiency.",
         isEnabled: true,
       },
@@ -2291,7 +2320,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
         name: "Allocation Strategy Agent",
         role: "Actionable Turnaround Playbook",
         icon: "👔",
-        description:
+        runtimePrompt:
           "Will formulate an actionable inventory strategy, detailing budget reallocation toward top sellers and clearance schedules for slow-moving lines.",
         isEnabled: true,
       },
@@ -2305,7 +2334,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Sales Billing Agent",
       role: "POS Invoices & Store Velocity",
       icon: "🛍️",
-      description:
+      runtimePrompt:
         "Will extract and analyze 90-day store billing transactions across all 42 retail doors to benchmark sell-through velocity and detect demand drop-offs.",
       isEnabled: true,
     },
@@ -2314,7 +2343,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Inventory & Warehouse Agent",
       role: "Stock Aging & Depot Balances",
       icon: "📦",
-      description:
+      runtimePrompt:
         "Will scan central warehouse ledgers and store depot levels to flag SKUs with holding age >60 days and stock cover exceeding safe thresholds.",
       isEnabled: true,
     },
@@ -2323,7 +2352,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Finance & Exposure Agent",
       role: "Working Capital & Returns Deduction",
       icon: "💰",
-      description:
+      runtimePrompt:
         "Will calculate working capital tied up in slow-moving inventory and audit customer return deductions to quantify net financial exposure.",
       isEnabled: true,
     },
@@ -2332,7 +2361,7 @@ export const getDefaultAgentPlan = (query: string): AgentPlanItem[] => {
       name: "Executive Strategy Agent",
       role: "Synthesis & Turnaround Playbook",
       icon: "👔",
-      description:
+      runtimePrompt:
         "Will synthesize findings across all agent analyses into an executive turnaround plan with prioritized markdown timelines and stock redistribution.",
       isEnabled: true,
     },
@@ -2343,8 +2372,21 @@ export interface DataRepoItem {
   id: string;
   name: string;
   sourceType: string;
-  recordsCount: string;
-  lastSync: string;
+  /**
+   * What the user sees, e.g. "Rakuten Stock Data". Shown instead of `name`,
+   * which is the raw table identifier the orchestrator needs but which means
+   * nothing to the user. Must distinguish rows: a channel alone repeats across
+   * the stock/sales sources of the same channel.
+   */
+  label?: string;
+  /** Sales channel this source belongs to, for grouping. */
+  channel?: string;
+  /**
+   * Display-only metadata. Optional because the plan agent derives repos from
+   * the catalog's DBAccess column, which carries neither value.
+   */
+  recordsCount?: string;
+  lastSync?: string;
   isEnabled: boolean;
   isCustom?: boolean;
 }
@@ -2830,6 +2872,8 @@ export function CxoDashboard({
   // Gemini Chat session state on Home Page
   const [geminiMessages, setGeminiMessages] = useState<GeminiMessageItem[]>([]);
   const [isGeminiLoading, setIsGeminiLoading] = useState(false);
+  /** The plan returned for the current run, or null before one arrives. */
+  const [reportPlan, setReportPlan] = useState<ReportPlan | null>(null);
   /** The run we are waiting on a socket reply for, or null when idle. */
   const [pendingRun, setPendingRun] = useState<{ sessionId: string; mode: AnalysisMode } | null>(
     null,
@@ -2858,6 +2902,47 @@ export function CxoDashboard({
     setChatQuery("");
     setIsGeminiLoading(false);
     setStreamingQuery("");
+    // Opening a session continues it, so follow-ups keep its id rather than
+    // opening a new one.
+    runSessionIdRef.current = session.id;
+    setReportPlan(null);
+    setContinueStage("idle");
+    setReport(null);
+    setOpenedSessionId(session.id);
+
+    setIsLoadingConversations(true);
+    void fetchConversations({ data: { sessionId: session.id } })
+      .then((result) => {
+        // The user may have clicked another session while this was in flight.
+        if (runSessionIdRef.current !== result.sessionId) return;
+
+        // A plan the user never approved is not history — it is a question
+        // still waiting on them. Lift the trailing one out of the transcript
+        // so it reopens with its toggles, prompt edits and Continue button.
+        const last = result.entries.at(-1);
+        const pending =
+          last !== undefined && last.kind === "plan" && !isApproved(last.approvedStatus)
+            ? toReportPlan(safeParseJson(last.planJson), result.sessionId, last.conversationId)
+            : null;
+
+        if (pending !== null && last !== undefined) {
+          setConversationEntries(result.entries.slice(0, -1));
+          setReportPlan(pending);
+          // The prompt bubble above the card: only when the session has no
+          // user row of its own to supply it.
+          if (last.kind === "plan" && last.showPrompt) setStreamingQuery(pending.prompt);
+        } else {
+          setConversationEntries(result.entries);
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("[conversations] could not load session", error);
+        setConversationEntries([]);
+      })
+      .finally(() => {
+        setIsLoadingConversations(false);
+      });
+
     setTimeout(() => {
       scrollStreamToBottom(false);
     }, 60);
@@ -2870,9 +2955,27 @@ export function CxoDashboard({
     setActiveQuestion("");
     setIsGeminiLoading(false);
     setStreamingQuery("");
+    // Start clean: a new session must not inherit the opened session's id,
+    // or its first prompt would continue the old conversation.
+    runSessionIdRef.current = null;
+    setContinueStage("idle");
+    setReport(null);
+    setOpenedSessionId(null);
+    setConversationEntries([]);
+    setReportPlan(null);
   };
 
-  const handleDeleteSession = (sessionId: string) => {
+  /**
+   * Delete a session for real. The sidebar has already confirmed with the
+   * user; it keeps its dialog open until this resolves, so throwing on failure
+   * is what tells them nothing was removed.
+   *
+   * The row is removed only after the backend agrees. Dropping it optimistically
+   * would show the session gone and then bring it back on the next load.
+   */
+  const handleDeleteSession = async (sessionId: string) => {
+    await deleteSession({ data: { sessionId } });
+
     setSessionHistoryList((prev) => prev.filter((s) => s.id !== sessionId));
     if (activeSessionId === sessionId) {
       handleNewSession();
@@ -2939,6 +3042,208 @@ export function CxoDashboard({
    * Approve or un-approve a suggested specialist. Approving only marks it —
    * the run picks up approved suggestions when it is submitted.
    */
+  /**
+   * Replace a session's provisional title (the raw prompt) with the distilled
+   * one from the plan agent. Called when a plan arrives over the socket.
+   *
+   * No-op for an unknown id or a blank title, so a malformed event cannot wipe
+   * a title the user can already read.
+   */
+  const applySessionTitle = useCallback((sessionId: string, title: string) => {
+    const next = title.trim();
+    if (next === "") return;
+    setSessionHistoryList((prev) =>
+      prev.map((session) => (session.id === sessionId ? { ...session, title: next } : session)),
+    );
+  }, []);
+
+  // Plans arrive over the chat socket, not in the workflow's HTTP response.
+  const { on: onSocketEvent } = useSocket();
+
+  useEffect(() => {
+    return onSocketEvent(REPORT_PLAN_EVENT, (raw) => {
+      const plan = parseReportPlanEvent(raw);
+      if (plan === null) return;
+
+      // Ignore plans for other runs — the socket is per-user, not per-session.
+      if (plan.sessionId !== runSessionIdRef.current) return;
+
+      setReportPlan(plan);
+      setIsGeminiLoading(false);
+      setPendingRun(null);
+      // `streamingQuery` deliberately survives: it is the user's message, and
+      // it stays above the plan that answers it.
+
+      if (plan.sessionTitle !== undefined) {
+        applySessionTitle(plan.sessionId, plan.sessionTitle);
+      }
+    });
+  }, [onSocketEvent, applySessionTitle]);
+
+  // The finished report arrives the same way the plan does.
+  useEffect(() => {
+    return onSocketEvent(REPORT_EVENT, (raw) => {
+      const next = parseReportEvent(raw);
+      if (next === null) return;
+
+      // The socket is per-user, not per-session.
+      if (next.sessionId !== runSessionIdRef.current) return;
+
+      setReport(next);
+      // The report is the answer to the Continue click, so the waiting state
+      // it was driving ends here.
+      setContinueStage("idle");
+    });
+  }, [onSocketEvent]);
+
+  /**
+   * How far along the Continue click is. Approved suggestions have to exist in
+   * the catalog before the report can name them, so that call comes first and
+   * the user is told it is happening rather than watching a generic spinner.
+   */
+  const [continueStage, setContinueStage] = useState<ContinueStage>("idle");
+  /** How many specialists the Continue click is creating, for the loader. */
+  const [creatingAgentCount, setCreatingAgentCount] = useState(0);
+  /** The finished report, once it arrives over the socket. */
+  const [report, setReport] = useState<Report | null>(null);
+  /** Messages for the session the user opened from the sidebar. */
+  const [conversationEntries, setConversationEntries] = useState<Array<ConversationEntry>>([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  /**
+   * The session opened from the sidebar. Tracked separately from the rows
+   * because a session with no messages still has to show *something* — falling
+   * back to the landing screen makes the click look like it did nothing.
+   */
+  const [openedSessionId, setOpenedSessionId] = useState<string | null>(null);
+
+  const handleEditPlanAgentPrompt = useCallback((agentId: string, text: string) => {
+    setReportPlan((prev) =>
+      prev === null
+        ? prev
+        : {
+            ...prev,
+            agents: prev.agents.map((a) => (a.id === agentId ? { ...a, runtimePrompt: text } : a)),
+          },
+    );
+  }, []);
+
+  const handleEditSuggestedPrompt = useCallback((agentId: string, text: string) => {
+    setReportPlan((prev) =>
+      prev === null
+        ? prev
+        : {
+            ...prev,
+            suggestedAgents: prev.suggestedAgents.map((a) =>
+              a.id === agentId ? { ...a, runtimePrompt: text } : a,
+            ),
+          },
+    );
+  }, []);
+
+  /**
+   * Hand the approved plan back for execution.
+   *
+   * Only what the user left switched on is sent, with whatever edits they made
+   * to the instructions — the plan as displayed, not as originally proposed.
+   */
+  const handleContinuePlan = useCallback(() => {
+    if (reportPlan === null) return;
+
+    // The workflow runs one specific stored plan; without its row id there is
+    // nothing to continue.
+    if (reportPlan.conversationId === undefined) {
+      console.error("[plan] cannot continue: the plan carries no conversation id");
+      return;
+    }
+
+    const conversationId = reportPlan.conversationId;
+    const rosterAgents = reportPlan.agents
+      .filter((a) => a.isEnabled)
+      .map(({ id, name, role, runtimePrompt }) => ({ id, name, role, runtimePrompt }));
+    const approvedSuggestions = reportPlan.suggestedAgents.filter((a) => a.isApproved);
+
+    const run = async () => {
+      // Approved suggestions are not agents yet. Create them first, one call
+      // each, and keep the runtime prompt the user edited — the creation
+      // endpoint does not take it, but the report does.
+      let newAgents: Array<{ id: string; name: string; role: string; runtimePrompt: string }> = [];
+
+      if (approvedSuggestions.length > 0) {
+        setCreatingAgentCount(approvedSuggestions.length);
+        setContinueStage("creating-agents");
+
+        const created = await createAgents({
+          data: {
+            agents: approvedSuggestions.map((agent) => ({
+              suggestionId: agent.id,
+              title: agent.name,
+              category: agent.role,
+              description: agent.description ?? "",
+            })),
+          },
+        });
+
+        newAgents = created.map((agent) => ({
+          id: agent.id,
+          name: agent.name,
+          role: agent.role,
+          runtimePrompt:
+            approvedSuggestions.find((s) => s.id === agent.suggestionId)?.runtimePrompt ?? "",
+        }));
+      }
+
+      setContinueStage("starting");
+
+      await continueReport({
+        data: {
+          sessionId: reportPlan.sessionId,
+          conversationId,
+          prompt: reportPlan.prompt,
+          planTitle: reportPlan.planTitle,
+          planSummary: reportPlan.planSummary,
+          sessionTitle: reportPlan.sessionTitle,
+          customInstructions: reportPlan.customInstructions,
+          // The ones just created join the roster; there is no longer anything
+          // "suggested" about them.
+          agents: [...rosterAgents, ...newAgents],
+        },
+      });
+    };
+
+    // The report itself comes back over the socket, so on success the button
+    // stays disabled rather than flipping back and inviting a second run.
+    void run().catch((error: unknown) => {
+      console.error("[plan] could not start the report", error);
+      setContinueStage("idle");
+    });
+  }, [reportPlan]);
+
+  const handleTogglePlanAgent = useCallback((agentId: string) => {
+    setReportPlan((prev) =>
+      prev === null
+        ? prev
+        : {
+            ...prev,
+            agents: prev.agents.map((a) =>
+              a.id === agentId ? { ...a, isEnabled: !a.isEnabled } : a,
+            ),
+          },
+    );
+  }, []);
+
+  const handleTogglePlanSuggested = useCallback((agentId: string) => {
+    setReportPlan((prev) =>
+      prev === null
+        ? prev
+        : {
+            ...prev,
+            suggestedAgents: prev.suggestedAgents.map((a) =>
+              a.id === agentId ? { ...a, isApproved: !a.isApproved } : a,
+            ),
+          },
+    );
+  }, []);
+
   const handleToggleSuggestedAgent = (msgId: string, agentId: string) => {
     setGeminiMessages((prev) =>
       prev.map((m) => {
@@ -2956,7 +3261,7 @@ export function CxoDashboard({
 
   const handleStartEditAgent = (agent: AgentPlanItem) => {
     setEditingAgentId(agent.id);
-    setEditedTaskText(agent.description);
+    setEditedTaskText(agent.runtimePrompt);
   };
 
   const handleSaveEditAgent = (msgId: string, agentId: string) => {
@@ -2965,7 +3270,7 @@ export function CxoDashboard({
         if (m.id !== msgId) return m;
         const plan = m.agentPlan || getDefaultAgentPlan(m.query);
         const updatedPlan = plan.map((a) =>
-          a.id === agentId ? { ...a, description: editedTaskText.trim() || a.description } : a,
+          a.id === agentId ? { ...a, runtimePrompt: editedTaskText.trim() || a.runtimePrompt } : a,
         );
         return { ...m, agentPlan: updatedPlan };
       }),
@@ -2981,7 +3286,7 @@ export function CxoDashboard({
       name: newAgentName.trim(),
       role: newAgentRole.trim() || "Custom Merchandising Task",
       icon: "⚡",
-      description:
+      runtimePrompt:
         newAgentTask.trim() ||
         `Will conduct specialized merchandising analysis as directed for ${newAgentName.trim()}.`,
       isEnabled: true,
@@ -3065,7 +3370,9 @@ export function CxoDashboard({
     activeAgents.forEach((agent, idx) => {
       const t = setTimeout(
         () => {
-          setGeminiLoadingStage(`${agent.name} is executing: ${agent.description.slice(0, 52)}...`);
+          setGeminiLoadingStage(
+            `${agent.name} is executing: ${agent.runtimePrompt.slice(0, 52)}...`,
+          );
         },
         baseOffset + idx * 600,
       );
@@ -3568,6 +3875,24 @@ export function CxoDashboard({
     setIsGeminiLoading(true);
     setChatQuery("");
 
+    // Show the session in the sidebar straight away, titled with what the user
+    // actually typed. The plan agent sends back a distilled `sessionTitle`,
+    // which replaces this via applySessionTitle once the first plan lands.
+    if (isNewSession) {
+      setSessionHistoryList((prev) => [
+        {
+          id: runSessionId,
+          title: q,
+          timestamp: "Just now",
+          group: "Today",
+          summarySnippet: "",
+          messages: [],
+        },
+        ...prev,
+      ]);
+      setActiveSessionId(runSessionId);
+    }
+
     geminiTimersRef.current.forEach((t) => clearTimeout(t));
     geminiTimersRef.current = [];
 
@@ -3917,7 +4242,10 @@ export function CxoDashboard({
         {/* WORKSPACE AREA TO RIGHT OF RAIL */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {activeView === "chat" ? (
-            geminiMessages.length === 0 && !isGeminiLoading ? (
+            geminiMessages.length === 0 &&
+            !isGeminiLoading &&
+            reportPlan === null &&
+            openedSessionId === null ? (
               /* ASK ASTYLE CHAT HERO VIEW - NO SCROLLBARS */
               <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] text-foreground relative overflow-hidden px-4 py-4 sm:py-6">
                 {/* Subtle Ambient Radial Orbs contained inside */}
@@ -4190,7 +4518,7 @@ export function CxoDashboard({
 
                                                           {!isEditing ? (
                                                             <p className="text-sm text-slate-700 leading-relaxed font-normal">
-                                                              {agent.description}
+                                                              {agent.runtimePrompt}
                                                             </p>
                                                           ) : (
                                                             <div className="space-y-2.5 pt-2 animate-in fade-in duration-150">
@@ -5022,12 +5350,114 @@ export function CxoDashboard({
                       </div>
                     )}
 
+                    {/* Messages of a session opened from the sidebar. */}
+                    {openedSessionId !== null && (
+                      <div className="mb-5">
+                        <ConversationList
+                          entries={conversationEntries}
+                          isLoading={isLoadingConversations}
+                        />
+                      </div>
+                    )}
+
+                    {/* The plan, once it arrives over the socket, under the
+                        prompt that produced it. */}
+                    {reportPlan !== null && streamingQuery !== "" && (
+                      <div className="mb-4 flex justify-end">
+                        <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                          <span>{streamingQuery}</span>
+                          <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                            <User className="size-3.5" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {reportPlan !== null && (
+                      <ReportPlanCard
+                        plan={reportPlan}
+                        onToggleAgent={handleTogglePlanAgent}
+                        onToggleSuggested={handleTogglePlanSuggested}
+                        onEditAgentPrompt={handleEditPlanAgentPrompt}
+                        onEditSuggestedPrompt={handleEditSuggestedPrompt}
+                        onContinue={handleContinuePlan}
+                        continueStage={continueStage}
+                      />
+                    )}
+
+                    {/* Pressing Continue is a turn in the conversation, so it
+                        reads as one: the user's message, then what it set off
+                        underneath — exactly how a prompt and its plan read. */}
+                    {continueStage !== "idle" && (
+                      <div className="space-y-4 animate-in fade-in duration-200">
+                        <div className="flex justify-end">
+                          <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                            <span>Continue</span>
+                            <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                              <User className="size-3.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {continueStage === "creating-agents" ? (
+                          <AgentCreationLoader count={creatingAgentCount} />
+                        ) : (
+                          <ReportSkeleton />
+                        )}
+                      </div>
+                    )}
+
+                    {report !== null && <ReportView report={report} />}
+
                     <div className="h-4" />
                   </div>
                 </div>
 
                 {/* FLOATING BOTTOM SEARCH BAR WITH SEAMLESS GRADIENT FADE */}
                 <div className="absolute bottom-0 inset-x-0 pointer-events-none bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 via-55% to-transparent pt-14 pb-4 px-4 sm:px-6 z-30">
+                  {/* Mode is switchable mid-session: a follow-up may want a
+                      quick answer even when the first turn was a full report. */}
+                  <div
+                    className={`mx-auto mb-2 flex items-center justify-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${
+                      isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
+                    }`}
+                  >
+                    <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 shadow-xs backdrop-blur">
+                      <span
+                        onClick={() => setIsReportFormatMode(true)}
+                        className={`cursor-pointer text-xs transition-all ${
+                          isReportFormatMode ? "font-semibold text-[#0e7490]" : "text-slate-500"
+                        }`}
+                      >
+                        Deep Insights
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={!isReportFormatMode}
+                        aria-label={
+                          isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"
+                        }
+                        onClick={() => setIsReportFormatMode((prev) => !prev)}
+                        className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-200 transition-colors"
+                      >
+                        <span
+                          className={`pointer-events-none mt-px inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out ${
+                            isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
+                          }`}
+                        />
+                      </button>
+                      <span
+                        onClick={() => setIsReportFormatMode(false)}
+                        className={`cursor-pointer text-xs transition-all ${
+                          !isReportFormatMode ? "font-semibold text-[#0e7490]" : "text-slate-500"
+                        }`}
+                      >
+                        Chat Mode
+                      </span>
+                    </div>
+                  </div>
+
                   <div
                     className={`mx-auto flex items-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${
                       isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
@@ -5756,4 +6186,17 @@ export function CxoDashboard({
       )}
     </div>
   );
+}
+
+/** `ApprovedStatus` is free text on the platform; accept the obvious spellings. */
+function isApproved(status: string): boolean {
+  return status === "approved" || status === "approve" || status === "true";
+}
+
+function safeParseJson(json: string): unknown {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
 }

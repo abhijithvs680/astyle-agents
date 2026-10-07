@@ -38,6 +38,35 @@ export const API_ENDPOINTS = {
    * Same fire-and-forget contract as `agentOrchestration`.
    */
   chatModeAgent: "astylev2chatmodeagent6ac5023d207e4",
+
+  /**
+   * Creates one specialist agent in the catalog. POST `{ title, category,
+   * description }` — one call per agent. Called when the user approves a
+   * suggested agent, before the report runs, and unlike the run endpoints this
+   * one is awaited: its response carries the new agent's id.
+   */
+  agentCreation: "astylev2agentcreation6ac5f7eda6b6b",
+
+  /**
+   * Runs the report the user approved on the plan card. POST the approved
+   * plan — only the agents, data sources and suggestions left switched on,
+   * carrying whatever edits were made to their runtime prompts.
+   * Same fire-and-forget contract as `agentOrchestration`.
+   */
+  continueReport: "astylev26ac5f949993d2",
+
+  /**
+   * Permanently deletes one session. POST `{ session_id }`, authenticated with
+   * the bearer token. Unlike the run endpoints this one is awaited: the user
+   * is told whether their session actually went.
+   */
+  deleteSession: "astylev2deletesession6ac5e242511ef",
+
+  /**
+   * Messages belonging to one session, loaded when the user opens it from the
+   * sidebar. POST `{ session_id, email }`, authenticated with the bearer token.
+   */
+  getConversations: "astylev2getconversations6ac5d29d97733",
 } as const;
 
 export type ApiEndpointName = keyof typeof API_ENDPOINTS;

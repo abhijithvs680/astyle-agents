@@ -64,3 +64,89 @@ export type StartAnalysisResult = {
   sessionId: string;
   mode: AnalysisMode;
 };
+
+/**
+ * One stored turn in a session.
+ *
+ * A `deep_insight` turn keeps the plan as JSON rather than a parsed object so
+ * this type stays serialisable across the server-function boundary; the client
+ * maps it with `toReportPlan`.
+ */
+export type ConversationEntry = {
+  id: string;
+  role: "user" | "agent";
+  /** Platform `CreatedOn`, verbatim — it is not always a sane date. */
+  createdOn?: string;
+} & (
+  | { kind: "text"; text: string }
+  | {
+      kind: "report";
+      /** The generated report, as stored. Kept a string so it crosses the
+       *  server-function boundary unchanged. */
+      reportJson: string;
+    }
+  | {
+      kind: "plan";
+      planJson: string;
+      /** `ConversationID` of this row; the report workflow keys on it. */
+      conversationId?: string;
+      /**
+       * Platform `ApprovedStatus`, lowercased. A trailing plan that is not yet
+       * approved is still awaiting the user's decision, so it reopens for
+       * editing instead of rendering as settled history.
+       */
+      approvedStatus: string;
+      /**
+       * Whether the card should print the prompt the plan echoes back. False
+       * once the session also stores the user's own turn, so the question is
+       * not shown twice.
+       */
+      showPrompt: boolean;
+    }
+);
+
+export type ConversationsResult = {
+  sessionId: string;
+  entries: Array<ConversationEntry>;
+};
+
+/** What the plan card hands back when the user presses Continue. */
+export type ContinueReportInput = {
+  sessionId: string;
+  /** The plan row being continued, so the workflow knows which one to run. */
+  conversationId: string;
+  prompt?: string | undefined;
+  planTitle?: string | undefined;
+  planSummary?: string | undefined;
+  sessionTitle?: string | undefined;
+  customInstructions?: string | undefined;
+  /** Catalog agents left switched on, with any edits to their instructions. */
+  agents: Array<{
+    id: string;
+    name: string;
+    role?: string | undefined;
+    runtimePrompt?: string | undefined;
+  }>;
+};
+
+/** One approved suggestion, on its way to becoming a catalog agent. */
+export type CreateAgentsInput = {
+  agents: Array<{
+    /** The suggestion this came from, so the caller can match the result back. */
+    suggestionId: string;
+    title: string;
+    category: string;
+    description: string;
+  }>;
+};
+
+/** An agent that now exists in the catalog, with the id the platform minted. */
+export type CreatedAgent = {
+  id: string;
+  suggestionId: string;
+  name: string;
+  role: string;
+  description: string;
+};
+
+export type ContinueReportResult = { accepted: true; sessionId: string };

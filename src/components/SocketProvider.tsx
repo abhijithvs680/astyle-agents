@@ -44,6 +44,15 @@ export function useSocket(): SocketContextValue {
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<SocketIOClient.Socket | null>(null);
+  /**
+   * Subscriptions, kept independently of the socket.
+   *
+   * Consumers mount and call `on` immediately, but the socket only exists
+   * after an async credentials fetch — so a subscription made in the meantime
+   * would be dropped. Holding them here lets them attach whenever the socket
+   * appears, and re-attach if it is ever replaced.
+   */
+  const listenersRef = useRef<Map<string, Set<(data: unknown) => void>>>(new Map());
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -76,6 +85,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       });
 
       socketRef.current = socket;
+
+      // Attach anything that subscribed while the socket was still being set up.
+      for (const [event, handlers] of listenersRef.current) {
+        for (const handler of handlers) socket.on(event, handler);
+      }
 
       socket.on("connect", () => {
         setConnected(true);
@@ -124,10 +138,21 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socket.emit(event, payload);
   }, []);
 
-  /** Subscribes to an event and returns an unsubscribe function. */
+  /**
+   * Subscribes to an event and returns an unsubscribe function. Safe to call
+   * before the socket connects — the handler attaches once it does.
+   */
   const on = useCallback((event: string, handler: (data: unknown) => void) => {
+    let handlers = listenersRef.current.get(event);
+    if (handlers === undefined) {
+      handlers = new Set();
+      listenersRef.current.set(event, handlers);
+    }
+    handlers.add(handler);
     socketRef.current?.on(event, handler);
+
     return () => {
+      listenersRef.current.get(event)?.delete(handler);
       socketRef.current?.off(event, handler);
     };
   }, []);
