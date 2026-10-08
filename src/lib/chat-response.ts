@@ -1,3 +1,5 @@
+import { looksLikeReport, unwrapJsonFence } from "./report";
+
 /** The chat workflow sends a JSON answer inside the socket event's response field. */
 export const CHAT_RESPONSE_EVENT = "chat_response";
 
@@ -40,7 +42,7 @@ function recoverJsonAnswer(value: string): ChatAnswer | null {
 /** Also used for chat answers saved in a session's conversation history. */
 export function toChatAnswer(value: unknown): ChatAnswer | null {
   if (typeof value === "string") {
-    const text = value.trim();
+    const text = unwrapJsonFence(value);
     if (!text.startsWith("{")) return null;
     try {
       return toChatAnswer(JSON.parse(text));
@@ -80,6 +82,10 @@ export function parseChatResponseEvent(raw: unknown): ChatResponse | null {
     }
   }
 
-  const answer = toChatAnswer(body) ?? (typeof body === "string" ? recoverJsonAnswer(body) : null);
+  const answer =
+    toChatAnswer(body) ??
+    (typeof body === "string" ? recoverJsonAnswer(body) : null) ??
+    // A report sent as the whole answer; the card renders it as a report.
+    (looksLikeReport(body) ? { title: "Report", response: JSON.stringify(body) } : null);
   return answer === null ? null : { sessionId, ...answer };
 }

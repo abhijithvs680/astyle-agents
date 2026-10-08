@@ -551,3 +551,37 @@ export function parseReportEvent(rawEvent: unknown): Report | null {
 
   return toReport(body, envelopeSessionId, conversationId);
 }
+
+/**
+ * Agents sometimes wrap their JSON in a Markdown code fence. Return the body
+ * of a fence that spans the whole text, or the text unchanged.
+ */
+export function unwrapJsonFence(text: string): string {
+  const fenced = /^```[a-zA-Z]*\s*\n?([\s\S]*?)\n?\s*```$/.exec(text.trim());
+  return fenced === null ? text.trim() : (fenced[1] ?? "").trim();
+}
+
+/** Whether a parsed body is a report, with or without chart blocks. */
+export function looksLikeReport(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    Array.isArray(value["blocks"]) ||
+    value["spec"] === "astyle-report-template" ||
+    (str(value["reportTitle"]) !== undefined && isRecord(value["executiveSummary"]))
+  );
+}
+
+/**
+ * A report sent as text — e.g. a specialist answer that is the report JSON,
+ * possibly fenced. Returns null for anything that is not a report.
+ */
+export function reportFromText(text: string, fallbackSessionId = ""): Report | null {
+  const body = unwrapJsonFence(text);
+  if (!body.startsWith("{")) return null;
+  try {
+    const parsed: unknown = JSON.parse(body);
+    return looksLikeReport(parsed) ? toReport(parsed, fallbackSessionId) : null;
+  } catch {
+    return null;
+  }
+}

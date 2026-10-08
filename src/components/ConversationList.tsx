@@ -55,7 +55,7 @@ export function ConversationList({
     <div className="space-y-4">
       {entries.map((entry) => {
         if (entry.kind === "report") {
-          const report = toReport(safeParse(entry.reportJson));
+          const report = toReport(safeParse(entry.reportJson), "");
           return report === null ? null : <ReportView key={entry.id} report={report} />;
         }
 
@@ -93,6 +93,14 @@ export function ConversationList({
                 readOnly
               />
             </div>
+          );
+        }
+
+        // Plain agent replies are usually Markdown, and some are a report
+        // sent as text; the answer card handles both.
+        if (entry.role === "agent") {
+          return (
+            <ChatResponseCard key={entry.id} answer={{ title: "Answer", response: entry.text }} />
           );
         }
 

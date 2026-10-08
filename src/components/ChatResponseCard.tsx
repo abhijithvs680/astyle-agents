@@ -1,12 +1,22 @@
+import { useMemo } from "react";
 import { Sparkles } from "lucide-react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import type { ChatAnswer } from "../lib/chat-response";
+import { reportFromText } from "../lib/report";
+import { ReportView } from "./ReportView";
 import { useTranslateMarkdown } from "../hooks/useTranslate";
 
 export function ChatResponseCard({ answer }: { answer: ChatAnswer }) {
-  const { markdown: displayMarkdown, isLoading } = useTranslateMarkdown(answer.response);
+  // Some agents answer with the full report JSON; show it as a report.
+  const report = useMemo(() => reportFromText(answer.response), [answer.response]);
+  if (report !== null) return <ReportView report={report} />;
+  return <MarkdownAnswer markdown={answer.response} />;
+}
+
+function MarkdownAnswer({ markdown }: { markdown: string }) {
+  const { markdown: displayMarkdown, isLoading } = useTranslateMarkdown(markdown);
 
   return (
     <div data-chat-answer-card className={`flex items-start gap-3 ${isLoading ? "opacity-80 transition-opacity" : ""}`}>

@@ -12,6 +12,7 @@ import { decodeTokenClaims } from "./jwt.server";
 import { requireSessionToken } from "./session.server";
 import type { ConversationEntry, ConversationsResult } from "./types";
 import { toChatAnswer } from "../lib/chat-response";
+import { looksLikeReport, unwrapJsonFence } from "../lib/report";
 
 /** Platform bookkeeping that rides along on every row; never content. */
 const ENVELOPE_FIELDS = new Set(["jsCodes", "workflow_log_id", "Echo", "Status", "Time", "Errors"]);
@@ -72,8 +73,11 @@ function isUserRole(role: string): boolean {
 function toEntry(row: unknown, index: number): ConversationEntry | null {
   if (!isRecord(row)) return null;
 
-  const content = str(row["Content"]);
-  if (content === "") return null;
+  const rawContent = str(row["Content"]);
+  if (rawContent === "") return null;
+  // Agents sometimes wrap stored JSON in a ```json fence.
+  const unfenced = unwrapJsonFence(rawContent);
+  const content = unfenced.startsWith("{") ? unfenced : rawContent;
 
   const id = str(row["ConversationID"]) || str(row["rowID"]) || `row-${index}`;
   const role = isUserRole(str(row["Role"])) ? "user" : "agent";
@@ -84,8 +88,8 @@ function toEntry(row: unknown, index: number): ConversationEntry | null {
     try {
       const parsed: unknown = JSON.parse(content);
       // A finished report. Checked before the plan, because only one of the
-      // two carries `blocks`.
-      if (isRecord(parsed) && Array.isArray(parsed["blocks"])) {
+      // two carries `blocks` (or the report-template markers).
+      if (looksLikeReport(parsed)) {
         return {
           id,
           role,
