@@ -78,6 +78,8 @@ import { deleteSession } from "../api/delete-session";
 import { continueReport } from "../api/report";
 import type { ConversationEntry } from "../api/types";
 import type { AnalysisMode } from "../api/types";
+import { useLanguage } from "../context/LanguageContext";
+import { TranslatableText } from "./TranslatableText";
 
 type PastTurn = {
   id: string;
@@ -3246,7 +3248,7 @@ export function CxoDashboard({
 
   const [isReportFormatMode, setIsReportFormatMode] = useState(true);
   const [logoRotation, setLogoRotation] = useState(0);
-  const [language, setLanguage] = useState<"en" | "ja">("en");
+  const { language, setLanguage, t } = useLanguage();
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
   const isToggleFirstMount = useRef(true);
@@ -4653,7 +4655,7 @@ export function CxoDashboard({
           </div>
           <div className="text-right hidden sm:block">
             <p className="text-xs font-medium leading-none text-white">Robert</p>
-            <p className="text-[10px] text-sky-200/70 mt-0.5">Chief Executive Officer</p>
+            <p className="text-[10px] text-sky-200/70 mt-0.5">{t("header.executiveOfficer", { defaultValue: "Chief Executive Officer" })}</p>
           </div>
           <span className="grid size-7 sm:size-8 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-xs sm:text-sm font-medium text-white shadow-xs">
             R
@@ -4683,7 +4685,7 @@ export function CxoDashboard({
               <MessageSquare className="size-5" />
             </button>
             <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
-              Chat
+              {t("nav.chat", { defaultValue: "Chat" })}
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
             </div>
           </div>
@@ -4699,10 +4701,10 @@ export function CxoDashboard({
                 }
                 setIsHistoryOpen((open) => !open);
               }}
-              aria-label="Chat History"
+              aria-label={t("nav.chatHistory", { defaultValue: "Chat History" })}
               aria-expanded={activeView === "chat" && isHistoryOpen}
               aria-controls={activeView === "chat" && isHistoryOpen ? "ask-ai-session-history" : undefined}
-              title={activeView === "chat" && isHistoryOpen ? "Close Chat History" : "Open Chat History"}
+              title={activeView === "chat" && isHistoryOpen ? t("nav.closeChatHistory", { defaultValue: "Close Chat History" }) : t("nav.openChatHistory", { defaultValue: "Open Chat History" })}
               className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
                 activeView === "chat" && isHistoryOpen
                   ? "bg-chip-active text-chip-active-foreground shadow-xs"
@@ -4712,7 +4714,7 @@ export function CxoDashboard({
               <History className="size-5" aria-hidden="true" />
             </button>
             <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
-              Chat History
+              {t("nav.chatHistory", { defaultValue: "Chat History" })}
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
             </div>
           </div>
@@ -4735,7 +4737,7 @@ export function CxoDashboard({
               <UsersRound className="size-5" />
             </button>
             <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
-              Specialists
+              {t("nav.specialists", { defaultValue: "Specialists" })}
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
             </div>
           </div>
@@ -4796,7 +4798,7 @@ export function CxoDashboard({
                       style={{ fontWeight: 400 }}
                       className="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-[#142a38] leading-tight select-none mb-3 sm:mb-4"
                     >
-                      What should AI analyze?
+                      {t("hero.title", { defaultValue: "What should AI analyze?" })}
                     </h1>
 
                     {/* Centered Search Card with Top-Docked Deep Insights / Chat Mode Toggle */}
@@ -4813,7 +4815,7 @@ export function CxoDashboard({
                                 : "font-normal text-slate-500 hover:text-slate-800"
                             }`}
                           >
-                            Deep Insights
+                            {t("hero.deepInsights", { defaultValue: "Deep Insights" })}
                           </button>
 
                           <button
@@ -4823,7 +4825,7 @@ export function CxoDashboard({
                             onClick={() => setIsReportFormatMode((prev) => !prev)}
                             className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-slate-200 border border-slate-300 transition-colors duration-200 ease-in-out focus:outline-hidden"
                             title={
-                              isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"
+                              isReportFormatMode ? t("hero.switchToChat", { defaultValue: "Switch to Chat Mode" }) : t("hero.switchToDeep", { defaultValue: "Switch to Deep Insights" })
                             }
                           >
                             <span
@@ -4842,7 +4844,7 @@ export function CxoDashboard({
                                 : "font-normal text-slate-500 hover:text-slate-800"
                             }`}
                           >
-                            Chat Mode
+                            {t("hero.chatMode", { defaultValue: "Chat Mode" })}
                           </button>
                         </div>
                       </div>
@@ -4867,7 +4869,7 @@ export function CxoDashboard({
                           onFocus={() => setIsSearchFocused(true)}
                           onClick={() => setIsSearchFocused(true)}
                           onChange={(e) => setChatQuery(e.target.value)}
-                          placeholder="Ask anything (e.g. Products creating highest inventory exposure...)"
+                          placeholder={t("hero.inputPlaceholder", { defaultValue: "Ask anything (e.g. Products creating highest inventory exposure...)" })}
                           className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
                         />
                         {chatQuery && (
@@ -4885,7 +4887,7 @@ export function CxoDashboard({
                           disabled={!chatQuery.trim() && !isVoiceActive}
                           className="px-5 sm:px-6 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
                         >
-                          Analyze
+                          {t("hero.analyze", { defaultValue: "Analyze" })}
                         </button>
                       </form>
 
@@ -4901,7 +4903,7 @@ export function CxoDashboard({
                           }`}
                         >
                           <Mic className="size-3.5 sm:size-4 text-white" />
-                          <span>{isVoiceActive ? "Listening..." : "Voice Mode"}</span>
+                          <span>{isVoiceActive ? t("hero.listening", { defaultValue: "Listening..." }) : t("hero.voiceMode", { defaultValue: "Voice Mode" })}</span>
                         </button>
                       </div>
                     </div>
@@ -4909,7 +4911,7 @@ export function CxoDashboard({
                     {/* Highly Readable Suggested Queries - Transparent Background */}
                     <div className="pt-6 sm:pt-8 w-full max-w-xl flex flex-col items-center gap-2.5">
                       <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                        Suggested Queries
+                        {t("hero.suggestedQueries", { defaultValue: "Suggested Queries" })}
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
                         {suggestedQueries.map((query, idx) => (
@@ -4920,7 +4922,9 @@ export function CxoDashboard({
                             className="px-4 py-2.5 rounded-2xl sm:rounded-full bg-transparent hover:bg-white/40 border border-slate-300 hover:border-[#0e7490]/60 text-xs sm:text-sm text-slate-800 hover:text-[#0e7490] transition cursor-pointer flex items-center gap-2.5 text-left group"
                           >
                             <Sparkles className="size-3.5 text-[#0e7490] shrink-0" />
-                            <span className="leading-snug font-medium line-clamp-1">{query}</span>
+                            <span className="leading-snug font-medium line-clamp-1">
+                              <TranslatableText text={query} />
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -4944,10 +4948,10 @@ export function CxoDashboard({
                   className="relative z-10 mx-auto min-h-full w-full max-w-xl snap-start pb-10 pt-8 text-left"
                 >
                   <span className="block text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Recents
+                    {t("hero.recents", { defaultValue: "Recents" })}
                   </span>
                   {sessionHistoryList.length === 0 ? (
-                    <p className="mt-2 text-center text-xs text-slate-500">No recent chats yet</p>
+                    <p className="mt-2 text-center text-xs text-slate-500">{t("hero.noRecentChats", { defaultValue: "No recent chats yet" })}</p>
                   ) : (
                     <div className="mt-2 flex flex-col gap-1">
                       {sessionHistoryList.map((session) => (
@@ -4962,7 +4966,7 @@ export function CxoDashboard({
                             aria-hidden="true"
                           />
                           <span className="min-w-0 flex-1 truncate text-sm text-slate-700 group-hover:text-[#0e7490]">
-                            {session.title}
+                            <TranslatableText text={session.title} />
                           </span>
                           <span className="shrink-0 text-[11px] text-slate-400">
                             {session.timestamp}
@@ -5006,7 +5010,7 @@ export function CxoDashboard({
                         {/* USER QUERY BUBBLE */}
                         <div className="flex justify-end">
                           <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
-                            <span>{msg.query}</span>
+                            <span><TranslatableText text={msg.query} /></span>
                             <div className="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-700">
                               <User className="size-3.5" />
                             </div>
@@ -5021,11 +5025,11 @@ export function CxoDashboard({
                             <div className="flex-1 max-w-2xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs p-4 sm:p-5 text-slate-800 text-sm space-y-3">
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                 <h3 className="font-bold text-slate-900 text-base">
-                                  {msg.structuredAnswer.reportTitle}
+                                  <TranslatableText text={msg.structuredAnswer.reportTitle} />
                                 </h3>
                               </div>
                               <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                                {msg.structuredAnswer.keyFinding}
+                                <TranslatableText text={msg.structuredAnswer.keyFinding} />
                               </p>
                             </div>
                           </div>
@@ -5054,12 +5058,10 @@ export function CxoDashboard({
                                         {/* Card Header - Clean Title */}
                                         <div className="border-b border-slate-200/70 pb-3">
                                           <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                                            Report Generation Plan
+                                            {t("chat.reportPlan", { defaultValue: "Report Generation Plan" })}
                                           </h3>
                                           <p className="text-sm text-slate-600 mt-1 font-normal">
-                                            This plan outlines how specialized merchandising agents
-                                            will analyze data and synthesize findings to generate
-                                            your report.
+                                            {t("chat.planDescription", { defaultValue: "This plan outlines how specialized merchandising agents will analyze data and synthesize findings to generate your report." })}
                                           </p>
                                         </div>
 
@@ -5087,13 +5089,13 @@ export function CxoDashboard({
                                                         <div className="min-w-0 flex-1 space-y-1.5">
                                                           <div className="flex items-center gap-2.5 flex-wrap">
                                                             <h4 className="text-base font-bold text-slate-900">
-                                                              {agent.name}
+                                                              <TranslatableText text={agent.name} />
                                                             </h4>
                                                           </div>
 
                                                           {!isEditing ? (
                                                             <p className="text-sm text-slate-700 leading-relaxed font-normal">
-                                                              {agent.runtimePrompt}
+                                                              <TranslatableText text={agent.runtimePrompt} />
                                                             </p>
                                                           ) : (
                                                             <div className="space-y-2.5 pt-2 animate-in fade-in duration-150">
@@ -5908,7 +5910,7 @@ export function CxoDashboard({
                         {turn.query !== "" && (
                           <div className="flex justify-end">
                             <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                              <span>{turn.query}</span>
+                              <span><TranslatableText text={turn.query} /></span>
                               <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                 <User className="size-3.5" />
                               </div>
@@ -5933,7 +5935,7 @@ export function CxoDashboard({
                         {(turn.awaitingReport || turn.report !== null) && (
                           <div className="flex justify-end">
                             <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                              <span>Continue</span>
+                              <span>{t("reportPlan.continue", { defaultValue: "Continue" })}</span>
                               <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                 <User className="size-3.5" />
                               </div>
@@ -5985,7 +5987,7 @@ export function CxoDashboard({
                           {streamingQuery !== "" && (
                             <div className="flex justify-end">
                               <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                                <span>{streamingQuery}</span>
+                                <span><TranslatableText text={streamingQuery} /></span>
                                 <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                   <User className="size-3.5" />
                                 </div>
@@ -6001,7 +6003,7 @@ export function CxoDashboard({
                       {reportPlan !== null && streamingQuery !== "" && (
                         <div className="mb-4 flex justify-end">
                           <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                            <span>{streamingQuery}</span>
+                            <span><TranslatableText text={streamingQuery} /></span>
                             <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                               <User className="size-3.5" />
                             </div>
@@ -6031,7 +6033,7 @@ export function CxoDashboard({
                         >
                           <div className="flex justify-end">
                             <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                              <span>Continue</span>
+                              <span>{t("reportPlan.continue", { defaultValue: "Continue" })}</span>
                               <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                 <User className="size-3.5" />
                               </div>
@@ -6129,7 +6131,7 @@ export function CxoDashboard({
                         onFocus={() => setIsSearchFocused(true)}
                         onClick={() => setIsSearchFocused(true)}
                         onChange={(e) => setChatQuery(e.target.value)}
-                        placeholder="Ask follow-up question or instruct AI..."
+                        placeholder={t("chatInput.followUp", { defaultValue: "Ask follow-up question or instruct AI..." })}
                         className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
                       />
                       {chatQuery && (
@@ -6150,7 +6152,7 @@ export function CxoDashboard({
                             ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
                             : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
                         }`}
-                        title={isVoiceActive ? "Listening... Click to stop" : "Voice input"}
+                        title={isVoiceActive ? t("chatInput.listening", { defaultValue: "Listening... Click to stop" }) : t("chatInput.voiceInput", { defaultValue: "Voice input" })}
                         aria-label="Voice input"
                       >
                         <Mic className="size-4" />
@@ -6160,7 +6162,7 @@ export function CxoDashboard({
                         disabled={!chatQuery.trim() && !isVoiceActive}
                         className="px-4 sm:px-5 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
                       >
-                        <span>Analyze</span>
+                        <span>{t("chatInput.analyze", { defaultValue: "Analyze" })}</span>
                       </button>
                     </form>
                     <button
@@ -6169,7 +6171,7 @@ export function CxoDashboard({
                         handleNewSession();
                       }}
                       className="size-10 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0e7490] text-slate-600 hover:text-[#0e7490] shadow-md flex items-center justify-center transition cursor-pointer shrink-0"
-                      title="New Query / Reset"
+                      title={t("chatInput.newQuery", { defaultValue: "New Query / Reset" })}
                     >
                       <Plus className="size-4" />
                     </button>

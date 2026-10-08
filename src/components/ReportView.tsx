@@ -42,13 +42,9 @@ import {
 } from "recharts";
 
 import type { Report, ReportBlock, SeriesSpec, Slice, Tone, TrendData } from "../lib/report";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { useLanguage } from "../context/LanguageContext";
+import { TranslatableText } from "./TranslatableText";
 
 /** Categorical palette, in the order series and slices are assigned. */
 const SERIES_COLORS = ["#0e7490", "#06b6d4", "#6366f1", "#10b981", "#f59e0b", "#8b5cf6"];
@@ -125,7 +121,7 @@ function TrendLegend({ series }: { series: Array<SeriesSpec> }) {
       {series.map((entry, index) => (
         <span key={entry.key} className="flex items-center gap-1.5">
           <span className="size-3 rounded" style={{ background: color(index) }} />
-          <span className="text-slate-700">{entry.label}</span>
+          <span className="text-slate-700"><TranslatableText text={entry.label} /></span>
         </span>
       ))}
     </div>
@@ -149,7 +145,7 @@ function ReportBarChart({
     <Card>
       {data.valueLabel !== undefined ? (
         <span className="mb-3 inline-flex items-center rounded-full border border-blue-200/80 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-          {data.valueLabel}
+          <TranslatableText text={data.valueLabel} />
         </span>
       ) : null}
 
@@ -188,11 +184,11 @@ function ReportBarChart({
             {data.bars.map((bar) => (
               <div key={bar.label} className="w-24 space-y-0.5 text-center sm:w-32">
                 <span className="block truncate text-xs font-bold leading-tight text-slate-950 sm:text-sm">
-                  {bar.label}
+                  <TranslatableText text={bar.label} />
                 </span>
                 {bar.subtext !== undefined ? (
                   <span className="block text-[11px] font-medium leading-tight text-slate-600 sm:text-xs">
-                    {bar.subtext}
+                    <TranslatableText text={bar.subtext} />
                   </span>
                 ) : null}
               </div>
@@ -232,7 +228,7 @@ function KpiRibbon({ data }: { data: Extract<ReportBlock, { component: "kpiRibbo
             className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs"
           >
             <div className="min-w-0">
-              <span className="block text-xs font-medium text-slate-500">{card.label}</span>
+              <span className="block text-xs font-medium text-slate-500"><TranslatableText text={card.label} /></span>
               <span className="block text-xl font-bold text-slate-950">{card.value}</span>
               {card.delta !== undefined ? (
                 /* Coloured by the agent's tone, not by the arrow direction:
@@ -314,11 +310,11 @@ function SliceChart({
           {donut && centerMetric !== undefined ? (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
               <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                {centerMetric.label}
+                <TranslatableText text={centerMetric.label} />
               </span>
-              <span className="text-2xl font-bold text-slate-950">{centerMetric.value}</span>
+              <span className="text-2xl font-bold text-slate-950"><TranslatableText text={centerMetric.value} /></span>
               {centerMetric.caption !== undefined ? (
-                <span className="text-[11px] text-slate-500">{centerMetric.caption}</span>
+                <span className="text-[11px] text-slate-500"><TranslatableText text={centerMetric.caption} /></span>
               ) : null}
             </div>
           ) : null}
@@ -328,11 +324,14 @@ function SliceChart({
           {slices.map((slice, index) => (
             <div key={slice.name} className="flex items-start justify-between gap-3 text-sm">
               <span className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="size-2.5 shrink-0 rounded-sm" style={{ background: color(index) }} />
-                <span className="min-w-0 font-medium text-slate-800">{slice.name}</span>
+                <span
+                  className="size-2.5 shrink-0 rounded-sm"
+                  style={{ background: color(index) }}
+                />
+                <span className="min-w-0 font-medium text-slate-800"><TranslatableText text={slice.name} /></span>
                 {slice.highlight !== undefined ? (
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
-                    {slice.highlight}
+                    <TranslatableText text={slice.highlight} />
                   </span>
                 ) : null}
               </span>
@@ -510,7 +509,7 @@ function DataTable({
                   column.align === "right" ? "text-right" : "text-left"
                 }`}
               >
-                {column.label}
+                <TranslatableText text={column.label} />
               </th>
             ))}
           </tr>
@@ -525,7 +524,7 @@ function DataTable({
                     column.emphasis === true ? "font-semibold text-slate-900" : "text-slate-700"
                   }`}
                 >
-                  {cellText(row[column.key])}
+                  {typeof row[column.key] === "string" ? <TranslatableText text={row[column.key] as string} /> : cellText(row[column.key])}
                 </td>
               ))}
             </tr>
@@ -551,7 +550,7 @@ function BlockBody({ block, expanded = false }: { block: ReportBlock; expanded?:
         <div className="space-y-3">
           {block.data.paragraphs.map((paragraph, index) => (
             <p key={index} className="text-sm leading-relaxed text-slate-700">
-              {paragraph}
+              <TranslatableText text={paragraph} />
             </p>
           ))}
         </div>
@@ -591,8 +590,8 @@ function BlockBody({ block, expanded = false }: { block: ReportBlock; expanded?:
         >
           <AlertTriangle className={`mt-0.5 size-4 shrink-0 ${styles.text}`} aria-hidden="true" />
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-900">{block.data.heading}</div>
-            <p className="mt-0.5 text-sm text-slate-700">{block.data.body}</p>
+            <div className="text-sm font-semibold text-slate-900"><TranslatableText text={block.data.heading} /></div>
+            <p className="mt-0.5 text-sm text-slate-700"><TranslatableText text={block.data.body} /></p>
           </div>
         </div>
       );
@@ -607,9 +606,9 @@ function BlockBody({ block, expanded = false }: { block: ReportBlock; expanded?:
               />
               <span>
                 {item.label !== undefined ? (
-                  <span className="font-semibold text-slate-900">{item.label}: </span>
+                  <span className="font-semibold text-slate-900"><TranslatableText text={item.label} />: </span>
                 ) : null}
-                {item.text}
+                <TranslatableText text={item.text} />
               </span>
             </li>
           ))}
@@ -645,11 +644,11 @@ function Block({ block }: { block: ReportBlock }) {
           <div className="min-w-0">
             {block.eyebrow !== undefined ? (
               <span className="block text-xs font-bold uppercase tracking-wider text-[#0e7490]">
-                {block.eyebrow}
+                <TranslatableText text={block.eyebrow} />
               </span>
             ) : null}
             <h3 className="text-base font-bold tracking-tight text-slate-950 sm:text-lg">
-              {block.title}
+              <TranslatableText text={block.title} />
             </h3>
           </div>
           {expandable ? (
@@ -671,7 +670,7 @@ function Block({ block }: { block: ReportBlock }) {
               >
                 <DialogHeader className="shrink-0 border-b border-slate-200 px-5 py-4 pr-14 text-left sm:px-6">
                   <DialogTitle className="text-lg leading-snug sm:text-xl">
-                    {block.title}
+                    <TranslatableText text={block.title} />
                   </DialogTitle>
                 </DialogHeader>
                 <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
@@ -687,7 +686,7 @@ function Block({ block }: { block: ReportBlock }) {
 
       {block.insight !== undefined ? (
         <p className="border-l-2 border-[#0e7490]/30 pl-3 text-sm leading-relaxed text-slate-700">
-          {block.insight}
+          <TranslatableText text={block.insight} />
         </p>
       ) : null}
 
@@ -698,7 +697,7 @@ function Block({ block }: { block: ReportBlock }) {
               key={source}
               className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600"
             >
-              {source}
+              <TranslatableText text={source} />
             </span>
           ))}
         </div>
@@ -713,11 +712,7 @@ const PRIORITY_STYLES: Record<string, string> = {
   low: "bg-slate-50 border-slate-200 text-slate-600",
 };
 
-function HowDataFound({
-  method,
-}: {
-  method: NonNullable<Report["howDataFound"]>;
-}) {
+function HowDataFound({ method }: { method: NonNullable<Report["howDataFound"]> }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
@@ -781,6 +776,8 @@ function HowDataFound({
 }
 
 export function ReportView({ report }: { report: Report }) {
+  const { t } = useLanguage();
+
   return (
     <article
       data-report-card
@@ -788,7 +785,7 @@ export function ReportView({ report }: { report: Report }) {
     >
       <header className="border-b border-slate-200/70 pb-4">
         <h2 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
-          {report.reportTitle}
+          <TranslatableText text={report.reportTitle} />
         </h2>
       </header>
 
@@ -797,10 +794,10 @@ export function ReportView({ report }: { report: Report }) {
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden="true" />
           <div className="min-w-0">
             <div className="text-sm font-semibold text-slate-900">
-              The report could not be completed
+              {t("reportView.runCouldNotComplete", { defaultValue: "The report run could not be completed" })}
             </div>
             <p className="mt-0.5 text-sm text-slate-700">
-              {report.error ?? "No detail was given."}
+              <TranslatableText text={report.error ?? "No detail was given."} />
             </p>
           </div>
         </div>
@@ -809,14 +806,14 @@ export function ReportView({ report }: { report: Report }) {
       {report.executiveSummary !== undefined ? (
         <section className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs">
           <span className="block text-xs font-bold uppercase tracking-wider text-[#0e7490]">
-            Executive summary
+            {t("reportView.executiveSummary", { defaultValue: "Executive summary" })}
           </span>
           <p className="mt-1.5 text-base font-semibold leading-snug text-slate-950">
-            {report.executiveSummary.headline}
+            <TranslatableText text={report.executiveSummary.headline} />
           </p>
           {report.executiveSummary.narrative !== "" ? (
             <p className="mt-2 text-sm leading-relaxed text-slate-700">
-              {report.executiveSummary.narrative}
+              <TranslatableText text={report.executiveSummary.narrative} />
             </p>
           ) : null}
           {report.executiveSummary.keyFindings.length > 0 ? (
@@ -824,7 +821,9 @@ export function ReportView({ report }: { report: Report }) {
               {report.executiveSummary.keyFindings.map((finding, index) => (
                 <li key={index} className="flex items-start gap-2.5 text-sm text-slate-700">
                   <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#0e7490]" />
-                  <span>{finding}</span>
+                  <span>
+                    <TranslatableText text={finding} />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -841,14 +840,16 @@ export function ReportView({ report }: { report: Report }) {
       {report.recommendations.length > 0 ? (
         <section className="space-y-3">
           <h3 className="text-base font-bold tracking-tight text-slate-950 sm:text-lg">
-            Recommendations
+            {t("reportView.recommendations", { defaultValue: "Recommendations" })}
           </h3>
           <div className="divide-y divide-slate-200/80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
             {report.recommendations.map((item, index) => (
               <div key={index} className="flex items-start gap-3 p-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-900">{item.title}</span>
+                    <span className="text-sm font-semibold text-slate-900">
+                      <TranslatableText text={item.title} />
+                    </span>
                     <span
                       className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
                         PRIORITY_STYLES[item.priority] ?? PRIORITY_STYLES["low"]
@@ -861,7 +862,9 @@ export function ReportView({ report }: { report: Report }) {
                     ) : null}
                   </div>
                   {item.detail !== "" ? (
-                    <p className="mt-1 text-sm text-slate-700">{item.detail}</p>
+                    <p className="mt-1 text-sm text-slate-700">
+                      <TranslatableText text={item.detail} />
+                    </p>
                   ) : null}
                 </div>
               </div>
@@ -875,12 +878,12 @@ export function ReportView({ report }: { report: Report }) {
           {report.appendix.dataGaps.length > 0 ? (
             <div>
               <span className="block text-xs font-bold uppercase tracking-wider text-amber-700">
-                Data gaps
+                {t("reportView.dataGaps", { defaultValue: "Data gaps" })}
               </span>
               <ul className="mt-1.5 space-y-1">
                 {report.appendix.dataGaps.map((gap, index) => (
                   <li key={index} className="text-sm text-slate-600">
-                    {gap}
+                    <TranslatableText text={gap} />
                   </li>
                 ))}
               </ul>
@@ -889,12 +892,12 @@ export function ReportView({ report }: { report: Report }) {
           {report.appendix.assumptions.length > 0 ? (
             <div>
               <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-                Assumptions
+                {t("reportView.assumptions", { defaultValue: "Assumptions" })}
               </span>
               <ul className="mt-1.5 space-y-1">
                 {report.appendix.assumptions.map((assumption, index) => (
                   <li key={index} className="text-sm text-slate-600">
-                    {assumption}
+                    <TranslatableText text={assumption} />
                   </li>
                 ))}
               </ul>

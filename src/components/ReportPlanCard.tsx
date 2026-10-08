@@ -14,6 +14,8 @@ import { AlertTriangle, Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 
 import type { ReportPlan } from "../lib/report-plan";
+import { useLanguage } from "../context/LanguageContext";
+import { TranslatableText } from "./TranslatableText";
 
 /**
  * Continuing happens in two steps, and they fail differently: creating an
@@ -81,6 +83,7 @@ function EditablePrompt({
   onSave: (text: string) => void;
   readOnly?: boolean;
 }) {
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
@@ -107,7 +110,7 @@ function EditablePrompt({
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#0e7490] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0c627a]"
           >
             <Check className="size-3.5" aria-hidden="true" />
-            Save
+            {t("reportPlan.save", { defaultValue: "Save" })}
           </button>
           <button
             type="button"
@@ -118,7 +121,7 @@ function EditablePrompt({
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             <X className="size-3.5" aria-hidden="true" />
-            Cancel
+            {t("reportPlan.cancel", { defaultValue: "Cancel" })}
           </button>
         </div>
       </div>
@@ -128,9 +131,13 @@ function EditablePrompt({
   return (
     <div className="mt-1 group/prompt">
       {value === "" ? (
-        <p className="text-sm italic text-slate-400">No instruction was provided for this agent.</p>
+        <p className="text-sm italic text-slate-400">
+          {t("reportPlan.noInstruction", { defaultValue: "No instruction was provided for this agent." })}
+        </p>
       ) : (
-        <p className="whitespace-pre-line text-sm text-slate-600">{value}</p>
+        <p className="whitespace-pre-line text-sm text-slate-600">
+          <TranslatableText text={value} />
+        </p>
       )}
       {readOnly ? null : (
         <button
@@ -142,7 +149,7 @@ function EditablePrompt({
           className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-[#0e7490] hover:underline"
         >
           <Pencil className="size-3" aria-hidden="true" />
-          Edit instruction
+          {t("reportPlan.editInstruction", { defaultValue: "Edit instruction" })}
         </button>
       )}
     </div>
@@ -159,6 +166,7 @@ export function ReportPlanCard({
   continueStage,
   readOnly = false,
 }: Props) {
+  const { t } = useLanguage();
   const activeAgents = plan.agents.filter((a) => a.isEnabled).length;
   const approved = plan.suggestedAgents.filter((a) => a.isApproved).length;
 
@@ -173,9 +181,9 @@ export function ReportPlanCard({
   const busyLabel =
     continueStage === "creating-agents"
       ? approved === 1
-        ? "Creating 1 agent…"
-        : `Creating ${approved} agents…`
-      : "Starting…";
+        ? t("reportPlan.creatingAgent", { defaultValue: "Creating 1 agent…" })
+        : t("reportPlan.creatingAgentsPlural", { defaultValue: "Creating {{count}} agents…", count: approved })
+      : t("reportPlan.starting", { defaultValue: "Starting…" });
 
   return (
     <div
@@ -184,10 +192,12 @@ export function ReportPlanCard({
     >
       <div className="border-b border-slate-200/70 pb-3">
         <h3 className="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
-          {plan.planTitle}
+          <TranslatableText text={plan.planTitle} />
         </h3>
         {plan.planSummary ? (
-          <p className="mt-1 text-sm font-normal text-slate-600">{plan.planSummary}</p>
+          <p className="mt-1 text-sm font-normal text-slate-600">
+            <TranslatableText text={plan.planSummary} />
+          </p>
         ) : null}
       </div>
 
@@ -195,8 +205,12 @@ export function ReportPlanCard({
         <div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3.5">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-900">Plan could not be completed</div>
-            <p className="mt-0.5 text-sm text-slate-600">{plan.error}</p>
+            <div className="text-sm font-semibold text-slate-900">
+              {t("reportPlan.planNotCompleted", { defaultValue: "Plan could not be completed" })}
+            </div>
+            <p className="mt-0.5 text-sm text-slate-600">
+              <TranslatableText text={plan.error} />
+            </p>
           </div>
         </div>
       ) : null}
@@ -205,10 +219,10 @@ export function ReportPlanCard({
         <div className="space-y-2.5">
           <div className="flex items-center justify-between px-1">
             <span className="text-sm font-bold uppercase tracking-wider text-slate-800">
-              Agents
+              {t("reportPlan.agents", { defaultValue: "Agents" })}
             </span>
             <span className="text-xs font-medium text-slate-500">
-              {activeAgents} of {plan.agents.length} active
+              {t("reportPlan.activeAgents", { defaultValue: "{{active}} of {{total}} active", active: activeAgents, total: plan.agents.length })}
             </span>
           </div>
           <div className="divide-y divide-slate-200/80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
@@ -218,8 +232,14 @@ export function ReportPlanCard({
                   {agent.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-slate-900">{agent.name}</div>
-                  {agent.role ? <div className="text-sm text-slate-600">{agent.role}</div> : null}
+                  <div className="text-sm font-semibold text-slate-900">
+                    <TranslatableText text={agent.name} />
+                  </div>
+                  {agent.role ? (
+                    <div className="text-sm text-slate-600">
+                      <TranslatableText text={agent.role} />
+                    </div>
+                  ) : null}
                   <EditablePrompt
                     value={agent.runtimePrompt}
                     label={agent.name}
@@ -239,9 +259,9 @@ export function ReportPlanCard({
         </div>
       ) : (
         <p className="px-1 text-sm text-slate-600">
-          No agents were selected for this report.
+          {t("reportPlan.noAgentsSelected", { defaultValue: "No agents were selected for this report." })}
           {plan.suggestedAgents.length > 0
-            ? " Approve one of the suggestions below to give this question an agent that can answer it."
+            ? t("reportPlan.approveSuggestions", { defaultValue: " Approve one of the suggestions below to give this question an agent that can answer it." })
             : ""}
         </p>
       )}
@@ -250,14 +270,14 @@ export function ReportPlanCard({
         <div className="space-y-2.5">
           <div className="flex items-center justify-between px-1">
             <span className="text-sm font-bold uppercase tracking-wider text-slate-800">
-              Suggested New Specialist Agents
+              {t("reportPlan.suggestedSpecialists", { defaultValue: "Suggested New Specialist Agents" })}
             </span>
             <span className="text-xs font-medium text-slate-500">
-              {approved} of {plan.suggestedAgents.length} approved
+              {t("reportPlan.approvedAgents", { defaultValue: "{{approved}} of {{total}} approved", approved, total: plan.suggestedAgents.length })}
             </span>
           </div>
           <p className="px-1 text-sm text-slate-600">
-            Not part of your standing roster. Approve the ones you want this report to use.
+            {t("reportPlan.notInRoster", { defaultValue: "Not part of your standing roster. Approve the ones you want this report to use." })}
           </p>
           <div className="divide-y divide-amber-200/70 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/40">
             {plan.suggestedAgents.map((agent) => (
@@ -266,13 +286,24 @@ export function ReportPlanCard({
                   {agent.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-slate-900">{agent.name}</div>
-                  {agent.role ? <div className="text-sm text-slate-600">{agent.role}</div> : null}
+                  <div className="text-sm font-semibold text-slate-900">
+                    <TranslatableText text={agent.name} />
+                  </div>
+                  {agent.role ? (
+                    <div className="text-sm text-slate-600">
+                      <TranslatableText text={agent.role} />
+                    </div>
+                  ) : null}
                   {agent.description ? (
-                    <p className="mt-1 text-sm text-slate-600">{agent.description}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      <TranslatableText text={agent.description} />
+                    </p>
                   ) : null}
                   {agent.rationale ? (
-                    <p className="mt-1.5 text-xs text-amber-800">Why: {agent.rationale}</p>
+                    <p className="mt-1.5 text-xs text-amber-800">
+                      {t("reportPlan.why", { defaultValue: "Why: " })}
+                      <TranslatableText text={agent.rationale} />
+                    </p>
                   ) : null}
                   <EditablePrompt
                     value={agent.runtimePrompt}
@@ -302,16 +333,16 @@ export function ReportPlanCard({
                 aria-hidden="true"
               />
               {continueStage === "creating-agents"
-                ? "Adding the approved specialists to your catalog…"
-                : "Starting the report…"}
+                ? t("reportPlan.addingApproved", { defaultValue: "Adding the approved specialists to your catalog…" })
+                : t("reportPlan.startingReport", { defaultValue: "Starting the report…" })}
             </span>
           ) : !hasConversationId ? (
             <span className="text-sm text-slate-500">
-              This plan arrived without a conversation id, so it cannot be run.
+              {t("reportPlan.noConversationId", { defaultValue: "This plan arrived without a conversation id, so it cannot be run." })}
             </span>
           ) : !hasRoster ? (
             <span className="text-sm text-slate-500">
-              Enable at least one agent, or approve a suggestion, to continue.
+              {t("reportPlan.enableAtLeastOne", { defaultValue: "Enable at least one agent, or approve a suggestion, to continue." })}
             </span>
           ) : null}
           <button
@@ -320,7 +351,7 @@ export function ReportPlanCard({
             disabled={!canContinue || isBusy}
             className="inline-flex items-center justify-center rounded-xl bg-[#0e7490] px-5 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-[#0c627a] disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            {isBusy ? busyLabel : "Continue"}
+            {isBusy ? busyLabel : t("reportPlan.continue", { defaultValue: "Continue" })}
           </button>
         </div>
       )}

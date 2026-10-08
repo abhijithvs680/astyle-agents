@@ -3,10 +3,13 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import type { ChatAnswer } from "../lib/chat-response";
+import { useTranslateMarkdown } from "../hooks/useTranslate";
 
 export function ChatResponseCard({ answer }: { answer: ChatAnswer }) {
+  const { markdown: displayMarkdown, isLoading } = useTranslateMarkdown(answer.response);
+
   return (
-    <div data-chat-answer-card className="flex items-start gap-3">
+    <div data-chat-answer-card className={`flex items-start gap-3 ${isLoading ? "opacity-80 transition-opacity" : ""}`}>
       <div className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#0e7490] text-white shadow-2xs">
         <Sparkles className="size-4" aria-hidden="true" />
       </div>
@@ -93,7 +96,7 @@ export function ChatResponseCard({ answer }: { answer: ChatAnswer }) {
               ),
             }}
           >
-            {answer.response}
+            {displayMarkdown}
           </Markdown>
         </div>
       </div>

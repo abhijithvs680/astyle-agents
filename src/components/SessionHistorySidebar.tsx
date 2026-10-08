@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { Search, Clock, Trash2, Calendar } from "lucide-react";
 import type { GeminiMessageItem } from "./CxoDashboard";
+import { useLanguage } from "../context/LanguageContext";
+import { TranslatableText } from "./TranslatableText";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,12 +40,19 @@ export function SessionHistorySidebar({
   historySessions,
   onDeleteSession,
 }: SessionHistorySidebarProps) {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   /** The session awaiting confirmation. Deleting cannot be undone, so it is
    *  never done on the click itself. */
   const [pendingDelete, setPendingDelete] = useState<HistorySession | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const groupLabels: Record<string, string> = {
+    Today: t("sidebar.today", { defaultValue: "Today" }),
+    Yesterday: t("sidebar.yesterday", { defaultValue: "Yesterday" }),
+    "Previous 7 Days": t("sidebar.previous7Days", { defaultValue: "Previous 7 Days" }),
+  };
 
   // Filter sessions by search query across all sessions (unified, no mode split)
   const filteredSessions = useMemo(() => {
@@ -82,7 +91,7 @@ export function SessionHistorySidebar({
   return (
     <aside
       id="ask-ai-session-history"
-      aria-label="Chat History"
+      aria-label={t("nav.chatHistory", { defaultValue: "Chat History" })}
       className="absolute left-14 md:left-auto md:relative h-full w-[260px] sm:w-[280px] max-w-[calc(100vw-3.5rem)] md:max-w-none shrink-0 flex flex-col border-r border-[#0f354c]/30 dark:border-zinc-800 bg-[#f4f9fb] z-20 overflow-hidden select-none"
     >
       {/* Search stays at the top; session actions live in the main menu. */}
@@ -93,7 +102,7 @@ export function SessionHistorySidebar({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search previous sessions..."
+            placeholder={t("sidebar.searchPlaceholder", { defaultValue: "Search previous sessions..." })}
             className="w-full h-8 pl-8 pr-2.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0e7490] focus:ring-1 focus:ring-[#0e7490]/20 transition"
           />
         </div>
@@ -105,10 +114,12 @@ export function SessionHistorySidebar({
           <div className="text-center py-8 px-4 text-slate-400 space-y-2">
             <Clock className="size-8 mx-auto text-slate-300" />
             <p className="text-xs font-medium text-slate-600">
-              {searchQuery ? "No matching sessions found." : "No previous sessions yet."}
+              {searchQuery
+                ? t("sidebar.noMatchingSessions", { defaultValue: "No matching sessions found." })
+                : t("sidebar.noPreviousSessions", { defaultValue: "No previous sessions yet." })}
             </p>
             <p className="text-[11px] text-slate-400">
-              Ask a question on the right to start an analysis.
+              {t("sidebar.askQuestion", { defaultValue: "Ask a question on the right to start an analysis." })}
             </p>
           </div>
         ) : (
@@ -117,7 +128,7 @@ export function SessionHistorySidebar({
               <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="size-3 text-slate-400" />
-                  <span>{group}</span>
+                  <span>{groupLabels[group] ?? group}</span>
                 </span>
                 <span className="text-[10px] text-slate-400 font-semibold">{items.length}</span>
               </div>
@@ -149,7 +160,7 @@ export function SessionHistorySidebar({
                               : "text-slate-800 group-hover:text-slate-900"
                           }`}
                         >
-                          {session.title}
+                          <TranslatableText text={session.title} />
                         </h4>
 
                         {/* Delete session button on hover */}
@@ -162,8 +173,8 @@ export function SessionHistorySidebar({
                               setPendingDelete(session);
                             }}
                             className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer shrink-0"
-                            title="Delete this session"
-                            aria-label="Delete session"
+                            title={t("sidebar.deleteSession", { defaultValue: "Delete this session" })}
+                            aria-label={t("sidebar.deleteSession", { defaultValue: "Delete this session" })}
                           >
                             <Trash2 className="size-3" />
                           </button>
@@ -185,7 +196,7 @@ export function SessionHistorySidebar({
       {/* 4. FOOTER INFO */}
       <div className="p-2 border-t border-slate-200/80 bg-white/70 text-center shrink-0">
         <p className="text-[10px] text-slate-400 font-medium">
-          ASTYLE Session History &middot; {historySessions.length} Sessions
+          {`${t("sidebar.sessionHistory", { defaultValue: "ASTYLE Session History" })} · ${historySessions.length} ${t("sidebar.sessions", { defaultValue: "Sessions" })}`}
         </p>
       </div>
 
@@ -203,12 +214,12 @@ export function SessionHistorySidebar({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this session?</AlertDialogTitle>
+            <AlertDialogTitle>{t("sidebar.deleteTitle", { defaultValue: "Delete this session?" })}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDelete === null ? null : (
                 <>
-                  <span className="font-semibold text-slate-900">{pendingDelete.title}</span> and
-                  every message in it will be permanently deleted. This cannot be retrieved.
+                  <span className="font-semibold text-slate-900">{pendingDelete.title}</span>{" "}
+                  {t("sidebar.deleteDescription", { defaultValue: "and every message in it will be permanently deleted. This cannot be retrieved." })}
                 </>
               )}
             </AlertDialogDescription>
@@ -221,7 +232,7 @@ export function SessionHistorySidebar({
           ) : null}
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t("common.cancel", { defaultValue: "Cancel" })}</AlertDialogCancel>
             <AlertDialogAction
               disabled={isDeleting}
               className="bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-600"
@@ -240,8 +251,8 @@ export function SessionHistorySidebar({
                   .catch((error: unknown) => {
                     setDeleteError(
                       error instanceof Error
-                        ? `It could not be deleted: ${error.message}`
-                        : "It could not be deleted. Nothing was removed.",
+                        ? `${t("sidebar.deleteErrorPrefix", { defaultValue: "It could not be deleted:" })} ${error.message}`
+                        : t("sidebar.deleteErrorGeneric", { defaultValue: "It could not be deleted. Nothing was removed." }),
                     );
                   })
                   .finally(() => {
@@ -249,7 +260,9 @@ export function SessionHistorySidebar({
                   });
               }}
             >
-              {isDeleting ? "Deleting…" : "Delete session"}
+              {isDeleting
+                ? t("sidebar.deleting", { defaultValue: "Deleting…" })
+                : t("sidebar.deleteButton", { defaultValue: "Delete session" })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

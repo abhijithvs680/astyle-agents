@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { ArrowUp, ArrowRight } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import { TranslatableText } from "./TranslatableText";
 
 export interface AIAssistantDefaultViewProps {
   onSendMessage: (text: string) => void;
@@ -57,6 +59,7 @@ export function AIAssistantDefaultView({
   suggestions = fallbackSuggestions,
   className = "",
 }: AIAssistantDefaultViewProps) {
+  const { t } = useLanguage();
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -83,7 +86,7 @@ export function AIAssistantDefaultView({
 
         {/* Heading requested by user */}
         <h2 className="text-xl sm:text-[22px] text-foreground text-center mb-6 tracking-tight">
-          What can I help you with?
+          <TranslatableText text="What can I help you with?" />
         </h2>
 
         {/* Chat Box Container (Clean input area with send button only) */}
@@ -101,7 +104,7 @@ export function AIAssistantDefaultView({
                 onChange={(e) => setInputValue(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                placeholder="Continue, ask anything"
+                placeholder={t("chatInput.continueAsk", { defaultValue: "Continue, ask anything" })}
                 className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-slate-400 dark:placeholder:text-zinc-500 outline-none py-1"
               />
             </div>
@@ -133,7 +136,9 @@ export function AIAssistantDefaultView({
               className="group w-full flex items-center gap-2.5 text-left text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-foreground transition-colors py-1 cursor-pointer"
             >
               <ArrowRight className="size-3.5 text-slate-400 dark:text-zinc-500 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
-              <span className="leading-snug">{suggestion}</span>
+              <span className="leading-snug">
+                <TranslatableText text={suggestion} />
+              </span>
             </button>
           ))}
         </div>

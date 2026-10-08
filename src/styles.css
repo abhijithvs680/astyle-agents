@@ -324,3 +324,9 @@ body {
   animation: shimmer-sweep 1.8s infinite;
   content: "";
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

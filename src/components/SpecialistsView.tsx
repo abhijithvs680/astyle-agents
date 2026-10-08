@@ -10,6 +10,8 @@ import { ChatSkeleton } from "./AnalysisLoaders";
 import { ChatResponseCard } from "./ChatResponseCard";
 import { ConversationList } from "./ConversationList";
 import { useSocket } from "./SocketProvider";
+import { useLanguage } from "../context/LanguageContext";
+import { TranslatableText } from "./TranslatableText";
 
 type LocalTurn = {
   id: string;
@@ -27,6 +29,7 @@ function statusStyle(status: string | null): string {
 }
 
 export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
+  const { t } = useLanguage();
   const [specialists, setSpecialists] = useState<Array<Specialist>>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -221,17 +224,17 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                 <UsersRound className="size-5" aria-hidden="true" />
               </span>
               <div>
-                <h1 className="text-lg font-bold text-slate-900">Specialists</h1>
+                <h1 className="text-lg font-bold text-slate-900">{t("specialists.title", { defaultValue: "Specialists" })}</h1>
                 <p className="text-xs text-slate-500">
-                  {isLoading ? "Loading…" : `${specialists.length} available`}
+                  {isLoading ? t("specialists.loading", { defaultValue: "Loading specialists" }) : `${specialists.length} ${t("specialists.available", { defaultValue: "available" })}`}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setReloadKey((value) => value + 1)}
-              aria-label="Refresh specialists"
-              title="Refresh specialists"
+              aria-label={t("specialists.refresh", { defaultValue: "Refresh specialists" })}
+              title={t("specialists.refresh", { defaultValue: "Refresh specialists" })}
               className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0e7490]"
             >
               <RefreshCw className={`size-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -243,8 +246,8 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search specialists"
-              aria-label="Search specialists"
+              placeholder={t("specialists.searchPlaceholder", { defaultValue: "Search specialists" })}
+              aria-label={t("specialists.searchPlaceholder", { defaultValue: "Search specialists" })}
               className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-9 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/15"
             />
           </div>
@@ -252,27 +255,27 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
 
         <div className="subtle-scrollbar min-h-0 flex-1 overflow-y-auto p-3">
           {isLoading ? (
-            <div role="status" className="space-y-2" aria-label="Loading specialists">
+            <div role="status" className="space-y-2" aria-label={t("specialists.loading", { defaultValue: "Loading specialists" })}>
               {[0, 1, 2].map((item) => (
                 <div key={item} className="h-24 animate-pulse rounded-xl bg-slate-100" />
               ))}
             </div>
           ) : error !== null ? (
             <div className="px-3 py-8 text-center text-sm text-slate-600">
-              <p>{error}</p>
+              <p>{t("specialists.loadError", { defaultValue: "Could not load specialists. Please try again." })}</p>
               <button
                 type="button"
                 onClick={() => setReloadKey((value) => value + 1)}
                 className="mt-3 font-semibold text-[#0e7490] hover:underline"
               >
-                Try again
+                {t("specialists.tryAgain", { defaultValue: "Try again" })}
               </button>
             </div>
           ) : filtered.length === 0 ? (
             <p className="px-3 py-8 text-center text-sm text-slate-500">
               {specialists.length === 0
-                ? "No specialists are available yet."
-                : "No specialists match your search."}
+                ? t("specialists.noSpecialists", { defaultValue: "No specialists are available yet." })
+                : t("specialists.noMatch", { defaultValue: "No specialists match your search." })}
             </p>
           ) : (
             <div className="space-y-2">
@@ -295,21 +298,21 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="text-sm font-semibold text-slate-900">{item.title}</h2>
+                    <h2 className="text-sm font-semibold text-slate-900"><TranslatableText text={item.title} /></h2>
                     {item.status !== null && (
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${statusStyle(item.status)}`}
                       >
-                        {item.status}
+                        <TranslatableText text={item.status} />
                       </span>
                     )}
                   </div>
                   {item.role !== null && (
-                    <p className="mt-1 text-xs font-medium text-[#0e7490]">{item.role}</p>
+                    <p className="mt-1 text-xs font-medium text-[#0e7490]"><TranslatableText text={item.role} /></p>
                   )}
                   {item.description !== null && (
                     <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-600">
-                      {item.description}
+                      <TranslatableText text={item.description} />
                     </p>
                   )}
                 </button>
@@ -324,7 +327,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
       >
         {selectedId === null ? (
           <div className="flex h-full items-center justify-center text-center text-sm text-slate-500">
-            Select a specialist to see its conversation.
+            {t("specialists.selectSpecialist", { defaultValue: "Select a specialist to see its conversation." })}
           </div>
         ) : (
           <>
@@ -333,7 +336,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
               onClick={() => setIsDetailOpen(false)}
               className="mx-4 mt-4 inline-flex items-center gap-1.5 self-start text-sm font-medium text-[#0e7490] lg:hidden"
             >
-              <ArrowLeft className="size-4" /> Back to specialists
+              <ArrowLeft className="size-4" /> {t("specialists.backToSpecialists", { defaultValue: "Back to specialists" })}
             </button>
             <div
               ref={conversationScrollRef}
@@ -342,20 +345,20 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
               <div className="mx-auto max-w-[58rem]">
                 {conversationsError !== null ? (
                   <div className="py-10 text-center text-sm text-slate-600">
-                    <p>{conversationsError}</p>
+                    <p>{t("specialists.conversationsError", { defaultValue: "Could not load this specialist's conversations." })}</p>
                     <button
                       type="button"
                       onClick={() => setConversationReloadKey((value) => value + 1)}
                       className="mt-3 font-semibold text-[#0e7490] hover:underline"
                     >
-                      Try again
+                      {t("specialists.tryAgain", { defaultValue: "Try again" })}
                     </button>
                   </div>
                 ) : isConversationsLoading ? (
                   <ConversationList entries={[]} isLoading />
                 ) : conversationEntries.length === 0 && visibleTurns.length === 0 ? (
                   <p className="py-10 text-center text-sm text-slate-600">
-                    No messages were returned for this specialist.
+                    {t("specialists.noMessages", { defaultValue: "No messages were returned for this specialist." })}
                   </p>
                 ) : (
                   <div className="space-y-6">
@@ -366,7 +369,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                       <div key={turn.id} className="space-y-4">
                         <div className="flex justify-end">
                           <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                            <span>{turn.query}</span>
+                            <span><TranslatableText text={turn.query} /></span>
                             <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                               <User className="size-3.5" aria-hidden="true" />
                             </span>
@@ -404,15 +407,15 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                   type="text"
                   value={draft}
                   onChange={(event) => updateDraft(event.target.value)}
-                  placeholder="Ask this specialist a question..."
-                  aria-label="Message this specialist"
+                  placeholder={t("specialists.askPlaceholder", { defaultValue: "Ask this specialist a question..." })}
+                  aria-label={t("specialists.askPlaceholder", { defaultValue: "Ask this specialist a question..." })}
                   className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
                 />
                 {draft !== "" && (
                   <button
                     type="button"
                     onClick={() => updateDraft("")}
-                    aria-label="Clear message"
+                    aria-label={t("specialists.clearMessage", { defaultValue: "Clear message" })}
                     className="rounded-full p-1 text-slate-400 transition hover:text-slate-700"
                   >
                     <X className="size-4" />
@@ -423,7 +426,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                   disabled={draft.trim() === "" || isReplyPending}
                   className="shrink-0 rounded-xl bg-[#0e7490] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0c627a] disabled:cursor-not-allowed disabled:opacity-40 sm:rounded-full sm:px-5 sm:text-sm"
                 >
-                  Analyze
+                  {t("specialists.analyze", { defaultValue: "Analyze" })}
                 </button>
               </form>
             </div>

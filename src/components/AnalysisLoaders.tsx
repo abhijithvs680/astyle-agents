@@ -7,6 +7,7 @@
  * not claim a completion percentage or finish the request on a timer.
  */
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 function Shimmer({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
   return <div className={`animate-pulse rounded bg-slate-200/80 ${className}`} style={style} />;
@@ -17,6 +18,7 @@ function Shimmer({ className = "", style }: { className?: string; style?: React.
  * the layout doesn't jump when the real plan replaces it.
  */
 export function PlanSkeleton() {
+  const { t } = useLanguage();
   const [statusStep, setStatusStep] = useState(0);
 
   useEffect(() => {
@@ -28,14 +30,14 @@ export function PlanSkeleton() {
 
   const status =
     statusStep === 0
-      ? "Getting information…"
+      ? t("analysisLoaders.planStep1", { defaultValue: "Getting information…" })
       : statusStep === 1
-        ? "Generating ideas…"
+        ? t("analysisLoaders.planStep2", { defaultValue: "Generating ideas…" })
         : statusStep === 2
-          ? "Building your report plan…"
+          ? t("analysisLoaders.planStep3", { defaultValue: "Building your report plan…" })
           : statusStep === 3
-            ? "Finalizing…"
-            : "Still working on your report plan…";
+            ? t("analysisLoaders.planStep4", { defaultValue: "Finalizing…" })
+            : t("analysisLoaders.planStep5", { defaultValue: "Still working on your report plan…" });
 
   return (
     <div
@@ -43,16 +45,16 @@ export function PlanSkeleton() {
       role="status"
       aria-busy="true"
     >
-      <span className="sr-only">Building your report plan</span>
+      <span className="sr-only">{t("analysisLoaders.planBuilding", { defaultValue: "Building your report plan" })}</span>
 
       <div className="space-y-2 border-b border-slate-200/70 pb-4">
         <div className="flex items-center gap-2.5">
           <img src="/flower-logo.png" alt="" className="size-8 object-contain animate-spin" />
           <h3 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-            Building your report plan
+            {t("analysisLoaders.planBuilding", { defaultValue: "Building your report plan" })}
           </h3>
         </div>
-        <p className="text-sm font-normal text-slate-600">This may take a few minutes.</p>
+        <p className="text-sm font-normal text-slate-600">{t("analysisLoaders.planMayTakeMinutes", { defaultValue: "This may take a few minutes." })}</p>
         <p className="text-sm font-medium text-slate-600" aria-live="polite">
           {status}
         </p>
@@ -95,6 +97,7 @@ export function PlanSkeleton() {
 
 /** Chat Mode: a few lines of text taking shape. */
 export function ChatSkeleton() {
+  const { t } = useLanguage();
   return (
     <div
       className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm space-y-4 animate-in fade-in duration-300"
@@ -102,11 +105,11 @@ export function ChatSkeleton() {
       aria-live="polite"
       aria-busy="true"
     >
-      <span className="sr-only">Thinking</span>
+      <span className="sr-only">{t("analysisLoaders.thinking", { defaultValue: "Thinking…" })}</span>
 
       <div className="flex items-center gap-3">
         <img src="/flower-logo.png" alt="" className="size-7 object-contain animate-spin" />
-        <span className="text-sm font-medium text-slate-600">Thinking…</span>
+        <span className="text-sm font-medium text-slate-600">{t("analysisLoaders.thinking", { defaultValue: "Thinking…" })}</span>
       </div>
 
       <div className="space-y-2.5">
@@ -126,6 +129,7 @@ export function ChatSkeleton() {
  * seeing that number come back tells them the right thing is happening.
  */
 export function AgentCreationLoader({ count }: { count: number }) {
+  const { t } = useLanguage();
   return (
     <div
       className="animate-in fade-in space-y-4 rounded-2xl border border-amber-200/80 bg-amber-50/30 p-5 shadow-2xs duration-300 sm:p-6"
@@ -136,11 +140,11 @@ export function AgentCreationLoader({ count }: { count: number }) {
       <div className="flex items-center gap-2.5">
         <img src="/flower-logo.png" alt="" className="size-5 animate-spin object-contain" />
         <h3 className="text-base font-bold tracking-tight text-slate-900">
-          {count === 1 ? "Creating 1 new agent" : `Creating ${count} new agents`}
+          {count === 1 ? t("analysisLoaders.creatingAgentSingle", { defaultValue: "Creating 1 new agent" }) : t("analysisLoaders.creatingAgentsPlural", { defaultValue: "Creating {{count}} new agents", count })}
         </h3>
       </div>
       <p className="text-sm font-normal text-slate-600">
-        Adding the specialists you approved to your catalog before the report runs.
+        {t("analysisLoaders.addingSpecialistsDesc", { defaultValue: "Adding the specialists you approved to your catalog before the report runs." })}
       </p>
 
       <div className="divide-y divide-amber-200/70 overflow-hidden rounded-xl border border-amber-200 bg-white">
@@ -163,6 +167,7 @@ export function AgentCreationLoader({ count }: { count: number }) {
  * a summary block, a chart, and a second chart.
  */
 export function ReportSkeleton() {
+  const { t } = useLanguage();
   return (
     <div
       className="animate-in fade-in space-y-6 rounded-2xl border border-sky-200/80 bg-gradient-to-b from-white via-sky-50/20 to-white p-5 shadow-2xs duration-300 sm:p-7"
@@ -170,17 +175,17 @@ export function ReportSkeleton() {
       aria-live="polite"
       aria-busy="true"
     >
-      <span className="sr-only">Generating your report</span>
+      <span className="sr-only">{t("analysisLoaders.generatingReport", { defaultValue: "Generating your report" })}</span>
 
       <div className="space-y-2 border-b border-slate-200/70 pb-3">
         <div className="flex items-center gap-2.5">
           <img src="/flower-logo.png" alt="" className="size-5 animate-spin object-contain" />
           <h3 className="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
-            Generating your report
+            {t("analysisLoaders.generatingReport", { defaultValue: "Generating your report" })}
           </h3>
         </div>
         <p className="text-sm font-normal text-slate-600">
-          The agents are running their analyses and the findings are being combined.
+          {t("analysisLoaders.generatingReportDesc", { defaultValue: "The agents are running their analyses and the findings are being combined." })}
         </p>
       </div>
 

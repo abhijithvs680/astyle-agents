@@ -14,6 +14,8 @@ import { applyApprovedData, toReportPlan } from "../lib/report-plan";
 import { ReportPlanCard } from "./ReportPlanCard";
 import { ReportView } from "./ReportView";
 import { ChatResponseCard } from "./ChatResponseCard";
+import { TranslatableText } from "./TranslatableText";
+import { useLanguage } from "../context/LanguageContext";
 
 const noop = () => {
   /* history is not editable */
@@ -26,10 +28,12 @@ export function ConversationList({
   entries: Array<ConversationEntry>;
   isLoading: boolean;
 }) {
+  const { t } = useLanguage();
+
   if (isLoading) {
     return (
       <div className="space-y-3" role="status" aria-busy="true">
-        <span className="sr-only">Loading this session</span>
+        <span className="sr-only">{t("common.loadingSession", { defaultValue: "Loading this session" })}</span>
         {[0, 1, 2].map((row) => (
           <div key={row} className={`flex ${row % 2 === 0 ? "justify-end" : "justify-start"}`}>
             <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-slate-200/80" />
@@ -42,7 +46,7 @@ export function ConversationList({
   if (entries.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-slate-500">
-        No messages were returned for this session.
+        {t("common.noMessages", { defaultValue: "No messages were returned for this session." })}
       </p>
     );
   }
@@ -74,7 +78,7 @@ export function ConversationList({
               {entry.showPrompt && plan.prompt !== "" ? (
                 <div className="mb-4 flex justify-end">
                   <div className="max-w-xl rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                    {plan.prompt}
+                    <TranslatableText text={plan.prompt} />
                   </div>
                 </div>
               ) : null}
@@ -102,7 +106,7 @@ export function ConversationList({
                 entry.role === "user" ? "font-medium text-slate-900" : "text-slate-700"
               }`}
             >
-              {entry.text}
+              <TranslatableText text={entry.text} />
             </div>
           </div>
         );
