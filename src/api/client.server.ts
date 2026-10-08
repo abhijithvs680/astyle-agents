@@ -2,6 +2,8 @@
  * Server-side API client. Every backend call in the app goes through here so
  * the bearer token stays on the server.
  */
+import { getRequest } from "@tanstack/react-start/server";
+
 import { API_ENDPOINTS, type ApiEndpointName } from "../config";
 import { getApiBaseUrl } from "./env.server";
 import { requireSessionToken } from "./session.server";
@@ -129,7 +131,7 @@ export async function dispatchAuthenticated(
 
   // Never rejects: an unhandled rejection here would take down the process,
   // and by design nobody is waiting for this result.
-  void run
+  const settled = run
     .then((response) => {
       if (!response.ok) {
         console.warn(`[dispatch] ${endpoint} answered ${response.status} (ignored)`);
@@ -143,4 +145,24 @@ export async function dispatchAuthenticated(
         `[dispatch] ${endpoint} did not complete: ${reason} (expected — reply via socket)`,
       );
     });
+
+  keepAlive(settled);
+}
+
+/**
+ * On Cloudflare Workers, subrequests still pending when the response is sent
+ * are cancelled — the workflow request would never reach the backend. Nitro
+ * attaches the execution context's `waitUntil` to the request; register the
+ * dispatch with it so the Worker stays alive until the request settles. Node
+ * keeps pending promises alive on its own, so there it is a no-op.
+ */
+export function keepAlive(promise: Promise<unknown>): void {
+  try {
+    const request = getRequest() as Request & {
+      waitUntil?: (promise: Promise<unknown>) => void;
+    };
+    request.waitUntil?.(promise);
+  } catch (error) {
+    console.warn("[dispatch] could not register waitUntil", error);
+  }
 }

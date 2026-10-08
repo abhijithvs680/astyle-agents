@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { postAuthenticated } from "./client.server";
+import { keepAlive, postAuthenticated } from "./client.server";
 
 type RunSpecialistInput = { agentId?: string | undefined; prompt?: string | undefined };
 
@@ -63,7 +63,7 @@ export const runSpecialist = createServerFn({ method: "POST" })
     ]);
     if (timer !== undefined) clearTimeout(timer);
     if (response === pending) {
-      void run.catch((error: unknown) => console.error("[specialists] run failed", error));
+      keepAlive(run.catch((error: unknown) => console.error("[specialists] run failed", error)));
       return { accepted: true };
     }
     const error = responseError(response);
