@@ -3119,6 +3119,10 @@ export function CxoDashboard({
           // The prompt bubble above the card: only when the session has no
           // user row of its own to supply it.
           if (last.kind === "plan" && last.showPrompt) setStreamingQuery(pending.prompt);
+        } else if (!storedReport && reportStillLoading) {
+          // The live report loader draws its own "Continue" bubble. Drop the
+          // stored copy of that message so it isn't shown twice.
+          setConversationEntries(dropTrailingContinue(result.entries));
         } else {
           setConversationEntries(result.entries);
         }
@@ -6630,4 +6634,19 @@ function safeParseJson(json: string): unknown {
   } catch {
     return null;
   }
+}
+
+/**
+ * Remove the stored "continue" message from the end of a transcript. Only user
+ * rows after the last agent row are considered, so earlier turns are untouched.
+ */
+function dropTrailingContinue(entries: Array<ConversationEntry>): Array<ConversationEntry> {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const entry = entries[i];
+    if (entry === undefined || entry.role !== "user") break;
+    if (entry.kind === "text" && entry.text.trim().toLowerCase() === "continue") {
+      return [...entries.slice(0, i), ...entries.slice(i + 1)];
+    }
+  }
+  return entries;
 }
