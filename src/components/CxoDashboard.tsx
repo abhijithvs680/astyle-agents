@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  Inbox,
+  UsersRound,
   Home,
   FileText,
   Sparkles,
@@ -56,10 +56,13 @@ import { ReportPipelineDiagram } from "./ReportPipelineDiagram";
 import { SessionHistorySidebar, type HistorySession } from "./SessionHistorySidebar";
 import { AgentCreationLoader, ChatSkeleton, PlanSkeleton, ReportSkeleton } from "./AnalysisLoaders";
 import { ConversationList } from "./ConversationList";
+import { ChatResponseCard } from "./ChatResponseCard";
+import { SpecialistsView } from "./SpecialistsView";
 import { ReportPlanCard, type ContinueStage } from "./ReportPlanCard";
 import { ReportView } from "./ReportView";
 import { useSocket } from "./SocketProvider";
 import { parseReportEvent, REPORT_EVENT, type Report } from "../lib/report";
+import { CHAT_RESPONSE_EVENT, parseChatResponseEvent, type ChatAnswer } from "../lib/chat-response";
 import {
   parseReportPlanEvent,
   REPORT_PLAN_EVENT,
@@ -79,7 +82,9 @@ type PastTurn = {
   query: string;
   plan: ReportPlan | null;
   report: Report | null;
+  chatAnswer: ChatAnswer | null;
   awaitingPlan: boolean;
+  awaitingChat: boolean;
   awaitingReport: boolean;
   continueStage: ContinueStage;
   creatingAgentCount: number;
@@ -2849,6 +2854,7 @@ export function CxoDashboard({
 
   // Active view: "chat" (Ask Astyle) or "inbox" (Inbox for CXO)
   const [activeView, setActiveView] = useState<"chat" | "inbox">(initialView);
+  const [specialistsRefreshKey, setSpecialistsRefreshKey] = useState(0);
 
   // Sync state if initialView changes via route navigation
   useEffect(() => {
@@ -2860,7 +2866,7 @@ export function CxoDashboard({
     if (targetView === "chat") {
       navigate({ to: "/ask-ai" });
     } else {
-      navigate({ to: "/inbox" });
+      navigate({ to: "/specialists" });
     }
   };
 
@@ -2876,6 +2882,7 @@ export function CxoDashboard({
   const [isGeminiLoading, setIsGeminiLoading] = useState(false);
   /** The plan returned for the current run, or null before one arrives. */
   const [reportPlan, setReportPlan] = useState<ReportPlan | null>(null);
+  const [chatAnswer, setChatAnswer] = useState<ChatAnswer | null>(null);
   /** The run we are waiting on a socket reply for, or null when idle. */
   const [pendingRun, setPendingRun] = useState<{ sessionId: string; mode: AnalysisMode } | null>(
     null,
@@ -2885,6 +2892,10 @@ export function CxoDashboard({
    * the next prompt opens a new session (`new_session: true`).
    */
   const runSessionIdRef = useRef<string | null>(null);
+  /** First chat run may be returned under an id assigned by the workflow. */
+  const provisionalChatSessionIdRef = useRef<string | null>(null);
+  /** Only the first chat reply in a newly created session may rename it. */
+  const firstChatTitleSessionIdRef = useRef<string | null>(null);
   const [streamingQuery, setStreamingQuery] = useState("");
   const [geminiLoadingStage, setGeminiLoadingStage] = useState(
     "Agent Sales is looking for data...",
@@ -2903,6 +2914,10 @@ export function CxoDashboard({
     setActiveQuestion(session.title);
     setChatQuery("");
     setIsGeminiLoading(false);
+    setPendingRun(null);
+    pendingRunRef.current = null;
+    provisionalChatSessionIdRef.current = null;
+    firstChatTitleSessionIdRef.current = null;
     setStreamingQuery("");
     // Opening a session continues it, so follow-ups keep its id rather than
     // opening a new one.
@@ -2910,6 +2925,7 @@ export function CxoDashboard({
     setReportPlan(null);
     setContinueStage("idle");
     setReport(null);
+    setChatAnswer(null);
     setPastTurns([]);
     setOpenedSessionId(session.id);
 
@@ -2918,6 +2934,19 @@ export function CxoDashboard({
       .then((result) => {
         // The user may have clicked another session while this was in flight.
         if (runSessionIdRef.current !== result.sessionId) return;
+
+        // Earlier live replies could leave the provisional "Answer" title in
+        // the sidebar. The saved chat answer has the workflow's real title.
+        if (session.title.trim().toLowerCase() === "answer") {
+          const savedChat = [...result.entries].reverse().find((entry) => entry.kind === "chat");
+          if (savedChat?.kind === "chat") {
+            setSessionHistoryList((prev) =>
+              prev.map((item) =>
+                item.id === session.id ? { ...item, title: savedChat.title } : item,
+              ),
+            );
+          }
+        }
 
         // A plan the user never approved is not history — it is a question
         // still waiting on them. Lift the trailing one out of the transcript
@@ -2953,12 +2982,17 @@ export function CxoDashboard({
     setChatQuery("");
     setActiveQuestion("");
     setIsGeminiLoading(false);
+    setPendingRun(null);
+    pendingRunRef.current = null;
+    provisionalChatSessionIdRef.current = null;
+    firstChatTitleSessionIdRef.current = null;
     setStreamingQuery("");
     // Start clean: a new session must not inherit the opened session's id,
     // or its first prompt would continue the old conversation.
     runSessionIdRef.current = null;
     setContinueStage("idle");
     setReport(null);
+    setChatAnswer(null);
     setOpenedSessionId(null);
     setConversationEntries([]);
     setReportPlan(null);
@@ -3086,6 +3120,72 @@ export function CxoDashboard({
     });
   }, [onSocketEvent, applySessionTitle]);
 
+  useEffect(() => {
+    return onSocketEvent(CHAT_RESPONSE_EVENT, (raw) => {
+      const next = parseChatResponseEvent(raw);
+      if (next === null) {
+        console.warn("[chat] received an unreadable response");
+        return;
+      }
+
+      const pending = pendingRunRef.current;
+      if (next.sessionId !== runSessionIdRef.current) {
+        // A new-session workflow may assign its own id instead of echoing the
+        // provisional one we sent. Adopt it so this answer and follow-ups use
+        // the id that the workflow actually stored.
+        if (
+          pending?.mode !== "chat" ||
+          provisionalChatSessionIdRef.current !== runSessionIdRef.current ||
+          sessionHistoryListRef.current.some((session) => session.id === next.sessionId)
+        ) {
+          console.warn("[chat] response belongs to another session", next.sessionId);
+          return;
+        }
+        const provisionalId = provisionalChatSessionIdRef.current;
+        runSessionIdRef.current = next.sessionId;
+        provisionalChatSessionIdRef.current = null;
+        if (firstChatTitleSessionIdRef.current === provisionalId) {
+          firstChatTitleSessionIdRef.current = next.sessionId;
+        }
+        setActiveSessionId((id) => (id === provisionalId ? next.sessionId : id));
+        setSessionHistoryList((prev) =>
+          prev.map((session) =>
+            session.id === provisionalId ? { ...session, id: next.sessionId } : session,
+          ),
+        );
+        pendingRunRef.current = { ...pending, sessionId: next.sessionId };
+        setPendingRun((current) =>
+          current === null ? null : { ...current, sessionId: next.sessionId },
+        );
+      } else {
+        provisionalChatSessionIdRef.current = null;
+      }
+
+      if (firstChatTitleSessionIdRef.current === next.sessionId) {
+        applySessionTitle(next.sessionId, next.title);
+        firstChatTitleSessionIdRef.current = null;
+      }
+
+      // The event identifies a session but not a prompt. If another prompt was
+      // sent before this answer arrived, finish the oldest waiting chat turn.
+      const waiting = pastTurnsRef.current.findIndex((turn) => turn.awaitingChat);
+      if (waiting !== -1) {
+        setPastTurns((prev) =>
+          prev.map((turn, index) =>
+            index === waiting ? { ...turn, chatAnswer: next, awaitingChat: false } : turn,
+          ),
+        );
+        return;
+      }
+
+      if (pending?.mode !== "chat") return;
+      setChatAnswer(next);
+      setIsGeminiLoading(false);
+      setPendingRun(null);
+      pendingRunRef.current = null;
+    });
+  }, [onSocketEvent, applySessionTitle]);
+
   // The finished report arrives the same way the plan does.
   useEffect(() => {
     return onSocketEvent(REPORT_EVENT, (raw) => {
@@ -3155,6 +3255,10 @@ export function CxoDashboard({
   continueStageRef.current = continueStage;
   const pastTurnsRef = useRef<Array<PastTurn>>([]);
   pastTurnsRef.current = pastTurns;
+  const pendingRunRef = useRef(pendingRun);
+  pendingRunRef.current = pendingRun;
+  const sessionHistoryListRef = useRef(sessionHistoryList);
+  sessionHistoryListRef.current = sessionHistoryList;
 
   // Keep the latest message visible when a prompt or socket response adds content.
   const planArrivalKey = reportPlan?.conversationId ?? reportPlan?.planTitle ?? null;
@@ -3171,6 +3275,7 @@ export function CxoDashboard({
     planArrivalKey,
     continueStage,
     report,
+    chatAnswer,
     pastTurns,
     conversationEntries,
     isLoadingConversations,
@@ -3931,10 +4036,20 @@ export function CxoDashboard({
     const isNewSession = runSessionIdRef.current === null;
     const runSessionId = runSessionIdRef.current ?? crypto.randomUUID();
     runSessionIdRef.current = runSessionId;
+    if (mode === "chat" && isNewSession) {
+      provisionalChatSessionIdRef.current = runSessionId;
+      firstChatTitleSessionIdRef.current = runSessionId;
+    }
 
     // Finish the visible turn before starting another one. Otherwise the new
     // loader is rendered above the old plan/report, and the old reply is lost.
-    if (streamingQuery !== "" || reportPlan !== null || report !== null || isGeminiLoading) {
+    if (
+      streamingQuery !== "" ||
+      reportPlan !== null ||
+      report !== null ||
+      chatAnswer !== null ||
+      isGeminiLoading
+    ) {
       setPastTurns((prev) => [
         ...prev,
         {
@@ -3942,7 +4057,9 @@ export function CxoDashboard({
           query: streamingQuery,
           plan: reportPlan,
           report,
+          chatAnswer,
           awaitingPlan: isGeminiLoading && pendingRun?.mode === "deep-insights",
+          awaitingChat: isGeminiLoading && pendingRun?.mode === "chat",
           awaitingReport: continueStage !== "idle" && report === null,
           continueStage,
           creatingAgentCount,
@@ -3951,9 +4068,12 @@ export function CxoDashboard({
     }
     setReportPlan(null);
     setReport(null);
+    setChatAnswer(null);
     setContinueStage("idle");
     setStreamingQuery(q);
-    setPendingRun({ sessionId: runSessionId, mode });
+    const nextPendingRun = { sessionId: runSessionId, mode };
+    pendingRunRef.current = nextPendingRun;
+    setPendingRun(nextPendingRun);
     setIsGeminiLoading(true);
     setChatQuery("");
 
@@ -3987,6 +4107,7 @@ export function CxoDashboard({
       console.error("[analysis] could not dispatch run", error);
       setIsGeminiLoading(false);
       setPendingRun(null);
+      pendingRunRef.current = null;
       setStreamingQuery("");
     });
   };
@@ -4142,88 +4263,7 @@ export function CxoDashboard({
           </button>
         </div>
 
-        {/* Search & Filter centered on top in the header (only on inbox view) */}
-        {activeView !== "chat" ? (
-          <div className="flex-1 max-w-md sm:max-w-xl flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-sky-200/60 pointer-events-none" />
-              <input
-                type="text"
-                value={caseSearchQuery}
-                onChange={(e) => setCaseSearchQuery(e.target.value)}
-                placeholder="Search active agents by title, description..."
-                className="w-full h-8 rounded-lg border border-sky-400/20 bg-sky-950/50 pl-8.5 pr-8 text-xs sm:text-sm text-white placeholder:text-sky-200/50 focus:outline-none focus:ring-1 focus:ring-sky-400 focus:bg-sky-950/80 transition-all"
-              />
-              {caseSearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setCaseSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sky-200/60 hover:text-white cursor-pointer p-0.5 rounded-full hover:bg-white/10 transition"
-                  aria-label="Clear search"
-                >
-                  <X className="size-3" />
-                </button>
-              )}
-            </div>
-
-            {/* Category Filter Dropdown in Header */}
-            <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={() => setIsCategoryFilterOpen((prev) => !prev)}
-                className={`h-8 inline-flex items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition cursor-pointer ${
-                  selectedSuggestedCategory !== "All"
-                    ? "border-sky-400/50 bg-sky-500/25 text-white ring-1 ring-sky-400/30"
-                    : "border-sky-400/20 bg-sky-950/40 text-sky-200/80 hover:bg-sky-900/50 hover:text-white"
-                }`}
-                title="Filter category"
-              >
-                <Filter className="size-3.5 text-sky-300" />
-                <span className="hidden sm:inline">
-                  {selectedSuggestedCategory === "All" ? "Filter" : selectedSuggestedCategory}
-                </span>
-                <ChevronDown
-                  className={`size-3 text-sky-300/80 transition-transform duration-200 ${
-                    isCategoryFilterOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {isCategoryFilterOpen && (
-                <div className="absolute right-0 top-full mt-1.5 z-50 w-52 rounded-xl border border-border/90 bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-1">
-                    Filter by Category
-                  </div>
-                  <div className="space-y-0.5">
-                    {SUGGESTED_CATEGORIES.map((cat) => {
-                      const isSelected = selectedSuggestedCategory === cat.id;
-                      return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedSuggestedCategory(cat.id);
-                            setIsCategoryFilterOpen(false);
-                          }}
-                          className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition cursor-pointer ${
-                            isSelected
-                              ? "bg-tile text-brand-blue font-semibold"
-                              : "text-foreground hover:bg-tile/60"
-                          }`}
-                        >
-                          <span>{cat.label}</span>
-                          {isSelected && <Check className="size-3 text-brand-blue" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1" />
-        )}
+        <div className="flex-1" />
 
         {/* Profile on right top end */}
         <div className="flex items-center gap-2.5 shrink-0">
@@ -4261,26 +4301,25 @@ export function CxoDashboard({
             </div>
           </div>
 
-          {/* Inbox Button */}
+          {/* Specialists Button */}
           <div className="relative group flex items-center justify-center">
             <button
               type="button"
-              onClick={() => switchView("inbox")}
-              aria-label="Inbox"
+              onClick={() => {
+                setSpecialistsRefreshKey((key) => key + 1);
+                switchView("inbox");
+              }}
+              aria-label="Specialists"
               className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
                 activeView === "inbox"
                   ? "bg-chip-active text-chip-active-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-tile"
               }`}
             >
-              <Inbox className="size-5" />
-              {/* Show the count */}
-              <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 px-1 flex items-center justify-center rounded-full bg-cyan-600 text-[10px] font-bold text-white shadow-xs">
-                {displayedCases.length}
-              </span>
+              <UsersRound className="size-5" />
             </button>
             <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
-              Inbox ({displayedCases.length})
+              Specialists
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
             </div>
           </div>
@@ -4306,6 +4345,7 @@ export function CxoDashboard({
             !isGeminiLoading &&
             reportPlan === null &&
             report === null &&
+            chatAnswer === null &&
             pastTurns.length === 0 &&
             openedSessionId === null ? (
               /* ASK ASTYLE CHAT HERO VIEW - NO SCROLLBARS */
@@ -5413,6 +5453,8 @@ export function CxoDashboard({
                           </div>
                         )}
                         {turn.awaitingPlan && <PlanSkeleton />}
+                        {turn.awaitingChat && <ChatSkeleton />}
+                        {turn.chatAnswer !== null && <ChatResponseCard answer={turn.chatAnswer} />}
                         {turn.plan !== null && (
                           <ReportPlanCard
                             plan={turn.plan}
@@ -5464,6 +5506,22 @@ export function CxoDashboard({
                         {/* Mode-specific waiting state. Stays up until a socket
                             event for this run arrives — nothing here is on a timer. */}
                         {pendingRun?.mode === "chat" ? <ChatSkeleton /> : <PlanSkeleton />}
+                      </div>
+                    )}
+
+                    {chatAnswer !== null && (
+                      <div className="space-y-4">
+                        {streamingQuery !== "" && (
+                          <div className="flex justify-end">
+                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                              <span>{streamingQuery}</span>
+                              <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                                <User className="size-3.5" />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <ChatResponseCard answer={chatAnswer} />
                       </div>
                     )}
 
@@ -5639,229 +5697,7 @@ export function CxoDashboard({
               </div>
             )
           ) : (
-            /* INBOX FOR CXO OUTLOOK-STYLE SPLIT VIEW */
-            <div className="flex-1 flex min-w-0 h-full overflow-hidden">
-              {/* LEFT COLUMN: OUTLOOK-STYLE CASE & AGENT LIST (380px width) */}
-              <aside
-                className={`w-full lg:w-[380px] shrink-0 border-r-2 border-border dark:border-zinc-800 bg-surface flex flex-col h-full overflow-hidden ${
-                  mobileActiveView === "detail" ? "hidden lg:flex" : "flex"
-                }`}
-              >
-                {/* Header of Active Cases */}
-                <div className="px-5 py-3.5 border-b border-border/80 flex items-center justify-between bg-surface shrink-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-foreground tracking-tight">
-                      Active Cases
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-xs font-bold">
-                      {displayedCases.length}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddNewCaseOpen(true)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#0e7490] hover:bg-[#0c627a] text-white text-xs font-semibold transition cursor-pointer shadow-xs active:scale-98"
-                    title="Add New Case"
-                  >
-                    <Plus className="size-3.5 stroke-[2.5]" />
-                    <span>Add New</span>
-                  </button>
-                </div>
-
-                {/* Toast Notices if present */}
-                {(lastArchivedNotice || suggestedNotice) && (
-                  <div className="p-3 border-b border-border/80 space-y-2 bg-surface">
-                    {lastArchivedNotice && (
-                      <div className="flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-foreground animate-in fade-in">
-                        <div className="flex items-center gap-2 truncate">
-                          <Archive className="size-3.5 text-amber-600 shrink-0" />
-                          <span className="truncate">Archived "{lastArchivedNotice}"</span>
-                        </div>
-                        <button
-                          onClick={() => restoreCase(lastArchivedNotice)}
-                          className="text-xs font-semibold text-brand-blue hover:underline cursor-pointer shrink-0 ml-2"
-                        >
-                          Undo
-                        </button>
-                      </div>
-                    )}
-
-                    {suggestedNotice && (
-                      <div className="flex items-center justify-between rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 p-2.5 text-xs text-blue-900 dark:text-blue-200 animate-in fade-in">
-                        <div className="flex items-center gap-2 truncate">
-                          <CheckCircle2 className="size-4 text-brand-blue shrink-0" />
-                          <span className="truncate font-medium">{suggestedNotice}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setSuggestedNotice(null)}
-                          className="text-muted-foreground hover:text-foreground cursor-pointer shrink-0 ml-2"
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Scrollable Outlook List Items: Exact 5 Garment Cases */}
-                <div className="flex-1 overflow-y-auto no-scrollbar divide-y-2 divide-border/80 dark:divide-zinc-800">
-                  {displayedCases.map((c, i) => {
-                    const isSelected = selectedActiveCase?.title === c.title;
-
-                    return (
-                      <div
-                        key={`${c.title}-${i}`}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => {
-                          handleSelectCase(c, i);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            handleSelectCase(c, i);
-                          }
-                        }}
-                        className={`w-full text-left p-5 sm:p-5.5 transition-all cursor-pointer relative group border-l-4 border-b border-border/80 dark:border-zinc-800 ${
-                          isSelected
-                            ? "border-l-brand-blue bg-blue-50/80 dark:bg-blue-950/45 shadow-xs"
-                            : "border-l-transparent hover:bg-tile/75"
-                        }`}
-                      >
-                        {/* Top Line: Age / Timestamp + 3 Count for 3rd Item */}
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            {c.isLive && c.age !== "Just now" && (
-                              <span
-                                className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0"
-                                title="Live Continuous Monitoring"
-                              />
-                            )}
-                            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                              {c.age}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2 shrink-0">
-                            {/* 3 count right side to represent new 3 findings (only for the third item) */}
-                            {(c.newFindingsCount ||
-                              c.title.includes("largest share") ||
-                              i === 2) && (
-                              <span
-                                className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-brand-blue text-white text-xs font-bold shadow-2xs shrink-0"
-                                title="3 new findings"
-                              >
-                                {c.newFindingsCount ?? 3}
-                              </span>
-                            )}
-
-                            {c.expiryDate && (
-                              <span className="text-xs text-amber-700 dark:text-amber-300 font-medium px-2 py-0.5 rounded-md bg-amber-500/10 whitespace-nowrap">
-                                {c.expiryDate}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Title on Left (18px and font-weight 400) */}
-                        <h4
-                          style={{ fontWeight: 400 }}
-                          className="text-[18px] font-normal leading-snug line-clamp-2 text-foreground"
-                        >
-                          {c.title}
-                        </h4>
-
-                        {/* Part of Description on Left (Sub lines grey color #41485e, less priority) */}
-                        <p
-                          style={{ color: "#41485e" }}
-                          className="mt-2 text-xs sm:text-[13px] text-[#41485e] dark:text-zinc-400 leading-relaxed line-clamp-2 font-normal"
-                        >
-                          {c.body}
-                        </p>
-                      </div>
-                    );
-                  })}
-
-                  {displayedCases.length === 0 && (
-                    <div className="p-8 text-center text-sm text-muted-foreground">
-                      No active agents matching your search or category filter.
-                    </div>
-                  )}
-                </div>
-              </aside>
-
-              {/* RIGHT COLUMN: OUTLOOK-STYLE READING PANE */}
-              <section
-                className={`flex-1 min-w-0 h-full overflow-hidden flex flex-col bg-surface-tint ${
-                  mobileActiveView === "list" ? "hidden lg:flex" : "flex"
-                }`}
-              >
-                {isCaseLoading ? (
-                  <div className="flex-1 flex flex-col h-full bg-surface-tint overflow-hidden animate-in fade-in duration-150">
-                    <div className="h-16 px-6 border-b border-border/80 dark:border-zinc-800 bg-surface flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-xl bg-muted/60 animate-pulse" />
-                        <div className="space-y-1.5">
-                          <div className="h-4 w-44 rounded-md bg-muted/70 animate-pulse" />
-                          <div className="h-2.5 w-24 rounded-md bg-muted/40 animate-pulse" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto no-scrollbar p-6 sm:p-8 space-y-6">
-                      <div className="flex items-center justify-center pt-2 pb-1">
-                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-surface border border-border/80 shadow-xs">
-                          <Loader2 className="size-4 text-brand-blue animate-spin" />
-                          <span className="text-xs sm:text-sm font-medium text-foreground">
-                            Loading case analysis & telemetry...
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl bg-surface border border-border/80 p-6 sm:p-7 space-y-4 animate-pulse">
-                        <div className="h-5 w-1/3 bg-muted/70 rounded-md" />
-                        <div className="space-y-2 pt-1">
-                          <div className="h-3.5 w-full bg-muted/50 rounded" />
-                          <div className="h-3.5 w-5/6 bg-muted/40 rounded" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : selectedActiveCase ? (
-                  <CaseDetailsView
-                    selectedCaseId={currentCaseId}
-                    customCase={selectedActiveCase}
-                    onBack={() => setMobileActiveView("list")}
-                    initialShowChat={false}
-                  />
-                ) : (
-                  /* DEFAULT EMPTY STATE WHEN NO ITEM IS SELECTED (LESS PRIORITY, SMALLER) */
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-surface-tint overflow-y-auto no-scrollbar">
-                    <div className="max-w-xs mx-auto space-y-3 my-auto w-full flex flex-col items-center select-none opacity-75 hover:opacity-100 transition-opacity">
-                      {/* Compact, understated icon container */}
-                      <div className="size-11 rounded-2xl bg-slate-200/60 dark:bg-zinc-800/80 border border-slate-300/50 dark:border-zinc-700/60 flex items-center justify-center text-slate-400 dark:text-slate-500 shadow-2xs">
-                        <FileText className="size-5 stroke-[1.75]" />
-                      </div>
-
-                      {/* Smaller, low-priority heading & description */}
-                      <div className="space-y-1">
-                        <h3 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">
-                          Select a case to view analysis
-                        </h3>
-                        <p
-                          style={{ color: "#41485e" }}
-                          className="text-[11px] sm:text-xs text-[#41485e]/80 dark:text-slate-400/75 leading-relaxed"
-                        >
-                          Choose an item from the left pane to view its executive summary and
-                          evidence records.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </section>
-            </div>
+            <SpecialistsView refreshKey={specialistsRefreshKey} />
           )}
         </div>
       </div>

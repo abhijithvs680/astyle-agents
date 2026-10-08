@@ -37,7 +37,7 @@ export const API_ENDPOINTS = {
    * Chat Mode run: single-turn conversational answer.
    * Same fire-and-forget contract as `agentOrchestration`.
    */
-  chatModeAgent: "astylev2chatmodeagent6ac5023d207e4",
+  chatModeAgent: "astylev2chatmodeagent6ac5eb98f21d9",
 
   /**
    * Creates one specialist agent in the catalog. POST `{ title, category,
@@ -67,6 +67,15 @@ export const API_ENDPOINTS = {
    * sidebar. POST `{ session_id, email }`, authenticated with the bearer token.
    */
   getConversations: "astylev2getconversations6ac5d29d97733",
+
+  /** Specialists shown in the Specialists view. POST `{}` with the session bearer token. */
+  getCaseAgents: "astylev2getcaseagents6ac6a72e5c316",
+
+  /** Stored conversations for one specialist. POST `{ agent_id }` with the session bearer token. */
+  getSpecialistConversations: "astylev2getspecialistconversations6ac6bca40cb6e",
+
+  /** Run the selected specialist; its agent ID is the chat session ID. */
+  runSpecialist: "astylev2runspecialist6ac6c7430d14f",
 } as const;
 
 export type ApiEndpointName = keyof typeof API_ENDPOINTS;

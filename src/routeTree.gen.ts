@@ -17,6 +17,7 @@ import { Route as DetailsRouteImport } from './routes/details'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FoldersRouteImport } from './routes/folders'
 import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as SpecialistsRouteImport } from './routes/specialists'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const InboxRoute = InboxRouteImport.update({
   path: '/inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SpecialistsRoute = SpecialistsRouteImport.update({
+  id: '/specialists',
+  path: '/specialists',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
+  '/specialists': typeof SpecialistsRoute
   '/welcome': typeof WelcomeRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
+  '/specialists': typeof SpecialistsRoute
   '/welcome': typeof WelcomeRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
+  '/specialists': typeof SpecialistsRoute
   '/welcome': typeof WelcomeRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/folders'
     | '/inbox'
+    | '/specialists'
     | '/welcome'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/folders'
     | '/inbox'
+    | '/specialists'
     | '/welcome'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/folders'
     | '/inbox'
+    | '/specialists'
     | '/welcome'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   FoldersRoute: typeof FoldersRoute
   InboxRoute: typeof InboxRoute
+  SpecialistsRoute: typeof SpecialistsRoute
   WelcomeRoute: typeof WelcomeRoute
 }
 
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InboxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/specialists': {
+      id: '/specialists'
+      path: '/specialists'
+      fullPath: '/specialists'
+      preLoaderRoute: typeof SpecialistsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/welcome': {
       id: '/welcome'
       path: '/welcome'
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   FoldersRoute: FoldersRoute,
   InboxRoute: InboxRoute,
+  SpecialistsRoute: SpecialistsRoute,
   WelcomeRoute: WelcomeRoute,
 }
 export const routeTree = rootRouteImport

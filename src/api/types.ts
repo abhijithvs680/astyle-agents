@@ -79,6 +79,7 @@ export type ConversationEntry = {
   createdOn?: string;
 } & (
   | { kind: "text"; text: string }
+  | { kind: "chat"; title: string; response: string }
   | {
       kind: "report";
       /** The generated report, as stored. Kept a string so it crosses the

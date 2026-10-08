@@ -11,6 +11,7 @@ import { postAuthenticated } from "./client.server";
 import { decodeTokenClaims } from "./jwt.server";
 import { requireSessionToken } from "./session.server";
 import type { ConversationEntry, ConversationsResult } from "./types";
+import { toChatAnswer } from "../lib/chat-response";
 
 /** Platform bookkeeping that rides along on every row; never content. */
 const ENVELOPE_FIELDS = new Set(["jsCodes", "workflow_log_id", "Echo", "Status", "Time", "Errors"]);
@@ -37,15 +38,20 @@ function parseCreatedOn(value: string): number | null {
   const m = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
   if (m === null) return null;
   const [, month, day, year, hour, minute, second] = m;
+  const numericYear = Number(year);
+  if (numericYear < 2000 || numericYear > new Date().getUTCFullYear() + 1) return null;
   const time = Date.UTC(
-    Number(year),
+    numericYear,
     Number(month) - 1,
     Number(day),
     Number(hour),
     Number(minute),
     Number(second),
   );
-  return Number.isNaN(time) ? null : time;
+  const parsed = new Date(time);
+  return parsed.getUTCMonth() === Number(month) - 1 && parsed.getUTCDate() === Number(day)
+    ? time
+    : null;
 }
 
 /** Same text, give or take whitespace and case — enough to spot a repeat. */
@@ -107,12 +113,64 @@ function toEntry(row: unknown, index: number): ConversationEntry | null {
           ...(createdOn !== "" ? { createdOn } : {}),
         };
       }
+
+      const chat = role === "agent" ? toChatAnswer(parsed) : null;
+      if (chat !== null) {
+        return { id, role, kind: "chat", ...chat, ...(createdOn !== "" ? { createdOn } : {}) };
+      }
     } catch {
-      // Not JSON after all — fall through and show it as text.
+      // Saved chat answers can contain unescaped line breaks inside their
+      // JSON string. Recover their title and body like live socket replies.
+      const chat = role === "agent" ? toChatAnswer(content) : null;
+      if (chat !== null) {
+        return { id, role, kind: "chat", ...chat, ...(createdOn !== "" ? { createdOn } : {}) };
+      }
     }
   }
 
   return { id, role, kind: "text", text: content, ...(createdOn !== "" ? { createdOn } : {}) };
+}
+
+/** Convert stored workflow rows into the same cards used by the main chat. */
+export function normalizeConversationRows(rows: Array<unknown>): Array<ConversationEntry> {
+  const entries = rows
+    .filter(hasContent)
+    .map(toEntry)
+    .filter((entry): entry is ConversationEntry => entry !== null);
+
+  // Put dated turns in chronological order. The platform also emits implausible
+  // timestamps (for example, year 2176); keep those rows in their original
+  // relative order after dated rows.
+  const order = new Map(entries.map((entry, index) => [entry, index]));
+  entries.sort((a, b) => {
+    const ta = parseCreatedOn(a.createdOn ?? "");
+    const tb = parseCreatedOn(b.createdOn ?? "");
+    if (ta === null && tb !== null) return 1;
+    if (ta !== null && tb === null) return -1;
+    if (ta !== null && tb !== null && ta !== tb) return ta - tb;
+    return (order.get(a) ?? 0) - (order.get(b) ?? 0);
+  });
+
+  // A plan echoes the question back inside its JSON. When the session also
+  // stores the user's own turn, that turn is the one to show.
+  const asked = new Set(
+    entries
+      .filter((entry) => entry.role === "user" && entry.kind === "text")
+      .map((entry) => normalise(entry.kind === "text" ? entry.text : "")),
+  );
+  for (const entry of entries) {
+    if (entry.kind !== "plan") continue;
+    let prompt = "";
+    try {
+      const parsed: unknown = JSON.parse(entry.planJson);
+      if (isRecord(parsed)) prompt = str(parsed["prompt"]);
+    } catch {
+      // An unreadable prompt should not add a duplicate bubble.
+    }
+    entry.showPrompt = prompt !== "" && !asked.has(normalise(prompt));
+  }
+
+  return entries;
 }
 
 export const fetchConversations = createServerFn({ method: "POST" })
@@ -131,39 +189,5 @@ export const fetchConversations = createServerFn({ method: "POST" })
       email,
     });
 
-    const rows = (Array.isArray(response) ? response : []).filter(hasContent);
-    const entries = rows.map(toEntry).filter((entry): entry is ConversationEntry => entry !== null);
-
-    // The platform returns rows in no particular order, so put the turns back
-    // in the order they happened. Rows without a usable timestamp keep their
-    // relative position rather than sorting to an arbitrary end.
-    const order = new Map(entries.map((entry, index) => [entry, index]));
-    entries.sort((a, b) => {
-      const ta = parseCreatedOn(a.createdOn ?? "");
-      const tb = parseCreatedOn(b.createdOn ?? "");
-      if (ta !== null && tb !== null && ta !== tb) return ta - tb;
-      return (order.get(a) ?? 0) - (order.get(b) ?? 0);
-    });
-
-    // A plan echoes the question back inside its JSON. When the session also
-    // stores the user's own turn, that turn is the one to show — it is what
-    // they actually typed — so the card must not repeat it.
-    const asked = new Set(
-      entries
-        .filter((entry) => entry.role === "user" && entry.kind === "text")
-        .map((entry) => normalise(entry.kind === "text" ? entry.text : "")),
-    );
-    for (const entry of entries) {
-      if (entry.kind !== "plan") continue;
-      let prompt = "";
-      try {
-        const parsed: unknown = JSON.parse(entry.planJson);
-        if (isRecord(parsed)) prompt = str(parsed["prompt"]);
-      } catch {
-        // Already parsed once above; a failure here just means no prompt.
-      }
-      entry.showPrompt = prompt !== "" && !asked.has(normalise(prompt));
-    }
-
-    return { sessionId: data.sessionId, entries };
+    return { sessionId: data.sessionId, entries: normalizeConversationRows(response) };
   });

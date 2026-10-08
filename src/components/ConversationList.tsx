@@ -13,6 +13,7 @@ import { toReport } from "../lib/report";
 import { applyApprovedData, toReportPlan } from "../lib/report-plan";
 import { ReportPlanCard } from "./ReportPlanCard";
 import { ReportView } from "./ReportView";
+import { ChatResponseCard } from "./ChatResponseCard";
 
 const noop = () => {
   /* history is not editable */
@@ -52,6 +53,15 @@ export function ConversationList({
         if (entry.kind === "report") {
           const report = toReport(safeParse(entry.reportJson));
           return report === null ? null : <ReportView key={entry.id} report={report} />;
+        }
+
+        if (entry.kind === "chat") {
+          return (
+            <ChatResponseCard
+              key={entry.id}
+              answer={{ title: entry.title, response: entry.response }}
+            />
+          );
         }
 
         if (entry.kind === "plan") {
