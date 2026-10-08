@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import "../i18n";
+import i18nInstance from "../i18n";
 
 export type SupportedLanguage = "en" | "ja";
 
@@ -21,7 +21,9 @@ const STORAGE_KEY = "astyle_lang";
 const MIN_OVERLAY_MS = 600;
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const { t, i18n } = useTranslation();
+  // Pass the instance explicitly: package.json sets "sideEffects": false, so a
+  // bare `import "../i18n"` is tree-shaken from production builds.
+  const { t, i18n } = useTranslation(undefined, { i18n: i18nInstance });
   const [language, setLanguageState] = useState<SupportedLanguage>("en");
   const [isTranslating, setIsTranslating] = useState(false);
 
