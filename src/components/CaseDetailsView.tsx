@@ -36,6 +36,7 @@ import {
 import { AIAssistantDefaultView } from "./AIAssistantDefaultView";
 import { ScanningRadarIcon } from "./ScanningRadarIcon";
 import { ReportPipelineDiagram } from "./ReportPipelineDiagram";
+import { VOICE_MODE_ENABLED } from "../config";
 
 export interface HistoryItem {
   id: string;
@@ -2219,17 +2220,19 @@ export function CaseDetailsView({
           {/* Option chat (with voice icon) is in the bottom of the right side */}
           <div className="shrink-0 border-t border-border/80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-8 sm:px-12 lg:px-16 xl:px-24 py-3.5 shadow-sm">
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleBottomVoiceClick}
-                className={`size-9 rounded-full border flex items-center justify-center transition shrink-0 cursor-pointer shadow-2xs ${isBottomVoiceListening
-                  ? "border-rose-500 bg-rose-50 text-rose-600 animate-pulse"
-                  : "border-teal-600/30 bg-teal-50/80 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 hover:bg-teal-100"
-                  }`}
-                title={isBottomVoiceListening ? "Listening... click to stop" : "Voice mode (click to speak)"}
-              >
-                <Mic className="size-4" />
-              </button>
+              {VOICE_MODE_ENABLED && (
+                <button
+                  type="button"
+                  onClick={handleBottomVoiceClick}
+                  className={`size-9 rounded-full border flex items-center justify-center transition shrink-0 cursor-pointer shadow-2xs ${isBottomVoiceListening
+                    ? "border-rose-500 bg-rose-50 text-rose-600 animate-pulse"
+                    : "border-teal-600/30 bg-teal-50/80 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 hover:bg-teal-100"
+                    }`}
+                  title={isBottomVoiceListening ? "Listening... click to stop" : "Voice mode (click to speak)"}
+                >
+                  <Mic className="size-4" />
+                </button>
+              )}
               <div className="relative flex-1">
                 <input
                   type="text"

@@ -80,6 +80,8 @@ import type { ConversationEntry } from "../api/types";
 import type { AnalysisMode } from "../api/types";
 import { useLanguage } from "../context/LanguageContext";
 import { TranslatableText } from "./TranslatableText";
+import { useCurrentUser } from "../hooks/useCurrentUser";
+import { VOICE_MODE_ENABLED } from "../config";
 
 type PastTurn = {
   id: string;
@@ -3249,6 +3251,7 @@ export function CxoDashboard({
   const [isReportFormatMode, setIsReportFormatMode] = useState(true);
   const [logoRotation, setLogoRotation] = useState(0);
   const { language, setLanguage, t } = useLanguage();
+  const currentUser = useCurrentUser();
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
   const isToggleFirstMount = useRef(true);
@@ -4654,11 +4657,11 @@ export function CxoDashboard({
             )}
           </div>
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-medium leading-none text-white">Robert</p>
-            <p className="text-[10px] text-sky-200/70 mt-0.5">{t("header.executiveOfficer", { defaultValue: "Chief Executive Officer" })}</p>
+            <p className="text-xs font-medium leading-none text-white">{currentUser.name}</p>
+            <p className="text-[10px] text-sky-200/70 mt-0.5">{currentUser.email}</p>
           </div>
           <span className="grid size-7 sm:size-8 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-xs sm:text-sm font-medium text-white shadow-xs">
-            R
+            {currentUser.initial}
           </span>
         </div>
       </header>
@@ -4892,20 +4895,22 @@ export function CxoDashboard({
                       </form>
 
                       {/* Voice Mode Pill Button - Filled Color with Bottom Spacing */}
-                      <div className="flex items-center justify-center pb-2">
-                        <button
-                          type="button"
-                          onClick={handleVoiceModeClick}
-                          className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${
-                            isVoiceActive
-                              ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
-                              : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
-                          }`}
-                        >
-                          <Mic className="size-3.5 sm:size-4 text-white" />
-                          <span>{isVoiceActive ? t("hero.listening", { defaultValue: "Listening..." }) : t("hero.voiceMode", { defaultValue: "Voice Mode" })}</span>
-                        </button>
-                      </div>
+                      {VOICE_MODE_ENABLED && (
+                        <div className="flex items-center justify-center pb-2">
+                          <button
+                            type="button"
+                            onClick={handleVoiceModeClick}
+                            className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${
+                              isVoiceActive
+                                ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
+                                : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
+                            }`}
+                          >
+                            <Mic className="size-3.5 sm:size-4 text-white" />
+                            <span>{isVoiceActive ? t("hero.listening", { defaultValue: "Listening..." }) : t("hero.voiceMode", { defaultValue: "Voice Mode" })}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Highly Readable Suggested Queries - Transparent Background */}
@@ -6144,19 +6149,21 @@ export function CxoDashboard({
                           <X className="size-4" />
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={handleVoiceModeClick}
-                        className={`size-9 rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${
-                          isVoiceActive
-                            ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
-                            : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
-                        }`}
-                        title={isVoiceActive ? t("chatInput.listening", { defaultValue: "Listening... Click to stop" }) : t("chatInput.voiceInput", { defaultValue: "Voice input" })}
-                        aria-label="Voice input"
-                      >
-                        <Mic className="size-4" />
-                      </button>
+                      {VOICE_MODE_ENABLED && (
+                        <button
+                          type="button"
+                          onClick={handleVoiceModeClick}
+                          className={`size-9 rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${
+                            isVoiceActive
+                              ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
+                              : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
+                          }`}
+                          title={isVoiceActive ? t("chatInput.listening", { defaultValue: "Listening... Click to stop" }) : t("chatInput.voiceInput", { defaultValue: "Voice input" })}
+                          aria-label="Voice input"
+                        >
+                          <Mic className="size-4" />
+                        </button>
+                      )}
                       <button
                         type="submit"
                         disabled={!chatQuery.trim() && !isVoiceActive}

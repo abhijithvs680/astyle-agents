@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 import {
   Home,
   Folder,
@@ -228,6 +229,7 @@ const pastelThemes = [
 ];
 
 function FoldersPage() {
+  const currentUser = useCurrentUser();
   const navigate = useNavigate();
   const [folders, setFolders] = useState<CaseFolder[]>(initialFolders);
   // Folder selected to display cases inside a modern popup
@@ -283,11 +285,11 @@ function FoldersPage() {
         {/* Profile on right */}
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-sm font-medium leading-none text-white">Robert</p>
-            <p className="text-xs text-sky-200/70 mt-1">Chief Executive Officer</p>
+            <p className="text-sm font-medium leading-none text-white">{currentUser.name}</p>
+            <p className="text-xs text-sky-200/70 mt-1">{currentUser.email}</p>
           </div>
           <span className="grid size-9 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-sm font-medium text-white shadow-xs">
-            R
+            {currentUser.initial}
           </span>
         </div>
       </header>

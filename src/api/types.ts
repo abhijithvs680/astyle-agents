@@ -14,8 +14,15 @@ export type InvalidReason =
   /** The backend could not be reached or answered with an error. */
   | "unreachable";
 
+/** The signed-in user, read from the session token's claims. */
+export type CurrentUser = {
+  name: string;
+  email: string;
+};
+
 export type SessionState =
-  { status: "authenticated" } | { status: "invalid"; reason: InvalidReason };
+  | { status: "authenticated"; user: CurrentUser }
+  | { status: "invalid"; reason: InvalidReason };
 
 /** A session row from `getInitialData`, normalised for the UI. */
 export type SessionSummary = {

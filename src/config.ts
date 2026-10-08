@@ -88,3 +88,6 @@ export const SESSION_COOKIE_NAME = "astyle_session";
 
 /** How long a session stays valid, in seconds. */
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+
+/** Voice mode buttons are hidden until voice input is implemented. */
+export const VOICE_MODE_ENABLED = false;

@@ -9,8 +9,20 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { isAffirmative, postUnauthenticated } from "./client.server";
 import { ConfigurationError } from "./env.server";
+import { decodeTokenClaims } from "./jwt.server";
 import { clearAppSession, createAppSession, getSessionToken } from "./session.server";
-import type { SessionState } from "./types";
+import type { CurrentUser, SessionState } from "./types";
+
+/** Display identity from the token's claims, falling back to the email. */
+function userFromToken(token: string): CurrentUser {
+  const claims = decodeTokenClaims(token);
+  const email = claims?.email?.trim() ?? "";
+  const fullName = [claims?.fname, claims?.lname]
+    .map((part) => part?.trim() ?? "")
+    .filter((part) => part !== "")
+    .join(" ");
+  return { name: fullName || email.split("@")[0] || "User", email };
+}
 
 /**
  * Validate `token` and establish a session for it.
@@ -33,12 +45,12 @@ export const establishSession = createServerFn({ method: "POST" })
         const existing = await getSessionToken();
         return existing === undefined
           ? { status: "invalid", reason: "missing-token" }
-          : { status: "authenticated" };
+          : { status: "authenticated", user: userFromToken(existing) };
       }
 
       // Already validated this exact token — don't spend a round trip on it.
       if ((await getSessionToken()) === token) {
-        return { status: "authenticated" };
+        return { status: "authenticated", user: userFromToken(token) };
       }
 
       const response = await postUnauthenticated("validateToken", { token });
@@ -49,7 +61,7 @@ export const establishSession = createServerFn({ method: "POST" })
       }
 
       await createAppSession(token);
-      return { status: "authenticated" };
+      return { status: "authenticated", user: userFromToken(token) };
     } catch (error) {
       console.error("[auth] token handshake failed", error);
       return {

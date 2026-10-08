@@ -10,6 +10,7 @@ export type TokenClaims = {
   email?: string;
   uid?: string;
   fname?: string;
+  lname?: string;
   domain?: string;
   exp?: number;
 };
