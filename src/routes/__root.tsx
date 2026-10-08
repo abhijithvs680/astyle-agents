@@ -170,7 +170,9 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        {/* Provided in the shell, not RootComponent: the root error and
+            not-found components replace RootComponent and use translations. */}
+        <LanguageProvider>{children}</LanguageProvider>
         <Scripts />
       </body>
     </html>
@@ -182,16 +184,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        {auth.status === "invalid" ? (
-          <InvalidConfiguration reason={auth.reason} />
-        ) : (
-          <SocketProvider>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </SocketProvider>
-        )}
-      </LanguageProvider>
+      {auth.status === "invalid" ? (
+        <InvalidConfiguration reason={auth.reason} />
+      ) : (
+        <SocketProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </SocketProvider>
+      )}
     </QueryClientProvider>
   );
 }

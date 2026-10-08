@@ -10,7 +10,7 @@ interface LanguageContextType {
   setLanguage: (lang: SupportedLanguage) => void;
   isJapanese: boolean;
   isTranslating: boolean;
-  t: (key: string, options?: { defaultValue?: string }) => string;
+  t: (key: string, options?: { defaultValue?: string; [key: string]: unknown }) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -75,7 +75,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setLanguage,
         isJapanese: language === "ja",
         isTranslating,
-        t: (key: string, options?: { defaultValue?: string }) =>
+        t: (key: string, options?: { defaultValue?: string; [key: string]: unknown }) =>
           options ? t(key, options) : t(key),
       }}
     >
