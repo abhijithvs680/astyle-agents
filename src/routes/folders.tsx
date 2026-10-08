@@ -27,7 +27,7 @@ export const Route = createFileRoute("/folders")({
 });
 
 const railIcons: { icon: typeof Home; label: string; to: string; active?: boolean }[] = [
-  { icon: Home, label: "Home", to: "/" },
+  { icon: Home, label: "Home", to: "/ask-ai" },
 ];
 
 interface CaseItem {
@@ -271,9 +271,10 @@ function FoldersPage() {
       <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <Link
-            to="/"
+            to="/ask-ai"
+            search={{ history: undefined }}
             className="text-xl sm:text-[22px] font-semibold text-white hover:opacity-85 transition cursor-pointer"
-            title="CXO Home"
+            title="Ask AI"
           >
             CXO
           </Link>

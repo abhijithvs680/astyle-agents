@@ -8,7 +8,15 @@
  * file decides what that looks like. Agent-chosen hex values would drift
  * between blocks and break contrast.
  */
-import { AlertTriangle, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import { useId, useState } from "react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  Maximize2,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -34,6 +42,13 @@ import {
 } from "recharts";
 
 import type { Report, ReportBlock, SeriesSpec, Slice, Tone, TrendData } from "../lib/report";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 /** Categorical palette, in the order series and slices are assigned. */
 const SERIES_COLORS = ["#0e7490", "#06b6d4", "#6366f1", "#10b981", "#f59e0b", "#8b5cf6"];
@@ -88,9 +103,15 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ChartFrame({ children }: { children: React.ReactElement }) {
+function ChartFrame({
+  children,
+  expanded = false,
+}: {
+  children: React.ReactElement;
+  expanded?: boolean;
+}) {
   return (
-    <div className="h-64 w-full sm:h-72">
+    <div className={expanded ? "h-[min(62vh,600px)] w-full" : "h-64 w-full sm:h-72"}>
       <ResponsiveContainer width="100%" height="100%">
         {children}
       </ResponsiveContainer>
@@ -115,8 +136,10 @@ function TrendLegend({ series }: { series: Array<SeriesSpec> }) {
 
 function ReportBarChart({
   data,
+  expanded = false,
 }: {
   data: Extract<ReportBlock, { component: "reportBar" }>["data"];
+  expanded?: boolean;
 }) {
   // Heights are derived here, never sent: an agent computing layout is an
   // agent that will eventually compute it wrong.
@@ -132,7 +155,9 @@ function ReportBarChart({
 
       <div className="overflow-x-auto pb-1">
         <div className="min-w-[500px]">
-          <div className="relative flex h-44 w-full items-end justify-around px-4 pt-8 sm:h-52 sm:px-8">
+          <div
+            className={`relative flex w-full items-end justify-around px-4 pt-8 sm:px-8 ${expanded ? "h-[min(52vh,500px)]" : "h-44 sm:h-52"}`}
+          >
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-between opacity-40">
               {[0, 1, 2, 3].map((line) => (
                 <div key={line} className="w-full border-b border-dashed border-slate-300" />
@@ -250,82 +275,105 @@ function SliceChart({
   slices,
   centerMetric,
   donut,
+  expanded = false,
 }: {
   slices: Array<Slice>;
   centerMetric?: { label: string; value: string; caption?: string };
   donut: boolean;
+  expanded?: boolean;
 }) {
   return (
     <Card>
-      <div className="relative">
-        <ChartFrame>
-          <PieChart>
-            <Tooltip
-              contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
-            />
-            <Pie
-              data={slices}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              innerRadius={donut ? "58%" : 0}
-              outerRadius="82%"
-              paddingAngle={donut ? 2 : 0}
-            >
-              {slices.map((slice, index) => (
-                <Cell key={slice.name} fill={color(index)} stroke="#ffffff" strokeWidth={2} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ChartFrame>
+      <div
+        className="grid items-center gap-6"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))" }}
+      >
+        <div className="relative min-w-0">
+          <ChartFrame expanded={expanded}>
+            <PieChart>
+              <Tooltip
+                contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
+              />
+              <Pie
+                data={slices}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={donut ? "58%" : 0}
+                outerRadius="82%"
+                paddingAngle={donut ? 2 : 0}
+              >
+                {slices.map((slice, index) => (
+                  <Cell key={slice.name} fill={color(index)} stroke="#ffffff" strokeWidth={2} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ChartFrame>
 
-        {donut && centerMetric !== undefined ? (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              {centerMetric.label}
-            </span>
-            <span className="text-2xl font-bold text-slate-950">{centerMetric.value}</span>
-            {centerMetric.caption !== undefined ? (
-              <span className="text-[11px] text-slate-500">{centerMetric.caption}</span>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mt-4 space-y-2">
-        {slices.map((slice, index) => (
-          <div key={slice.name} className="flex items-center justify-between gap-3 text-sm">
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="size-2.5 shrink-0 rounded-sm" style={{ background: color(index) }} />
-              <span className="truncate font-medium text-slate-800">{slice.name}</span>
-              {slice.highlight !== undefined ? (
-                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
-                  {slice.highlight}
-                </span>
+          {donut && centerMetric !== undefined ? (
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                {centerMetric.label}
+              </span>
+              <span className="text-2xl font-bold text-slate-950">{centerMetric.value}</span>
+              {centerMetric.caption !== undefined ? (
+                <span className="text-[11px] text-slate-500">{centerMetric.caption}</span>
               ) : null}
-            </span>
-            <span className="shrink-0 tabular-nums text-slate-600">
-              {slice.share !== undefined ? `${slice.share}%` : slice.value.toLocaleString()}
-            </span>
-          </div>
-        ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="min-w-0 space-y-3">
+          {slices.map((slice, index) => (
+            <div key={slice.name} className="flex items-start justify-between gap-3 text-sm">
+              <span className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="size-2.5 shrink-0 rounded-sm" style={{ background: color(index) }} />
+                <span className="min-w-0 font-medium text-slate-800">{slice.name}</span>
+                {slice.highlight !== undefined ? (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
+                    {slice.highlight}
+                  </span>
+                ) : null}
+              </span>
+              <span className="shrink-0 tabular-nums text-slate-600">
+                {slice.share !== undefined ? `${slice.share}%` : slice.value.toLocaleString()}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </Card>
   );
 }
 
-function Trend({ data, filled }: { data: TrendData; filled: boolean }) {
+function Trend({
+  data,
+  filled,
+  expanded = false,
+}: {
+  data: TrendData;
+  filled: boolean;
+  expanded?: boolean;
+}) {
   const Chart = filled ? AreaChart : LineChart;
+  const gradientId = useId().replace(/:/g, "");
 
   return (
     <Card>
       <TrendLegend series={data.series} />
-      <ChartFrame>
+      <ChartFrame expanded={expanded}>
         <Chart data={data.rows} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <defs>
             {data.series.map((entry, index) => (
-              <linearGradient key={entry.key} id={`fill-${entry.key}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient
+                key={entry.key}
+                id={`${gradientId}-fill-${entry.key}`}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
                 <stop offset="5%" stopColor={color(index)} stopOpacity={0.35} />
                 <stop offset="95%" stopColor={color(index)} stopOpacity={0.02} />
               </linearGradient>
@@ -352,7 +400,7 @@ function Trend({ data, filled }: { data: TrendData; filled: boolean }) {
                 name={entry.label}
                 stroke={color(index)}
                 strokeWidth={entry.emphasis === "primary" ? 2.5 : 1.5}
-                fill={`url(#fill-${entry.key})`}
+                fill={`url(#${gradientId}-fill-${entry.key})`}
                 dot={false}
               />
             ) : (
@@ -374,11 +422,17 @@ function Trend({ data, filled }: { data: TrendData; filled: boolean }) {
   );
 }
 
-function GroupedBars({ data }: { data: Omit<TrendData, "threshold"> }) {
+function GroupedBars({
+  data,
+  expanded = false,
+}: {
+  data: Omit<TrendData, "threshold">;
+  expanded?: boolean;
+}) {
   return (
     <Card>
       <TrendLegend series={data.series} />
-      <ChartFrame>
+      <ChartFrame expanded={expanded}>
         <BarChart data={data.rows} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
           <XAxis dataKey={data.xKey} tick={AXIS} tickLine={false} axisLine={false} />
@@ -403,64 +457,13 @@ function GroupedBars({ data }: { data: Omit<TrendData, "threshold"> }) {
   );
 }
 
-function RankedBars({
+function RadarDiagnostic({
   data,
+  expanded = false,
 }: {
-  data: Extract<ReportBlock, { component: "horizontalRanked" }>["data"];
+  data: Extract<ReportBlock, { component: "radar" }>["data"];
+  expanded?: boolean;
 }) {
-  return (
-    <Card>
-      <div className="space-y-3.5">
-        {data.items.map((item, index) => {
-          const styles = TONE_STYLES[item.statusTone ?? "neutral"];
-
-          return (
-            <div
-              key={item.label}
-              className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3"
-            >
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <span className="flex items-center gap-2">
-                  <span className="flex size-5 items-center justify-center rounded-md border border-slate-200 bg-white text-xs font-bold text-slate-700">
-                    {index + 1}
-                  </span>
-                  <span className="text-xs font-bold text-slate-950 sm:text-sm">{item.label}</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="text-sm font-bold tabular-nums text-slate-900">
-                    {item.primaryValue}
-                  </span>
-                  {item.status !== undefined ? (
-                    <span
-                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${styles.bg} ${styles.border} ${styles.text}`}
-                    >
-                      {item.status}
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className={`h-full rounded-full ${styles.dot}`}
-                  style={{ width: `${item.percent}%` }}
-                />
-              </div>
-
-              {item.secondaryValue !== undefined ? (
-                <span className="mt-1.5 block text-[11px] font-medium text-slate-600">
-                  {item.secondaryValue}
-                </span>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-function RadarDiagnostic({ data }: { data: Extract<ReportBlock, { component: "radar" }>["data"] }) {
   const max = Math.max(...data.axes.map((axis) => axis.fullMark), 1);
 
   return (
@@ -473,7 +476,7 @@ function RadarDiagnostic({ data }: { data: Extract<ReportBlock, { component: "ra
         </div>
       ) : null}
 
-      <ChartFrame>
+      <ChartFrame expanded={expanded}>
         <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data.axes}>
           <PolarGrid stroke="#e2e8f0" />
           <PolarAngleAxis dataKey="subject" tick={AXIS} />
@@ -486,16 +489,24 @@ function RadarDiagnostic({ data }: { data: Extract<ReportBlock, { component: "ra
   );
 }
 
-function DataTable({ data }: { data: Extract<ReportBlock, { component: "table" }>["data"] }) {
+function DataTable({
+  data,
+  expanded = false,
+}: {
+  data: Extract<ReportBlock, { component: "table" }>["data"];
+  expanded?: boolean;
+}) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200/90 bg-white shadow-2xs">
-      <table className="w-full text-sm">
+    <div
+      className={`rounded-xl border border-slate-200/90 bg-white shadow-2xs ${expanded ? "max-h-[calc(90dvh-10rem)] overflow-auto" : "overflow-x-auto"}`}
+    >
+      <table className="w-full min-w-max text-sm">
         <thead>
           <tr className="border-b border-slate-200 bg-slate-50/80">
             {data.columns.map((column) => (
               <th
                 key={column.key}
-                className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-600 ${
+                className={`sticky top-0 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-600 ${
                   column.align === "right" ? "text-right" : "text-left"
                 }`}
               >
@@ -533,7 +544,7 @@ function cellText(value: unknown): string {
   return value === null || value === undefined ? "—" : JSON.stringify(value);
 }
 
-function BlockBody({ block }: { block: ReportBlock }) {
+function BlockBody({ block, expanded = false }: { block: ReportBlock; expanded?: boolean }) {
   switch (block.component) {
     case "narrative":
       return (
@@ -548,31 +559,30 @@ function BlockBody({ block }: { block: ReportBlock }) {
     case "kpiRibbon":
       return <KpiRibbon data={block.data} />;
     case "reportBar":
-      return <ReportBarChart data={block.data} />;
+      return <ReportBarChart data={block.data} expanded={expanded} />;
     case "groupedBar":
-      return <GroupedBars data={block.data} />;
-    case "horizontalRanked":
-      return <RankedBars data={block.data} />;
+      return <GroupedBars data={block.data} expanded={expanded} />;
     case "donut":
       return (
         <SliceChart
           slices={block.data.slices}
           donut
+          expanded={expanded}
           {...(block.data.centerMetric !== undefined
             ? { centerMetric: block.data.centerMetric }
             : {})}
         />
       );
     case "pie":
-      return <SliceChart slices={block.data.slices} donut={false} />;
+      return <SliceChart slices={block.data.slices} donut={false} expanded={expanded} />;
     case "lineTrend":
-      return <Trend data={block.data} filled={false} />;
+      return <Trend data={block.data} filled={false} expanded={expanded} />;
     case "areaTrend":
-      return <Trend data={block.data} filled />;
+      return <Trend data={block.data} filled expanded={expanded} />;
     case "radar":
-      return <RadarDiagnostic data={block.data} />;
+      return <RadarDiagnostic data={block.data} expanded={expanded} />;
     case "table":
-      return <DataTable data={block.data} />;
+      return <DataTable data={block.data} expanded={expanded} />;
     case "callout": {
       const styles = TONE_STYLES[block.data.tone];
       return (
@@ -608,25 +618,67 @@ function BlockBody({ block }: { block: ReportBlock }) {
   }
 }
 
+function canExpand(block: ReportBlock): boolean {
+  return [
+    "reportBar",
+    "groupedBar",
+    "donut",
+    "pie",
+    "lineTrend",
+    "areaTrend",
+    "radar",
+    "table",
+  ].includes(block.component);
+}
+
 function Block({ block }: { block: ReportBlock }) {
   // The ribbon is the page header's companion; a title above it would repeat
   // what the cards already say.
   const bare = block.component === "kpiRibbon";
+  const expandable = canExpand(block);
+  const contentType = block.component === "table" ? "table" : "chart";
 
   return (
     <section id={block.id} className="space-y-3 scroll-mt-6">
       {bare ? null : (
-        <div>
-          {block.eyebrow !== undefined ? (
-            <span className="block text-xs font-bold uppercase tracking-wider text-[#0e7490]">
-              {block.eyebrow}
-            </span>
-          ) : null}
-          <h3 className="text-base font-bold tracking-tight text-slate-950 sm:text-lg">
-            {block.title}
-          </h3>
-          {block.caption !== undefined ? (
-            <p className="mt-0.5 text-xs text-slate-500">{block.caption}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            {block.eyebrow !== undefined ? (
+              <span className="block text-xs font-bold uppercase tracking-wider text-[#0e7490]">
+                {block.eyebrow}
+              </span>
+            ) : null}
+            <h3 className="text-base font-bold tracking-tight text-slate-950 sm:text-lg">
+              {block.title}
+            </h3>
+          </div>
+          {expandable ? (
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Expand ${contentType}: ${block.title}`}
+                  title={`Expand ${contentType}`}
+                  className="grid size-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:border-[#0e7490]/40 hover:text-[#0e7490] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e7490]"
+                >
+                  <Maximize2 className="size-4" aria-hidden="true" />
+                </button>
+              </DialogTrigger>
+              <DialogContent
+                className={`flex w-[96vw] max-w-[1400px] flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl ${
+                  block.component === "table" ? "max-h-[90dvh]" : "h-[90dvh] max-h-[900px]"
+                }`}
+              >
+                <DialogHeader className="shrink-0 border-b border-slate-200 px-5 py-4 pr-14 text-left sm:px-6">
+                  <DialogTitle className="text-lg leading-snug sm:text-xl">
+                    {block.title}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
+                  <BlockBody block={block} expanded />
+                </div>
+              </DialogContent>
+            </Dialog>
           ) : null}
         </div>
       )}
@@ -661,16 +713,83 @@ const PRIORITY_STYLES: Record<string, string> = {
   low: "bg-slate-50 border-slate-200 text-slate-600",
 };
 
+function HowDataFound({
+  method,
+}: {
+  method: NonNullable<Report["howDataFound"]>;
+}) {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <section className="space-y-3 border-t border-slate-200/70 pt-5">
+      <button
+        type="button"
+        onClick={() => setExpanded((open) => !open)}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <h3 className="text-base font-bold tracking-tight text-slate-950 sm:text-lg">
+          How the data was found
+        </h3>
+        <ChevronDown
+          className={`size-5 shrink-0 text-[#0e7490] transition-transform ${expanded ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {expanded ? (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-slate-700">{method.summary}</p>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+            {method.steps.map((step, index) => (
+              <div
+                key={`${step.title}-${index}`}
+                className="relative flex gap-3 p-4 sm:gap-4 sm:p-5"
+              >
+                {index < method.steps.length - 1 ? (
+                  <span
+                    className="absolute bottom-0 left-[1.65rem] top-14 w-px bg-slate-200 sm:left-[1.9rem]"
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <span className="relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700">
+                  {index + 1}
+                </span>
+                <div className="min-w-0 space-y-1">
+                  <h4 className="text-sm font-semibold text-slate-900">{step.title}</h4>
+                  <p className="text-sm leading-relaxed text-slate-600">{step.detail}</p>
+                  {step.sources.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {step.sources.map((source) => (
+                        <span
+                          key={source}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600"
+                        >
+                          {source}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export function ReportView({ report }: { report: Report }) {
   return (
-    <article className="mb-5 space-y-7 rounded-2xl border border-sky-200/80 bg-gradient-to-b from-white via-sky-50/20 to-white p-5 shadow-2xs animate-in fade-in duration-300 sm:p-7">
+    <article
+      data-report-card
+      className="mb-5 space-y-7 rounded-2xl border border-sky-200/80 bg-gradient-to-b from-white via-sky-50/20 to-white p-5 shadow-2xs animate-in fade-in duration-300 sm:p-7"
+    >
       <header className="border-b border-slate-200/70 pb-4">
         <h2 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
           {report.reportTitle}
         </h2>
-        {report.reportSubtitle !== undefined ? (
-          <p className="mt-1 text-sm text-slate-600">{report.reportSubtitle}</p>
-        ) : null}
       </header>
 
       {report.status === "error" ? (
@@ -712,6 +831,8 @@ export function ReportView({ report }: { report: Report }) {
           ) : null}
         </section>
       ) : null}
+
+      {report.howDataFound !== undefined ? <HowDataFound method={report.howDataFound} /> : null}
 
       {report.blocks.map((block) => (
         <Block key={block.id} block={block} />

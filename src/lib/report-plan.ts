@@ -163,28 +163,60 @@ function looksTruncated(json: string): boolean {
 }
 
 /**
+ * Workflows sometimes wrap JSON in a markdown fence, add a short preamble, or
+ * encode the JSON string twice. Try those harmless transport variations before
+ * showing a plan error to the user.
+ */
+function parsePlanJsonText(value: string): unknown {
+  const source = value.trim();
+  const candidates = [source];
+  const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(source);
+  if (fenced?.[1] !== undefined) candidates.push(fenced[1].trim());
+
+  const firstObject = source.indexOf("{");
+  const lastObject = source.lastIndexOf("}");
+  if (firstObject > 0 && lastObject > firstObject) {
+    candidates.push(source.slice(firstObject, lastObject + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      let parsed: unknown = JSON.parse(candidate);
+      if (typeof parsed === "string") {
+        parsed = JSON.parse(parsed.trim());
+      }
+      return parsed;
+    } catch {
+      // Try the next transport shape.
+    }
+  }
+  return undefined;
+}
+
+/**
  * Pull the plan out of a `report_gen_plan` event.
  *
  * Returns null when the payload carries no session id — without one there is
  * no run to attach it to, so acting on it would be a guess.
  */
 export function parseReportPlanEvent(raw: unknown): ReportPlan | null {
-  if (!isRecord(raw)) return null;
+  const payload = Array.isArray(raw) && raw[0] === REPORT_PLAN_EVENT ? raw[1] : raw;
+  if (!isRecord(payload)) return null;
 
   // The envelope repeats the id; `Session_ID` is authoritative, `jobId` is the
   // fallback seen on background-workflow events.
-  const envelopeSessionId = str(raw["Session_ID"]) ?? str(raw["session_id"]) ?? str(raw["jobId"]);
-  const conversationId = str(raw["conversation_id"]);
+  const envelopeSessionId =
+    str(payload["Session_ID"]) ?? str(payload["session_id"]) ?? str(payload["jobId"]);
+  const conversationId = str(payload["conversation_id"]);
 
-  let body: unknown = raw["response"];
+  let body: unknown = payload["response"];
   if (typeof body === "string") {
     // Held separately: `body` is reassigned by the parse, so it is no longer
     // known to be a string in the catch block.
     const rawJson = body;
-    try {
-      body = JSON.parse(rawJson);
-    } catch {
-      const stray = strayEnvelopeKeys(raw);
+    body = parsePlanJsonText(rawJson);
+    if (body === undefined) {
+      const stray = strayEnvelopeKeys(payload);
       const truncated = looksTruncated(rawJson);
 
       let detail: string;

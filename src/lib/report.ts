@@ -28,7 +28,6 @@ export type ReportBlock = {
   id: string;
   title: string;
   eyebrow?: string;
-  caption?: string;
   insight?: string;
   agentId?: string;
   dataSources?: Array<string>;
@@ -54,19 +53,6 @@ export type ReportBlock = {
       };
     }
   | { component: "groupedBar"; data: Omit<TrendData, "threshold"> }
-  | {
-      component: "horizontalRanked";
-      data: {
-        items: Array<{
-          label: string;
-          primaryValue: string;
-          secondaryValue?: string;
-          percent: number;
-          status?: string;
-          statusTone?: Tone;
-        }>;
-      };
-    }
   | {
       component: "donut";
       data: {
@@ -108,8 +94,11 @@ export type Report = {
   sessionId: string;
   conversationId?: string;
   reportTitle: string;
-  reportSubtitle?: string;
   executiveSummary?: { headline: string; narrative: string; keyFindings: Array<string> };
+  howDataFound?: {
+    summary: string;
+    steps: Array<{ title: string; detail: string; sources: Array<string> }>;
+  };
   blocks: Array<ReportBlock>;
   recommendations: Array<{
     title: string;
@@ -267,7 +256,6 @@ function toBlock(raw: unknown, index: number): ReportBlock | null {
     id: str(raw["id"]) ?? `block-${index}`,
     title: str(raw["title"]) ?? "",
     ...optional("eyebrow", str(raw["eyebrow"])),
-    ...optional("caption", str(raw["caption"])),
     ...optional("insight", str(raw["insight"])),
     ...optional("agentId", str(raw["agentId"])),
     ...(strList(raw["dataSources"]).length > 0 ? { dataSources: strList(raw["dataSources"]) } : {}),
@@ -334,24 +322,6 @@ function toBlock(raw: unknown, index: number): ReportBlock | null {
       if (trend === null) return null;
       const { xKey, series, rows } = trend;
       return { ...meta, component, data: { xKey, series, rows } };
-    }
-
-    case "horizontalRanked": {
-      const items = mapList(data["items"], (item) => {
-        const label = str(item["label"]);
-        const primaryValue = str(item["primaryValue"]);
-        if (label === undefined || primaryValue === undefined) return null;
-
-        return {
-          label,
-          primaryValue,
-          percent: Math.max(0, Math.min(100, num(item["percent"]) ?? 0)),
-          ...optional("secondaryValue", str(item["secondaryValue"])),
-          ...optional("status", str(item["status"])),
-          ...optional("statusTone", tone(item["statusTone"])),
-        };
-      });
-      return items.length === 0 ? null : { ...meta, component, data: { items } };
     }
 
     case "donut": {
@@ -500,6 +470,21 @@ export function toReport(
     };
   });
 
+  const methodRaw = raw["howDataFound"];
+  const methodSummary = isRecord(methodRaw) ? str(methodRaw["summary"]) : undefined;
+  const methodSteps = isRecord(methodRaw)
+    ? mapList(methodRaw["steps"], (step) => {
+        const title = str(step["title"]);
+        const detail = str(step["detail"]);
+        if (title === undefined || detail === undefined) return null;
+        return { title, detail, sources: strList(step["sources"]) };
+      })
+    : [];
+  const howDataFound =
+    methodSummary !== undefined && methodSteps.length > 0
+      ? { summary: methodSummary, steps: methodSteps }
+      : undefined;
+
   const appendixRaw = raw["appendix"];
   const assumptions = isRecord(appendixRaw) ? strList(appendixRaw["assumptions"]) : [];
   const dataGaps = isRecord(appendixRaw) ? strList(appendixRaw["dataGaps"]) : [];
@@ -508,8 +493,8 @@ export function toReport(
     sessionId,
     ...optional("conversationId", conversationId ?? str(raw["conversationId"])),
     reportTitle: str(raw["reportTitle"]) ?? "Report",
-    ...optional("reportSubtitle", str(raw["reportSubtitle"])),
     ...optional("executiveSummary", executiveSummary),
+    ...optional("howDataFound", howDataFound),
     blocks,
     recommendations,
     ...(assumptions.length > 0 || dataGaps.length > 0

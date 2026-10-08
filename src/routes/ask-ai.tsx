@@ -2,6 +2,9 @@ import { createFileRoute, useRouteContext } from "@tanstack/react-router";
 import { CxoDashboard } from "../components/CxoDashboard";
 
 export const Route = createFileRoute("/ask-ai")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    history: search["history"] === "open" ? "open" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "ASTYLE — Intelligent Garment & Merchandising Assistant" },
@@ -23,6 +26,13 @@ export const Route = createFileRoute("/ask-ai")({
 
 function AskAiPage() {
   const { sessions } = useRouteContext({ from: "__root__" });
+  const { history } = Route.useSearch();
 
-  return <CxoDashboard initialView="chat" initialSessions={sessions} />;
+  return (
+    <CxoDashboard
+      initialView="chat"
+      initialSessions={sessions}
+      initialHistoryOpen={history === "open"}
+    />
+  );
 }

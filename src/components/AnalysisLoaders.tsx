@@ -2,9 +2,11 @@
  * Waiting states for a dispatched analysis run.
  *
  * Both runs answer over the chat socket rather than the HTTP response, so
- * these stay up until a socket event for the session arrives. Neither is on a
- * timer — nothing here fabricates progress it cannot observe.
+ * these stay up until a socket event for the session arrives. The plan loader
+ * shows a small set of status messages while the request is running; it does
+ * not claim a completion percentage or finish the request on a timer.
  */
+import { useEffect, useState } from "react";
 
 function Shimmer({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
   return <div className={`animate-pulse rounded bg-slate-200/80 ${className}`} style={style} />;
@@ -15,24 +17,44 @@ function Shimmer({ className = "", style }: { className?: string; style?: React.
  * the layout doesn't jump when the real plan replaces it.
  */
 export function PlanSkeleton() {
+  const [statusStep, setStatusStep] = useState(0);
+
+  useEffect(() => {
+    const statusTimer = window.setInterval(() => {
+      setStatusStep((step) => Math.min(step + 1, 4));
+    }, 8000);
+    return () => window.clearInterval(statusTimer);
+  }, []);
+
+  const status =
+    statusStep === 0
+      ? "Getting information…"
+      : statusStep === 1
+        ? "Generating ideas…"
+        : statusStep === 2
+          ? "Building your report plan…"
+          : statusStep === 3
+            ? "Finalizing…"
+            : "Still working on your report plan…";
+
   return (
     <div
-      className="rounded-2xl border border-sky-200/80 bg-gradient-to-b from-white via-sky-50/20 to-white p-5 sm:p-7 shadow-2xs space-y-5 animate-in fade-in duration-300"
+      className="space-y-5 rounded-2xl border-2 border-sky-300/80 bg-gradient-to-b from-white via-sky-50/35 to-white p-6 shadow-md animate-in fade-in duration-300 sm:p-9"
       role="status"
-      aria-live="polite"
       aria-busy="true"
     >
       <span className="sr-only">Building your report plan</span>
 
-      <div className="border-b border-slate-200/70 pb-3 space-y-2">
+      <div className="space-y-2 border-b border-slate-200/70 pb-4">
         <div className="flex items-center gap-2.5">
-          <img src="/flower-logo.png" alt="" className="size-5 object-contain animate-spin" />
-          <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+          <img src="/flower-logo.png" alt="" className="size-8 object-contain animate-spin" />
+          <h3 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
             Building your report plan
           </h3>
         </div>
-        <p className="text-sm text-slate-600 font-normal">
-          Selecting the specialist agents and data sources this question needs.
+        <p className="text-sm font-normal text-slate-600">This may take a few minutes.</p>
+        <p className="text-sm font-medium text-slate-600" aria-live="polite">
+          {status}
         </p>
       </div>
 

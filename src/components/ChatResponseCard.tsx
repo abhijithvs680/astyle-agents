@@ -6,7 +6,7 @@ import type { ChatAnswer } from "../lib/chat-response";
 
 export function ChatResponseCard({ answer }: { answer: ChatAnswer }) {
   return (
-    <div className="flex items-start gap-3">
+    <div data-chat-answer-card className="flex items-start gap-3">
       <div className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#0e7490] text-white shadow-2xs">
         <Sparkles className="size-4" aria-hidden="true" />
       </div>

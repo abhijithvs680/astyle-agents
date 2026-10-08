@@ -250,7 +250,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <div className="subtle-scrollbar min-h-0 flex-1 overflow-y-auto p-3">
           {isLoading ? (
             <div role="status" className="space-y-2" aria-label="Loading specialists">
               {[0, 1, 2].map((item) => (
@@ -337,9 +337,9 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
             </button>
             <div
               ref={conversationScrollRef}
-              className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6"
+              className="subtle-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6"
             >
-              <div className="mx-auto max-w-3xl">
+              <div className="mx-auto max-w-[58rem]">
                 {conversationsError !== null ? (
                   <div className="py-10 text-center text-sm text-slate-600">
                     <p>{conversationsError}</p>

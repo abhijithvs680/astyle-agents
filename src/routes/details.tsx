@@ -1287,10 +1287,11 @@ function CaseDetailsPage() {
         {/* Left Side: Menu button, Back button, and project title */}
         <div className="flex items-center gap-2.5 min-w-0">
           <Link
-            to="/"
+            to="/ask-ai"
+            search={{ history: undefined }}
             className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 hover:bg-white/10 text-sky-100 hover:text-white transition cursor-pointer group shrink-0"
-            aria-label="Back to dashboard"
-            title="Back to Dashboard"
+            aria-label="Back to Ask AI"
+            title="Back to Ask AI"
           >
             <ArrowLeft className="size-4.5 group-hover:-translate-x-0.5 transition-transform" />
             <span className="text-sm font-semibold text-white">Back</span>

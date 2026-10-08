@@ -178,7 +178,10 @@ export function ReportPlanCard({
       : "Starting…";
 
   return (
-    <div className="mb-5 space-y-5 rounded-2xl border border-sky-200/80 bg-gradient-to-b from-white via-sky-50/20 to-white p-5 shadow-2xs animate-in fade-in duration-300 sm:p-7">
+    <div
+      data-report-plan-card
+      className="mb-5 space-y-5 rounded-2xl border border-sky-200/80 bg-gradient-to-b from-white via-sky-50/20 to-white p-5 shadow-2xs animate-in fade-in duration-300 sm:p-7"
+    >
       <div className="border-b border-slate-200/70 pb-3">
         <h3 className="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
           {plan.planTitle}

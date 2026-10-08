@@ -14,8 +14,10 @@ import {
   Filter,
   Check,
   Loader2,
+  Languages,
   Mic,
   MessageSquare,
+  History,
   X,
   TrendingDown,
   TrendingUp,
@@ -2842,13 +2844,59 @@ const getInitialPending = (): { pendingCase: ActiveCaseItem | null; shouldLoad: 
   return { pendingCase: null, shouldLoad: false };
 };
 
+const PENDING_REPORT_SESSION_KEY = "astyle_pending_report_session";
+const PENDING_ANALYSIS_KEY = "astyle_pending_analysis";
+
+type PendingAnalysis = {
+  sessionId: string;
+  mode: AnalysisMode;
+  query: string;
+};
+
+function readPendingReportSession(): string | null {
+  try {
+    return typeof window === "undefined"
+      ? null
+      : sessionStorage.getItem(PENDING_REPORT_SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function readPendingAnalysis(): PendingAnalysis | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const raw = sessionStorage.getItem(PENDING_ANALYSIS_KEY);
+    if (raw === null) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return null;
+    const value = parsed as Record<string, unknown>;
+    if (
+      typeof value["sessionId"] !== "string" ||
+      (value["mode"] !== "deep-insights" && value["mode"] !== "chat") ||
+      typeof value["query"] !== "string"
+    ) {
+      return null;
+    }
+    return {
+      sessionId: value["sessionId"],
+      mode: value["mode"],
+      query: value["query"],
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function CxoDashboard({
   initialView = "chat",
   initialSessions = [],
+  initialHistoryOpen = false,
 }: {
   initialView?: "chat" | "inbox";
   /** Session history from the API. The sidebar has no other source. */
   initialSessions?: HistorySession[];
+  initialHistoryOpen?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -2864,8 +2912,9 @@ export function CxoDashboard({
   const switchView = (targetView: "chat" | "inbox") => {
     setActiveView(targetView);
     if (targetView === "chat") {
-      navigate({ to: "/ask-ai" });
+      navigate({ to: "/ask-ai", search: { history: undefined } });
     } else {
+      setIsHistoryOpen(false);
       navigate({ to: "/specialists" });
     }
   };
@@ -2884,9 +2933,10 @@ export function CxoDashboard({
   const [reportPlan, setReportPlan] = useState<ReportPlan | null>(null);
   const [chatAnswer, setChatAnswer] = useState<ChatAnswer | null>(null);
   /** The run we are waiting on a socket reply for, or null when idle. */
-  const [pendingRun, setPendingRun] = useState<{ sessionId: string; mode: AnalysisMode } | null>(
-    null,
-  );
+  const [pendingRun, setPendingRun] = useState<{
+    sessionId: string;
+    mode: AnalysisMode;
+  } | null>(null);
   /**
    * Conversation id shared by every prompt in the current session. Null means
    * the next prompt opens a new session (`new_session: true`).
@@ -2901,14 +2951,77 @@ export function CxoDashboard({
     "Agent Sales is looking for data...",
   );
   const geminiTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const askAiHeroScrollRef = useRef<HTMLDivElement>(null);
   const conversationStreamRef = useRef<HTMLDivElement>(null);
+  const activeTurnRef = useRef<HTMLDivElement>(null);
+  const continueTurnRef = useRef<HTMLDivElement>(null);
+  const lastChatScrollTopRef = useRef(0);
+  const ignoreChatScrollUntilRef = useRef(0);
+  const [showChatChrome, setShowChatChrome] = useState(true);
+  const recentSectionRef = useRef<HTMLDivElement>(null);
 
   // Session History Sidebar state
-  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(initialHistoryOpen);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sessionHistoryList, setSessionHistoryList] = useState<HistorySession[]>(initialSessions);
+  const [pendingReportSessionId, setPendingReportSessionId] = useState<string | null>(
+    readPendingReportSession,
+  );
+  const [pendingAnalysis, setPendingAnalysis] = useState<PendingAnalysis | null>(
+    readPendingAnalysis,
+  );
+  const restoredPendingActivityRef = useRef(false);
+
+  const markAnalysisLoading = useCallback((next: PendingAnalysis) => {
+    setPendingAnalysis(next);
+    try {
+      sessionStorage.setItem(PENDING_ANALYSIS_KEY, JSON.stringify(next));
+    } catch {
+      // Session storage can be unavailable in private browsing; live state still works.
+    }
+  }, []);
+
+  const clearAnalysisLoading = useCallback((sessionId?: string) => {
+    const stored = readPendingAnalysis();
+    if (
+      sessionId !== undefined &&
+      stored?.sessionId !== sessionId &&
+      pendingAnalysis?.sessionId !== sessionId
+    ) {
+      return;
+    }
+    setPendingAnalysis(null);
+    try {
+      sessionStorage.removeItem(PENDING_ANALYSIS_KEY);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
+  }, [pendingAnalysis]);
+
+  const markReportLoading = (sessionId: string) => {
+    setPendingReportSessionId(sessionId);
+    try {
+      sessionStorage.setItem(PENDING_REPORT_SESSION_KEY, sessionId);
+    } catch {
+      // Session storage can be unavailable in private browsing; live state still works.
+    }
+  };
+
+  const clearReportLoading = (sessionId?: string) => {
+    const stored = readPendingReportSession();
+    if (sessionId !== undefined && stored !== sessionId) return;
+    setPendingReportSessionId(null);
+    try {
+      sessionStorage.removeItem(PENDING_REPORT_SESSION_KEY);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
+  };
 
   const handleSelectSession = (session: HistorySession) => {
+    setShowChatChrome(true);
+    lastChatScrollTopRef.current = 0;
+    ignoreChatScrollUntilRef.current = 0;
     setActiveSessionId(session.id);
     setGeminiMessages(session.messages);
     setActiveQuestion(session.title);
@@ -2918,12 +3031,30 @@ export function CxoDashboard({
     pendingRunRef.current = null;
     provisionalChatSessionIdRef.current = null;
     firstChatTitleSessionIdRef.current = null;
-    setStreamingQuery("");
+    const pendingAnalysisForSession =
+      pendingAnalysis?.sessionId === session.id
+        ? pendingAnalysis
+        : readPendingAnalysis()?.sessionId === session.id
+          ? readPendingAnalysis()
+          : null;
+    setIsGeminiLoading(pendingAnalysisForSession !== null);
+    setPendingRun(
+      pendingAnalysisForSession === null
+        ? null
+        : { sessionId: session.id, mode: pendingAnalysisForSession.mode },
+    );
+    pendingRunRef.current =
+      pendingAnalysisForSession === null
+        ? null
+        : { sessionId: session.id, mode: pendingAnalysisForSession.mode };
+    setStreamingQuery(pendingAnalysisForSession?.query ?? "");
+    const reportStillLoading =
+      pendingReportSessionId === session.id || readPendingReportSession() === session.id;
     // Opening a session continues it, so follow-ups keep its id rather than
     // opening a new one.
     runSessionIdRef.current = session.id;
     setReportPlan(null);
-    setContinueStage("idle");
+    setContinueStage(reportStillLoading ? "starting" : "idle");
     setReport(null);
     setChatAnswer(null);
     setPastTurns([]);
@@ -2957,6 +3088,27 @@ export function CxoDashboard({
             ? toReportPlan(safeParseJson(last.planJson), result.sessionId, last.conversationId)
             : null;
 
+        const hasStoredResult = result.entries.some(
+          (entry) => entry.kind === "plan" || entry.kind === "chat" || entry.kind === "report",
+        );
+        if (hasStoredResult && pendingAnalysisForSession !== null) {
+          clearAnalysisLoading(result.sessionId);
+          setIsGeminiLoading(false);
+          setPendingRun(null);
+          pendingRunRef.current = null;
+          setStreamingQuery("");
+        }
+
+        const storedReport = result.entries.some((entry) => entry.kind === "report");
+        if (storedReport) {
+          clearReportLoading(result.sessionId);
+          setContinueStage("idle");
+        } else if (reportStillLoading) {
+          // The report may still be running after the page was revisited.
+          // Keep the loader visible until the stored report or socket event arrives.
+          setContinueStage("starting");
+        }
+
         if (pending !== null && last !== undefined) {
           setConversationEntries(result.entries.slice(0, -1));
           setReportPlan(pending);
@@ -2977,6 +3129,10 @@ export function CxoDashboard({
   };
 
   const handleNewSession = () => {
+    setShowChatChrome(true);
+    lastChatScrollTopRef.current = 0;
+    ignoreChatScrollUntilRef.current = 0;
+    setIsHistoryOpen(false);
     setActiveSessionId(null);
     setGeminiMessages([]);
     setChatQuery("");
@@ -2999,6 +3155,70 @@ export function CxoDashboard({
     setPastTurns([]);
   };
 
+  const handleGoToAskAi = () => {
+    const pendingAnalysisForSession = readPendingAnalysis();
+    const pendingReportSession = readPendingReportSession();
+    const pendingSessionId = pendingAnalysisForSession?.sessionId ?? pendingReportSession;
+    const existingPendingSession =
+      pendingSessionId === null
+        ? undefined
+        : sessionHistoryList.find((session) => session.id === pendingSessionId);
+    const pendingSession =
+      existingPendingSession ??
+      (pendingSessionId === null
+        ? undefined
+        : {
+            id: pendingSessionId,
+            title: pendingAnalysisForSession?.query ?? "Report in progress",
+            timestamp: "Just now",
+            group: "Today" as const,
+            summarySnippet: "",
+            messages: [],
+          });
+
+    handleNewSession();
+    if (pendingSession !== undefined) {
+      if (existingPendingSession === undefined) {
+        setSessionHistoryList((previous) => [pendingSession, ...previous]);
+      }
+      handleSelectSession(pendingSession);
+      setIsHistoryOpen(false);
+    }
+    const resetScroll = () => {
+      askAiHeroScrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      conversationStreamRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+    resetScroll();
+    requestAnimationFrame(resetScroll);
+    void navigate({ to: "/ask-ai", search: { history: undefined } });
+  };
+
+  const sessionHistoryForRestoreRef = useRef(sessionHistoryList);
+  sessionHistoryForRestoreRef.current = sessionHistoryList;
+  const selectSessionForRestoreRef = useRef(handleSelectSession);
+  selectSessionForRestoreRef.current = handleSelectSession;
+
+  useEffect(() => {
+    if (initialView !== "chat" || restoredPendingActivityRef.current) return;
+    const pendingAnalysisForSession = readPendingAnalysis();
+    const pendingReportSession = readPendingReportSession();
+    const pendingSessionId = pendingAnalysisForSession?.sessionId ?? pendingReportSession;
+    if (pendingSessionId === null) return;
+
+    const session =
+      sessionHistoryForRestoreRef.current.find((item) => item.id === pendingSessionId) ?? {
+        id: pendingSessionId,
+        title: pendingAnalysisForSession?.query ?? "Report in progress",
+        timestamp: "Just now",
+        group: "Today" as const,
+        summarySnippet: "",
+        messages: [],
+    };
+    restoredPendingActivityRef.current = true;
+    selectSessionForRestoreRef.current(session);
+    setIsHistoryOpen(false);
+  }, [initialView]);
+
   /**
    * Delete a session for real. The sidebar has already confirmed with the
    * user; it keeps its dialog open until this resolves, so throwing on failure
@@ -3009,6 +3229,8 @@ export function CxoDashboard({
    */
   const handleDeleteSession = async (sessionId: string) => {
     await deleteSession({ data: { sessionId } });
+
+    clearReportLoading(sessionId);
 
     setSessionHistoryList((prev) => prev.filter((s) => s.id !== sessionId));
     if (activeSessionId === sessionId) {
@@ -3024,8 +3246,37 @@ export function CxoDashboard({
 
   const [isReportFormatMode, setIsReportFormatMode] = useState(true);
   const [logoRotation, setLogoRotation] = useState(0);
+  const [language, setLanguage] = useState<"en" | "ja">("en");
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const languageMenuRef = useRef<HTMLDivElement>(null);
   const isToggleFirstMount = useRef(true);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isLanguageMenuOpen) return;
+
+    const closeLanguageMenu = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent && event.key === "Escape") {
+        setIsLanguageMenuOpen(false);
+        return;
+      }
+      if (
+        event instanceof MouseEvent &&
+        event.target instanceof Node &&
+        languageMenuRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+      setIsLanguageMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeLanguageMenu);
+    document.addEventListener("keydown", closeLanguageMenu);
+    return () => {
+      document.removeEventListener("mousedown", closeLanguageMenu);
+      document.removeEventListener("keydown", closeLanguageMenu);
+    };
+  }, [isLanguageMenuOpen]);
 
   useEffect(() => {
     if (isToggleFirstMount.current) {
@@ -3097,6 +3348,7 @@ export function CxoDashboard({
         (turn) => turn.awaitingPlan && turn.query === plan.prompt,
       );
       if (waiting !== -1) {
+        clearAnalysisLoading(plan.sessionId);
         setPastTurns((prev) =>
           prev.map((turn, index) =>
             index === waiting ? { ...turn, plan, awaitingPlan: false } : turn,
@@ -3108,6 +3360,7 @@ export function CxoDashboard({
         return;
       }
 
+      clearAnalysisLoading(plan.sessionId);
       setReportPlan(plan);
       setIsGeminiLoading(false);
       setPendingRun(null);
@@ -3118,7 +3371,7 @@ export function CxoDashboard({
         applySessionTitle(plan.sessionId, plan.sessionTitle);
       }
     });
-  }, [onSocketEvent, applySessionTitle]);
+  }, [onSocketEvent, applySessionTitle, clearAnalysisLoading]);
 
   useEffect(() => {
     return onSocketEvent(CHAT_RESPONSE_EVENT, (raw) => {
@@ -3170,6 +3423,7 @@ export function CxoDashboard({
       // sent before this answer arrived, finish the oldest waiting chat turn.
       const waiting = pastTurnsRef.current.findIndex((turn) => turn.awaitingChat);
       if (waiting !== -1) {
+        clearAnalysisLoading(next.sessionId);
         setPastTurns((prev) =>
           prev.map((turn, index) =>
             index === waiting ? { ...turn, chatAnswer: next, awaitingChat: false } : turn,
@@ -3179,12 +3433,13 @@ export function CxoDashboard({
       }
 
       if (pending?.mode !== "chat") return;
+      clearAnalysisLoading(next.sessionId);
       setChatAnswer(next);
       setIsGeminiLoading(false);
       setPendingRun(null);
       pendingRunRef.current = null;
     });
-  }, [onSocketEvent, applySessionTitle]);
+  }, [onSocketEvent, applySessionTitle, clearAnalysisLoading]);
 
   // The finished report arrives the same way the plan does.
   useEffect(() => {
@@ -3210,6 +3465,7 @@ export function CxoDashboard({
             ? pastTurnsRef.current.map((turn) => turn.awaitingReport).lastIndexOf(true)
             : -1;
       if (waiting !== -1) {
+        clearReportLoading(next.sessionId);
         setPastTurns((prev) =>
           prev.map((turn, index) =>
             index === waiting ? { ...turn, report: next, awaitingReport: false } : turn,
@@ -3219,6 +3475,7 @@ export function CxoDashboard({
       }
 
       setReport(next);
+      clearReportLoading(next.sessionId);
       // The report is the answer to the Continue click, so the waiting state
       // it was driving ends here.
       setContinueStage("idle");
@@ -3260,26 +3517,92 @@ export function CxoDashboard({
   const sessionHistoryListRef = useRef(sessionHistoryList);
   sessionHistoryListRef.current = sessionHistoryList;
 
-  // Keep the latest message visible when a prompt or socket response adds content.
-  const planArrivalKey = reportPlan?.conversationId ?? reportPlan?.planTitle ?? null;
+  const handleConversationScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const top = event.currentTarget.scrollTop;
+    const change = top - lastChatScrollTopRef.current;
+    lastChatScrollTopRef.current = top;
+    if (top < 12) {
+      setShowChatChrome(true);
+      return;
+    }
+    // Collapsing the header changes the stream's height and can clamp its
+    // scrollTop. Ignore that layout movement until the transition finishes.
+    if (performance.now() < ignoreChatScrollUntilRef.current) return;
+    if (change < -4) {
+      setShowChatChrome(true);
+      ignoreChatScrollUntilRef.current = performance.now() + 240;
+    } else if (change > 4) {
+      setShowChatChrome(false);
+      ignoreChatScrollUntilRef.current = performance.now() + 240;
+    }
+  };
+
+  // Open each new turn with its question and loader near the top of the chat.
+  // The turn keeps the same wrapper when the loader becomes a plan or answer.
   useEffect(() => {
+    if (pendingRun === null || !isGeminiLoading) return;
+    const stream = conversationStreamRef.current;
+    const turn = activeTurnRef.current;
+    if (stream === null || turn === null) return;
+    const frame = requestAnimationFrame(() => {
+      const top =
+        turn.getBoundingClientRect().top -
+        stream.getBoundingClientRect().top +
+        stream.scrollTop -
+        16;
+      lastChatScrollTopRef.current = Math.max(0, top);
+      ignoreChatScrollUntilRef.current = performance.now() + 240;
+      stream.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pendingRun, isGeminiLoading]);
+
+  // "Continue" also starts a visible loading turn below the plan.
+  useEffect(() => {
+    if (continueStage === "idle") return;
+    const stream = conversationStreamRef.current;
+    const turn = continueTurnRef.current;
+    if (stream === null || turn === null) return;
+    const frame = requestAnimationFrame(() => {
+      const top =
+        turn.getBoundingClientRect().top -
+        stream.getBoundingClientRect().top +
+        stream.scrollTop -
+        16;
+      lastChatScrollTopRef.current = Math.max(0, top);
+      ignoreChatScrollUntilRef.current = performance.now() + 240;
+      stream.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [continueStage]);
+
+  // Open a saved session at the heading of its latest answer, plan, or report.
+  useEffect(() => {
+    if (openedSessionId === null || isLoadingConversations || pendingRunRef.current !== null)
+      return;
     const stream = conversationStreamRef.current;
     if (stream === null) return;
     const frame = requestAnimationFrame(() => {
-      stream.scrollTo({ top: stream.scrollHeight, behavior: "smooth" });
+      const cards = stream.querySelectorAll<HTMLElement>(
+        "[data-report-card], [data-report-plan-card], [data-chat-answer-card]",
+      );
+      const latestCard = cards.item(cards.length - 1);
+      const top =
+        latestCard === null
+          ? Math.max(0, stream.scrollHeight - stream.clientHeight)
+          : Math.max(
+              0,
+              latestCard.getBoundingClientRect().top -
+                stream.getBoundingClientRect().top +
+                stream.scrollTop -
+                16,
+            );
+      lastChatScrollTopRef.current = top;
+      ignoreChatScrollUntilRef.current = performance.now() + 240;
+      stream.scrollTo({ top, behavior: "instant" });
     });
     return () => cancelAnimationFrame(frame);
-  }, [
-    streamingQuery,
-    isGeminiLoading,
-    planArrivalKey,
-    continueStage,
-    report,
-    chatAnswer,
-    pastTurns,
-    conversationEntries,
-    isLoadingConversations,
-  ]);
+  }, [openedSessionId, conversationEntries, isLoadingConversations]);
 
   const handleEditPlanAgentPrompt = useCallback((agentId: string, text: string) => {
     setReportPlan((prev) =>
@@ -3322,6 +3645,7 @@ export function CxoDashboard({
     }
 
     const conversationId = reportPlan.conversationId;
+    markReportLoading(reportPlan.sessionId);
     const rosterAgents = reportPlan.agents
       .filter((a) => a.isEnabled)
       .map(({ id, name, role, runtimePrompt }) => ({ id, name, role, runtimePrompt }));
@@ -3379,6 +3703,7 @@ export function CxoDashboard({
     // stays disabled rather than flipping back and inviting a second run.
     void run().catch((error: unknown) => {
       console.error("[plan] could not start the report", error);
+      clearReportLoading(reportPlan.sessionId);
       setContinueStage("idle");
     });
   }, [reportPlan]);
@@ -4012,6 +4337,7 @@ export function CxoDashboard({
 
     setActiveQuestion(q);
     setChatQuery("");
+    setShowChatChrome(true);
 
     if (activeView === "inbox") {
       // In inbox view, load directly into inbox split-view
@@ -4074,6 +4400,7 @@ export function CxoDashboard({
     const nextPendingRun = { sessionId: runSessionId, mode };
     pendingRunRef.current = nextPendingRun;
     setPendingRun(nextPendingRun);
+    markAnalysisLoading({ sessionId: runSessionId, mode, query: q });
     setIsGeminiLoading(true);
     setChatQuery("");
 
@@ -4105,6 +4432,7 @@ export function CxoDashboard({
       // swallowed server-side. Without a dispatch there is no socket reply
       // coming, so stop waiting rather than spin forever.
       console.error("[analysis] could not dispatch run", error);
+      clearAnalysisLoading(runSessionId);
       setIsGeminiLoading(false);
       setPendingRun(null);
       pendingRunRef.current = null;
@@ -4248,14 +4576,19 @@ export function CxoDashboard({
       )}
 
       {/* UNIFIED TOP HEADER - IDENTICAL ON ASK ASTYLE & INBOX */}
-      <header className="sticky top-0 z-40 h-12 shrink-0 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-3 sm:px-6 gap-3">
+      <header
+        aria-hidden={activeView === "chat" && !showChatChrome}
+        inert={activeView === "chat" && !showChatChrome}
+        className={`sticky top-0 z-40 shrink-0 bg-[#072333] flex items-center justify-between px-3 sm:px-6 gap-3 transition-[height,opacity] duration-200 ${
+          activeView === "chat" && !showChatChrome
+            ? "h-0 overflow-hidden border-b-0 opacity-0"
+            : "h-12 overflow-visible border-b border-[#0f354c] opacity-100"
+        }`}
+      >
         <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
-            onClick={() => {
-              switchView("chat");
-              handleNewSession();
-            }}
+            onClick={handleGoToAskAi}
             className="text-base sm:text-lg font-extrabold tracking-wider text-white hover:text-sky-200 transition cursor-pointer flex items-center whitespace-nowrap select-none"
             title="ASTYLE — Go to Chat"
           >
@@ -4267,6 +4600,57 @@ export function CxoDashboard({
 
         {/* Profile on right top end */}
         <div className="flex items-center gap-2.5 shrink-0">
+          <div ref={languageMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsLanguageMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={isLanguageMenuOpen}
+              aria-label="Choose language"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-sky-200/35 bg-white/10 px-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:border-sky-100/60 hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
+            >
+              <Languages className="size-3.5 text-sky-200" aria-hidden="true" />
+              <span>{language === "ja" ? "日本語" : "English"}</span>
+              <ChevronDown
+                className={`size-3.5 text-sky-200 transition-transform ${isLanguageMenuOpen ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+
+            {isLanguageMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Language options"
+                className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-36 overflow-hidden rounded-xl border border-slate-200/90 bg-white p-1.5 text-sm shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150"
+              >
+                {[
+                  { value: "en" as const, label: "English" },
+                  { value: "ja" as const, label: "日本語" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={language === option.value}
+                    onClick={() => {
+                      setLanguage(option.value);
+                      setIsLanguageMenuOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left font-medium transition-colors ${
+                      language === option.value
+                        ? "bg-[#e5f4f7] text-[#0e7490]"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                  >
+                    <span>{option.label}</span>
+                    {language === option.value ? (
+                      <Check className="size-3.5" aria-hidden="true" />
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="text-right hidden sm:block">
             <p className="text-xs font-medium leading-none text-white">Robert</p>
             <p className="text-[10px] text-sky-200/70 mt-0.5">Chief Executive Officer</p>
@@ -4278,17 +4662,20 @@ export function CxoDashboard({
       </header>
 
       {/* MAIN CONTAINER WITH UNIFIED NAVIGATION RAIL */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="relative flex flex-1 min-h-0 overflow-hidden">
         {/* Navigation Rail - SAME across both views */}
-        <nav className="hidden w-[72px] shrink-0 flex-col items-center gap-2 pt-3 md:flex border-r border-border dark:border-zinc-800 overflow-visible bg-surface z-10">
-          {/* A style Chat Page Button */}
+        <nav
+          aria-label="Main menu"
+          className="flex w-14 md:w-[72px] shrink-0 flex-col items-center gap-2 pt-3 border-r border-border dark:border-zinc-800 overflow-visible bg-surface z-10"
+        >
+          {/* Chat */}
           <div className="relative group flex items-center justify-center">
             <button
               type="button"
-              onClick={() => switchView("chat")}
-              aria-label="ASTYLE"
+              onClick={handleGoToAskAi}
+              aria-label="Chat"
               className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
-                activeView === "chat"
+                activeView === "chat" && !isHistoryOpen
                   ? "bg-chip-active text-chip-active-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-tile"
               }`}
@@ -4296,12 +4683,41 @@ export function CxoDashboard({
               <MessageSquare className="size-5" />
             </button>
             <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
-              ASTYLE
+              Chat
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
             </div>
           </div>
 
-          {/* Specialists Button */}
+          {/* History */}
+          <div className="relative group flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (activeView !== "chat") {
+                  void navigate({ to: "/ask-ai", search: { history: "open" } });
+                  return;
+                }
+                setIsHistoryOpen((open) => !open);
+              }}
+              aria-label="Chat History"
+              aria-expanded={activeView === "chat" && isHistoryOpen}
+              aria-controls={activeView === "chat" && isHistoryOpen ? "ask-ai-session-history" : undefined}
+              title={activeView === "chat" && isHistoryOpen ? "Close Chat History" : "Open Chat History"}
+              className={`relative grid size-12 place-items-center rounded-full transition-colors duration-200 cursor-pointer ${
+                activeView === "chat" && isHistoryOpen
+                  ? "bg-chip-active text-chip-active-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tile"
+              }`}
+            >
+              <History className="size-5" aria-hidden="true" />
+            </button>
+            <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0.5">
+              Chat History
+              <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+            </div>
+          </div>
+
+          {/* Specialists */}
           <div className="relative group flex items-center justify-center">
             <button
               type="button"
@@ -4326,13 +4742,10 @@ export function CxoDashboard({
         </nav>
 
         {/* Session History Sidebar (between Nav Rail and Workspace when on chat view) */}
-        {activeView === "chat" && (
+        {activeView === "chat" && isHistoryOpen && (
           <SessionHistorySidebar
-            isExpanded={isHistoryExpanded}
-            onToggleExpand={() => setIsHistoryExpanded((prev) => !prev)}
             activeSessionId={activeSessionId}
             onSelectSession={handleSelectSession}
-            onNewSession={handleNewSession}
             historySessions={sessionHistoryList}
             onDeleteSession={handleDeleteSession}
           />
@@ -4348,172 +4761,221 @@ export function CxoDashboard({
             chatAnswer === null &&
             pastTurns.length === 0 &&
             openedSessionId === null ? (
-              /* ASK ASTYLE CHAT HERO VIEW - NO SCROLLBARS */
-              <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] text-foreground relative overflow-hidden px-4 py-4 sm:py-6">
+              /* ASK ASTYLE CHAT HERO VIEW */
+              <div
+                ref={askAiHeroScrollRef}
+                className="subtle-scrollbar relative min-h-0 flex-1 snap-y snap-proximity scroll-smooth overflow-x-hidden overflow-y-auto bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] px-4 text-foreground"
+              >
                 {/* Subtle Ambient Radial Orbs contained inside */}
                 <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
 
-                <div
-                  className={`w-full flex flex-col items-center text-center z-10 my-auto py-2 transition-all duration-300 ease-out ${
-                    isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
-                  }`}
-                >
-                  {/* Flower Logo above title */}
-                  <div className="flex items-center justify-center mb-3 sm:mb-4 group">
-                    <img
-                      src="/flower-logo.png"
-                      alt="Logo"
-                      onClick={() => {
-                        setLogoRotation((prev) => prev + 60);
-                        switchView("chat");
-                        handleNewSession();
-                      }}
-                      style={{ transform: `rotate(${logoRotation}deg)` }}
-                      className="size-16 sm:size-20 object-contain drop-shadow-sm select-none cursor-pointer transition-transform duration-500 ease-out hover:scale-105 active:scale-95"
-                      title="A style — Go to Chat"
-                    />
-                  </div>
-
-                  {/* Title: What should AI analyze? with bottom spacing */}
-                  <h1
-                    style={{ fontWeight: 400 }}
-                    className="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-[#142a38] leading-tight select-none mb-3 sm:mb-4"
+                <div className="relative z-10 flex min-h-full w-full snap-start flex-col items-center justify-center py-6">
+                  <div
+                    className={`w-full flex flex-col items-center text-center py-2 transition-all duration-300 ease-out ${
+                      isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
+                    }`}
                   >
-                    What should AI analyze?
-                  </h1>
+                    {/* Flower Logo above title */}
+                    <div className="flex items-center justify-center mb-3 sm:mb-4 group">
+                      <img
+                        src="/flower-logo.png"
+                        alt="Logo"
+                        onClick={() => {
+                          setLogoRotation((prev) => prev + 60);
+                          handleGoToAskAi();
+                        }}
+                        style={{ transform: `rotate(${logoRotation}deg)` }}
+                        className="size-16 sm:size-20 object-contain drop-shadow-sm select-none cursor-pointer transition-transform duration-500 ease-out hover:scale-105 active:scale-95"
+                        title="A style — Go to Chat"
+                      />
+                    </div>
 
-                  {/* Centered Search Card with Top-Docked Deep Insights / Chat Mode Toggle */}
-                  <div className="w-full space-y-3.5 flex flex-col items-center">
-                    {/* Mode Toggle Switch docked close on top of search box */}
-                    <div className="relative z-20 -mb-2.5 sm:-mb-3">
-                      <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white border border-slate-300 shadow-xs">
-                        <button
-                          type="button"
-                          onClick={() => setIsReportFormatMode(true)}
-                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
-                            isReportFormatMode
-                              ? "font-semibold text-[#0e7490]"
-                              : "font-normal text-slate-500 hover:text-slate-800"
-                          }`}
-                        >
-                          Deep Insights
-                        </button>
+                    {/* Title: What should AI analyze? with bottom spacing */}
+                    <h1
+                      style={{ fontWeight: 400 }}
+                      className="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-[#142a38] leading-tight select-none mb-3 sm:mb-4"
+                    >
+                      What should AI analyze?
+                    </h1>
 
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={!isReportFormatMode}
-                          onClick={() => setIsReportFormatMode((prev) => !prev)}
-                          className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-slate-200 border border-slate-300 transition-colors duration-200 ease-in-out focus:outline-hidden"
-                          title={
-                            isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"
-                          }
-                        >
-                          <span
-                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${
-                              isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
+                    {/* Centered Search Card with Top-Docked Deep Insights / Chat Mode Toggle */}
+                    <div className="w-full space-y-3.5 flex flex-col items-center">
+                      {/* Mode Toggle Switch docked close on top of search box */}
+                      <div className="relative z-20 -mb-2.5 sm:-mb-3">
+                        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white border border-slate-300 shadow-xs">
+                          <button
+                            type="button"
+                            onClick={() => setIsReportFormatMode(true)}
+                            className={`text-xs sm:text-sm transition-all cursor-pointer ${
+                              isReportFormatMode
+                                ? "font-semibold text-[#0e7490]"
+                                : "font-normal text-slate-500 hover:text-slate-800"
                             }`}
-                          />
-                        </button>
+                          >
+                            Deep Insights
+                          </button>
 
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={!isReportFormatMode}
+                            onClick={() => setIsReportFormatMode((prev) => !prev)}
+                            className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-slate-200 border border-slate-300 transition-colors duration-200 ease-in-out focus:outline-hidden"
+                            title={
+                              isReportFormatMode ? "Switch to Chat Mode" : "Switch to Deep Insights"
+                            }
+                          >
+                            <span
+                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${
+                                isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
+                              }`}
+                            />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setIsReportFormatMode(false)}
+                            className={`text-xs sm:text-sm transition-all cursor-pointer ${
+                              !isReportFormatMode
+                                ? "font-semibold text-[#0e7490]"
+                                : "font-normal text-slate-500 hover:text-slate-800"
+                            }`}
+                          >
+                            Chat Mode
+                          </button>
+                        </div>
+                      </div>
+
+                      <form
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={(e) => {
+                          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                            setIsSearchFocused(false);
+                          }
+                        }}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleAskQuestion();
+                        }}
+                        className="w-full relative shadow-lg hover:shadow-xl rounded-2xl sm:rounded-full bg-white border-2 border-slate-300 hover:border-slate-400 focus-within:border-[#0e7490] focus-within:ring-4 focus-within:ring-[#0e7490]/20 flex items-center px-4 sm:px-5 py-2 sm:py-2.5 gap-3 transition-all ring-1 ring-black/5"
+                      >
+                        <Search className="size-5 text-[#0e7490] shrink-0 stroke-[2.2]" />
+                        <input
+                          type="text"
+                          value={chatQuery}
+                          onFocus={() => setIsSearchFocused(true)}
+                          onClick={() => setIsSearchFocused(true)}
+                          onChange={(e) => setChatQuery(e.target.value)}
+                          placeholder="Ask anything (e.g. Products creating highest inventory exposure...)"
+                          className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
+                        />
+                        {chatQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setChatQuery("")}
+                            className="text-slate-400 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
+                            aria-label="Clear search"
+                          >
+                            <X className="size-4" />
+                          </button>
+                        )}
+                        <button
+                          type="submit"
+                          disabled={!chatQuery.trim() && !isVoiceActive}
+                          className="px-5 sm:px-6 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
+                        >
+                          Analyze
+                        </button>
+                      </form>
+
+                      {/* Voice Mode Pill Button - Filled Color with Bottom Spacing */}
+                      <div className="flex items-center justify-center pb-2">
                         <button
                           type="button"
-                          onClick={() => setIsReportFormatMode(false)}
-                          className={`text-xs sm:text-sm transition-all cursor-pointer ${
-                            !isReportFormatMode
-                              ? "font-semibold text-[#0e7490]"
-                              : "font-normal text-slate-500 hover:text-slate-800"
+                          onClick={handleVoiceModeClick}
+                          className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${
+                            isVoiceActive
+                              ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
+                              : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
                           }`}
                         >
-                          Chat Mode
+                          <Mic className="size-3.5 sm:size-4 text-white" />
+                          <span>{isVoiceActive ? "Listening..." : "Voice Mode"}</span>
                         </button>
                       </div>
                     </div>
 
-                    <form
-                      onFocus={() => setIsSearchFocused(true)}
-                      onBlur={(e) => {
-                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                          setIsSearchFocused(false);
-                        }
-                      }}
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleAskQuestion();
-                      }}
-                      className="w-full relative shadow-lg hover:shadow-xl rounded-2xl sm:rounded-full bg-white border-2 border-slate-300 hover:border-slate-400 focus-within:border-[#0e7490] focus-within:ring-4 focus-within:ring-[#0e7490]/20 flex items-center px-4 sm:px-5 py-2 sm:py-2.5 gap-3 transition-all ring-1 ring-black/5"
-                    >
-                      <Search className="size-5 text-[#0e7490] shrink-0 stroke-[2.2]" />
-                      <input
-                        type="text"
-                        value={chatQuery}
-                        onFocus={() => setIsSearchFocused(true)}
-                        onClick={() => setIsSearchFocused(true)}
-                        onChange={(e) => setChatQuery(e.target.value)}
-                        placeholder="Ask anything (e.g. Products creating highest inventory exposure...)"
-                        className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
-                      />
-                      {chatQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setChatQuery("")}
-                          className="text-slate-400 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
-                          aria-label="Clear search"
-                        >
-                          <X className="size-4" />
-                        </button>
-                      )}
-                      <button
-                        type="submit"
-                        disabled={!chatQuery.trim() && !isVoiceActive}
-                        className="px-5 sm:px-6 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
-                      >
-                        Analyze
-                      </button>
-                    </form>
-
-                    {/* Voice Mode Pill Button - Filled Color with Bottom Spacing */}
-                    <div className="flex items-center justify-center pb-2">
-                      <button
-                        type="button"
-                        onClick={handleVoiceModeClick}
-                        className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${
-                          isVoiceActive
-                            ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
-                            : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
-                        }`}
-                      >
-                        <Mic className="size-3.5 sm:size-4 text-white" />
-                        <span>{isVoiceActive ? "Listening..." : "Voice Mode"}</span>
-                      </button>
+                    {/* Highly Readable Suggested Queries - Transparent Background */}
+                    <div className="pt-6 sm:pt-8 w-full max-w-xl flex flex-col items-center gap-2.5">
+                      <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                        Suggested Queries
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+                        {suggestedQueries.map((query, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleAskQuestion(query)}
+                            className="px-4 py-2.5 rounded-2xl sm:rounded-full bg-transparent hover:bg-white/40 border border-slate-300 hover:border-[#0e7490]/60 text-xs sm:text-sm text-slate-800 hover:text-[#0e7490] transition cursor-pointer flex items-center gap-2.5 text-left group"
+                          >
+                            <Sparkles className="size-3.5 text-[#0e7490] shrink-0" />
+                            <span className="leading-snug font-medium line-clamp-1">{query}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      recentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }
+                    aria-label="Scroll to recent chats"
+                    title="More below"
+                    className="absolute bottom-3 left-1/2 grid size-8 -translate-x-1/2 place-items-center rounded-full border border-slate-300/80 bg-white/70 text-[#0e7490] shadow-xs transition hover:bg-white hover:translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e7490]"
+                  >
+                    <ChevronDown className="size-4" aria-hidden="true" />
+                  </button>
+                </div>
 
-                  {/* Highly Readable Suggested Queries - Transparent Background */}
-                  <div className="pt-6 sm:pt-8 w-full max-w-xl flex flex-col items-center gap-2.5">
-                    <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                      Suggested Queries
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
-                      {suggestedQueries.map((query, idx) => (
+                <div
+                  ref={recentSectionRef}
+                  className="relative z-10 mx-auto min-h-full w-full max-w-xl snap-start pb-10 pt-8 text-left"
+                >
+                  <span className="block text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Recents
+                  </span>
+                  {sessionHistoryList.length === 0 ? (
+                    <p className="mt-2 text-center text-xs text-slate-500">No recent chats yet</p>
+                  ) : (
+                    <div className="mt-2 flex flex-col gap-1">
+                      {sessionHistoryList.map((session) => (
                         <button
-                          key={idx}
+                          key={session.id}
                           type="button"
-                          onClick={() => handleAskQuestion(query)}
-                          className="px-4 py-2.5 rounded-2xl sm:rounded-full bg-transparent hover:bg-white/40 border border-slate-300 hover:border-[#0e7490]/60 text-xs sm:text-sm text-slate-800 hover:text-[#0e7490] transition cursor-pointer flex items-center gap-2.5 text-left group"
+                          onClick={() => handleSelectSession(session)}
+                          className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-[#0e7490]"
                         >
-                          <Sparkles className="size-3.5 text-[#0e7490] shrink-0" />
-                          <span className="leading-snug font-medium line-clamp-1">{query}</span>
+                          <History
+                            className="size-3.5 shrink-0 text-[#0e7490]/70"
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0 flex-1 truncate text-sm text-slate-700 group-hover:text-[#0e7490]">
+                            {session.title}
+                          </span>
+                          <span className="shrink-0 text-[11px] text-slate-400">
+                            {session.timestamp}
+                          </span>
                         </button>
                       ))}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             ) : (
               /* GEMINI BEHAVIOR CONVERSATION STREAM ON HOME PAGE */
-              <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] relative overflow-hidden">
+              <div className="relative flex min-h-0 flex-1 flex-col overflow-clip bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5]">
                 {/* Subtle Ambient Radial Orbs */}
                 <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
@@ -4521,9 +4983,10 @@ export function CxoDashboard({
                 {/* Scrollable Conversation Stream */}
                 <div
                   ref={conversationStreamRef}
+                  onScroll={handleConversationScroll}
                   className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-6 pb-28 z-10"
                 >
-                  <div className="max-w-3xl mx-auto space-y-6 pb-6">
+                  <div className="mx-auto max-w-[58rem] space-y-6 pb-6">
                     {/* Stored messages are always older than turns created in
                         this visit, including a follow-up to an opened session. */}
                     {openedSessionId !== null && (
@@ -5487,99 +5950,117 @@ export function CxoDashboard({
                       </div>
                     ))}
 
-                    {/* STREAMING / THINKING SHIMMER */}
-                    {isGeminiLoading && (
-                      <div
-                        id="gemini-loader"
-                        className="space-y-4 animate-in fade-in duration-200 scroll-mt-6"
-                      >
-                        {/* User Query Bubble */}
-                        <div className="flex justify-end">
-                          <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
-                            <span>{streamingQuery}</span>
-                            <div className="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-700">
-                              <User className="size-3.5" />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Mode-specific waiting state. Stays up until a socket
-                            event for this run arrives — nothing here is on a timer. */}
-                        {pendingRun?.mode === "chat" ? <ChatSkeleton /> : <PlanSkeleton />}
-                      </div>
-                    )}
-
-                    {chatAnswer !== null && (
-                      <div className="space-y-4">
-                        {streamingQuery !== "" && (
+                    <div
+                      ref={activeTurnRef}
+                      className={`space-y-4 ${streamingQuery !== "" ? "min-h-[calc(100dvh-6rem)]" : ""}`}
+                    >
+                      {/* STREAMING / THINKING SHIMMER */}
+                      {isGeminiLoading && (
+                        <div
+                          id="gemini-loader"
+                          className="space-y-4 animate-in fade-in duration-200 scroll-mt-6"
+                        >
+                          {/* User Query Bubble */}
                           <div className="flex justify-end">
-                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                            <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
                               <span>{streamingQuery}</span>
-                              <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                              <div className="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-700">
                                 <User className="size-3.5" />
                               </div>
                             </div>
                           </div>
-                        )}
-                        <ChatResponseCard answer={chatAnswer} />
-                      </div>
-                    )}
 
-                    {/* The plan, once it arrives over the socket, under the
-                        prompt that produced it. */}
-                    {reportPlan !== null && streamingQuery !== "" && (
-                      <div className="mb-4 flex justify-end">
-                        <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                          <span>{streamingQuery}</span>
-                          <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
-                            <User className="size-3.5" />
-                          </div>
+                          {/* Mode-specific waiting state. Stays up until a socket
+                            event for this run arrives — nothing here is on a timer. */}
+                          {pendingRun?.mode === "chat" ? (
+                            <ChatSkeleton />
+                          ) : (
+                            <PlanSkeleton />
+                          )}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {reportPlan !== null && (
-                      <ReportPlanCard
-                        plan={reportPlan}
-                        onToggleAgent={handleTogglePlanAgent}
-                        onToggleSuggested={handleTogglePlanSuggested}
-                        onEditAgentPrompt={handleEditPlanAgentPrompt}
-                        onEditSuggestedPrompt={handleEditSuggestedPrompt}
-                        onContinue={handleContinuePlan}
-                        continueStage={continueStage}
-                      />
-                    )}
+                      {chatAnswer !== null && (
+                        <div className="space-y-4">
+                          {streamingQuery !== "" && (
+                            <div className="flex justify-end">
+                              <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                                <span>{streamingQuery}</span>
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                                  <User className="size-3.5" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          <ChatResponseCard answer={chatAnswer} />
+                        </div>
+                      )}
 
-                    {/* Pressing Continue is a turn in the conversation, so it
-                        reads as one: the user's message, then what it set off
-                        underneath — exactly how a prompt and its plan read. */}
-                    {continueStage !== "idle" && (
-                      <div className="space-y-4 animate-in fade-in duration-200">
-                        <div className="flex justify-end">
+                      {/* The plan, once it arrives over the socket, under the
+                        prompt that produced it. */}
+                      {reportPlan !== null && streamingQuery !== "" && (
+                        <div className="mb-4 flex justify-end">
                           <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
-                            <span>Continue</span>
+                            <span>{streamingQuery}</span>
                             <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                               <User className="size-3.5" />
                             </div>
                           </div>
                         </div>
+                      )}
 
-                        {continueStage === "creating-agents" ? (
-                          <AgentCreationLoader count={creatingAgentCount} />
-                        ) : (
-                          <ReportSkeleton />
-                        )}
-                      </div>
-                    )}
+                      {reportPlan !== null && (
+                        <ReportPlanCard
+                          plan={reportPlan}
+                          onToggleAgent={handleTogglePlanAgent}
+                          onToggleSuggested={handleTogglePlanSuggested}
+                          onEditAgentPrompt={handleEditPlanAgentPrompt}
+                          onEditSuggestedPrompt={handleEditSuggestedPrompt}
+                          onContinue={handleContinuePlan}
+                          continueStage={continueStage}
+                        />
+                      )}
 
-                    {report !== null && <ReportView report={report} />}
+                      {/* Pressing Continue is a turn in the conversation, so it
+                        reads as one: the user's message, then what it set off
+                        underneath — exactly how a prompt and its plan read. */}
+                      {continueStage !== "idle" && (
+                        <div
+                          ref={continueTurnRef}
+                          className="min-h-[calc(100dvh-6rem)] space-y-4 animate-in fade-in duration-200"
+                        >
+                          <div className="flex justify-end">
+                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                              <span>Continue</span>
+                              <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
+                                <User className="size-3.5" />
+                              </div>
+                            </div>
+                          </div>
+
+                          {continueStage === "creating-agents" ? (
+                            <AgentCreationLoader count={creatingAgentCount} />
+                          ) : (
+                            <ReportSkeleton />
+                          )}
+                        </div>
+                      )}
+
+                      {report !== null && <ReportView report={report} />}
+                    </div>
 
                     <div className="h-4" />
                   </div>
                 </div>
 
-                {/* FLOATING BOTTOM SEARCH BAR WITH SEAMLESS GRADIENT FADE */}
-                <div className="absolute bottom-0 inset-x-0 pointer-events-none bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 via-55% to-transparent pt-14 pb-4 px-4 sm:px-6 z-30">
+                {/* The header and composer return together when scrolling up. */}
+                <div
+                  aria-hidden={!showChatChrome}
+                  inert={!showChatChrome}
+                  className={`absolute bottom-0 inset-x-0 z-30 pointer-events-none bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 via-55% to-transparent px-4 pb-4 pt-14 transition-[opacity,transform] duration-200 sm:px-6 ${
+                    showChatChrome ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+                  }`}
+                >
                   {/* Mode is switchable mid-session: a follow-up may want a
                       quick answer even when the first turn was a full report. */}
                   <div
