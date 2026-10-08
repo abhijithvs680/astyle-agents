@@ -73,6 +73,12 @@ export const fetchInitialData = createServerFn({ method: "POST" }).handler(
 
     const rows = (await postAuthenticated("getInitialData", { email })) as Array<InitialDataRow>;
 
-    return rows.map(toSessionSummary).filter((session) => !session.archived);
+    // With no sessions the platform still answers with one envelope-only row
+    // (`jsCodes`, `workflow_log_id`). A row without a SessionID cannot be
+    // opened, so it is not a session.
+    return rows
+      .filter((row) => row.SessionID !== undefined && String(row.SessionID).trim() !== "")
+      .map(toSessionSummary)
+      .filter((session) => !session.archived);
   },
 );
