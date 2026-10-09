@@ -17,6 +17,7 @@ import { Route as DetailsRouteImport } from './routes/details'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FoldersRouteImport } from './routes/folders'
 import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as ReportPreviewRouteImport } from './routes/report-preview'
 import { Route as SpecialistsRouteImport } from './routes/specialists'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 
@@ -60,6 +61,11 @@ const InboxRoute = InboxRouteImport.update({
   path: '/inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportPreviewRoute = ReportPreviewRouteImport.update({
+  id: '/report-preview',
+  path: '/report-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpecialistsRoute = SpecialistsRouteImport.update({
   id: '/specialists',
   path: '/specialists',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
+  '/report-preview': typeof ReportPreviewRoute
   '/specialists': typeof SpecialistsRoute
   '/welcome': typeof WelcomeRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
+  '/report-preview': typeof ReportPreviewRoute
   '/specialists': typeof SpecialistsRoute
   '/welcome': typeof WelcomeRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/folders': typeof FoldersRoute
   '/inbox': typeof InboxRoute
+  '/report-preview': typeof ReportPreviewRoute
   '/specialists': typeof SpecialistsRoute
   '/welcome': typeof WelcomeRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/folders'
     | '/inbox'
+    | '/report-preview'
     | '/specialists'
     | '/welcome'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/folders'
     | '/inbox'
+    | '/report-preview'
     | '/specialists'
     | '/welcome'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/folders'
     | '/inbox'
+    | '/report-preview'
     | '/specialists'
     | '/welcome'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   FoldersRoute: typeof FoldersRoute
   InboxRoute: typeof InboxRoute
+  ReportPreviewRoute: typeof ReportPreviewRoute
   SpecialistsRoute: typeof SpecialistsRoute
   WelcomeRoute: typeof WelcomeRoute
 }
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InboxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/report-preview': {
+      id: '/report-preview'
+      path: '/report-preview'
+      fullPath: '/report-preview'
+      preLoaderRoute: typeof ReportPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/specialists': {
       id: '/specialists'
       path: '/specialists'
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   FoldersRoute: FoldersRoute,
   InboxRoute: InboxRoute,
+  ReportPreviewRoute: ReportPreviewRoute,
   SpecialistsRoute: SpecialistsRoute,
   WelcomeRoute: WelcomeRoute,
 }

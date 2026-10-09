@@ -4588,10 +4588,10 @@ export function CxoDashboard({
       <header
         aria-hidden={activeView === "chat" && !showChatChrome}
         inert={activeView === "chat" && !showChatChrome}
-        className={`sticky top-0 z-40 shrink-0 bg-[#072333] flex items-center justify-between px-3 sm:px-6 gap-3 transition-[height,opacity] duration-200 ${
+        className={`sticky top-0 z-40 shrink-0 bg-ink flex items-center justify-between px-3 sm:px-6 gap-3 transition-[height,opacity] duration-200 ${
           activeView === "chat" && !showChatChrome
             ? "h-0 overflow-hidden border-b-0 opacity-0"
-            : "h-12 overflow-visible border-b border-[#0f354c] opacity-100"
+            : "h-12 overflow-visible border-b border-white/10 opacity-100"
         }`}
       >
         <div className="flex items-center gap-3 shrink-0">
@@ -4630,7 +4630,7 @@ export function CxoDashboard({
               <div
                 role="menu"
                 aria-label="Language options"
-                className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-36 overflow-hidden rounded-xl border border-slate-200/90 bg-white p-1.5 text-sm shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-150"
+                className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-36 overflow-hidden rounded-xl border border-border bg-popover p-1.5 text-sm shadow-xl animate-in fade-in zoom-in-95 duration-150"
               >
                 {[
                   { value: "en" as const, label: "English" },
@@ -4647,8 +4647,8 @@ export function CxoDashboard({
                     }}
                     className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left font-medium transition-colors ${
                       language === option.value
-                        ? "bg-[#e5f4f7] text-[#0e7490]"
-                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                        ? "bg-chip-active text-chip-active-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     }`}
                   >
                     <span>{option.label}</span>

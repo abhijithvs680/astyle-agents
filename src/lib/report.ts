@@ -24,6 +24,76 @@ export type TrendData = {
 };
 export type Slice = { name: string; value: number; share?: number; highlight?: string };
 
+/**
+ * A point on a forecast. `actual` is history and `forecast` is projection;
+ * a row carries one or the other, never both, so the two can never be drawn
+ * as the same thing. `lower`/`upper` bound the projection.
+ */
+export type ForecastRow = {
+  actual?: number;
+  forecast?: number;
+  lower?: number;
+  upper?: number;
+  [key: string]: unknown;
+};
+
+export type ForecastTrendData = {
+  xKey: string;
+  rows: Array<ForecastRow>;
+  /** x-value of the last observed point: everything after it is projection. */
+  actualsThrough?: string;
+  horizonLabel?: string;
+  valueLabel?: string;
+  threshold?: { value: number; label: string };
+};
+
+export type ScenarioCompareData = {
+  measures: Array<{ key: string; label: string }>;
+  scenarios: Array<{
+    name: string;
+    probability?: string;
+    assumption?: string;
+    likeliest?: boolean;
+    values: Record<string, string>;
+  }>;
+};
+
+export type VarianceBridgeData = {
+  startLabel: string;
+  startValue: number;
+  startFormatted?: string;
+  steps: Array<{ label: string; value: number; formattedValue?: string }>;
+  endLabel: string;
+  endValue: number;
+  endFormatted?: string;
+};
+
+export type PaceStatus = "onTrack" | "atRisk" | "offTrack";
+
+export type PaceTrackerData = {
+  label: string;
+  periodLabel?: string;
+  /** How far through the period we are, 0-100. */
+  elapsedShare: number;
+  actualToDate: number;
+  actualFormatted?: string;
+  target: number;
+  targetFormatted?: string;
+  projectedLanding: number;
+  projectedFormatted?: string;
+  statusTone?: PaceStatus;
+};
+
+/** Provenance for a forecast. A projection without this is an opinion. */
+export type ForecastMeta = {
+  asOf?: string;
+  horizon?: string;
+  method?: string;
+  confidence?: "high" | "medium" | "low";
+  confidenceRationale?: string;
+  keyAssumptions: Array<string>;
+};
+
 export type ReportBlock = {
   id: string;
   title: string;
@@ -41,7 +111,8 @@ export type ReportBlock = {
           value: string;
           delta?: string;
           deltaDirection?: "up" | "down" | "flat";
-          sparkline?: { points: Array<number>; tone?: Tone };
+          /** What the change means. The app picks the colour from it. */
+          deltaTone?: Tone;
         }>;
       };
     }
@@ -88,6 +159,10 @@ export type ReportBlock = {
       component: "insightList";
       data: { items: Array<{ label?: string; text: string; tone?: Tone }> };
     }
+  | { component: "forecastTrend"; data: ForecastTrendData }
+  | { component: "scenarioCompare"; data: ScenarioCompareData }
+  | { component: "varianceBridge"; data: VarianceBridgeData }
+  | { component: "paceTracker"; data: PaceTrackerData }
 );
 
 export type Report = {
@@ -99,6 +174,7 @@ export type Report = {
     summary: string;
     steps: Array<{ title: string; detail: string; sources: Array<string> }>;
   };
+  forecastMeta?: ForecastMeta;
   blocks: Array<ReportBlock>;
   recommendations: Array<{
     title: string;
@@ -136,11 +212,6 @@ function strList(value: unknown): Array<string> {
   return value.map(str).filter((item): item is string => item !== undefined);
 }
 
-function numList(value: unknown): Array<number> {
-  if (!Array.isArray(value)) return [];
-  return value.map(num).filter((item): item is number => item !== undefined);
-}
-
 function records(value: unknown): Array<Record<string, unknown>> {
   return Array.isArray(value) ? value.filter(isRecord) : [];
 }
@@ -154,6 +225,32 @@ function tone(value: unknown): Tone | undefined {
 
 const DIRECTIONS = ["up", "down", "flat"] as const;
 const PRIORITIES = ["high", "medium", "low"] as const;
+const PACE_STATUSES: ReadonlyArray<PaceStatus> = ["onTrack", "atRisk", "offTrack"];
+
+const CONFIDENCES = ["high", "medium", "low"] as const;
+
+function confidence(value: unknown): (typeof CONFIDENCES)[number] | undefined {
+  const raw = str(value)?.toLowerCase();
+  return CONFIDENCES.find((level) => level === raw);
+}
+
+function paceStatus(value: unknown): PaceStatus | undefined {
+  const raw = str(value)?.toLowerCase();
+  return PACE_STATUSES.find((status) => status.toLowerCase() === raw);
+}
+
+/** A number sent where a display string was expected, rendered rather than dropped. */
+function numText(value: unknown): string | undefined {
+  const parsed = num(value);
+  return parsed === undefined ? undefined : parsed.toLocaleString();
+}
+
+function toThreshold(value: unknown): { value: number; label: string } | undefined {
+  if (!isRecord(value)) return undefined;
+  const at = num(value["value"]);
+  const label = str(value["label"]);
+  return at === undefined || label === undefined ? undefined : { value: at, label };
+}
 
 function direction(value: unknown): (typeof DIRECTIONS)[number] | undefined {
   const raw = str(value)?.toLowerCase();
@@ -273,22 +370,19 @@ function toBlock(raw: unknown, index: number): ReportBlock | null {
         const value = str(card["value"]);
         if (label === undefined || value === undefined) return null;
 
-        const sparkRaw = card["sparkline"];
-        const points = isRecord(sparkRaw) ? numList(sparkRaw["points"]) : [];
+        // `sparkline.tone` is where this lived before the sparkline was
+        // dropped; still read so reports already in flight keep their colour.
+        const legacySpark = card["sparkline"];
+        const deltaTone =
+          tone(card["deltaTone"]) ??
+          (isRecord(legacySpark) ? tone(legacySpark["tone"]) : undefined);
 
         return {
           label,
           value,
           ...optional("delta", str(card["delta"])),
           ...optional("deltaDirection", direction(card["deltaDirection"])),
-          ...(points.length > 1
-            ? {
-                sparkline: {
-                  points,
-                  ...optional("tone", tone((sparkRaw as Record<string, unknown>)["tone"])),
-                },
-              }
-            : {}),
+          ...optional("deltaTone", deltaTone),
         };
       });
       return cards.length === 0 ? null : { ...meta, component, data: { cards } };
@@ -411,6 +505,123 @@ function toBlock(raw: unknown, index: number): ReportBlock | null {
       return items.length === 0 ? null : { ...meta, component, data: { items } };
     }
 
+    case "forecastTrend": {
+      const xKey = str(data["xKey"]);
+      if (xKey === undefined) return null;
+      const rows = records(data["rows"]).map((row) => {
+        const point: ForecastRow = { ...row };
+        for (const key of ["actual", "forecast", "lower", "upper"] as const) {
+          const value = num(row[key]);
+          if (value === undefined) delete point[key];
+          else point[key] = value;
+        }
+        return point;
+      });
+      // Without a projected point this is just a line chart, and calling it a
+      // forecast would overstate what the agent actually sent.
+      if (!rows.some((row) => row.forecast !== undefined)) return null;
+      return {
+        ...meta,
+        component,
+        data: {
+          xKey,
+          rows,
+          ...optional("actualsThrough", str(data["actualsThrough"])),
+          ...optional("horizonLabel", str(data["horizonLabel"])),
+          ...optional("valueLabel", str(data["valueLabel"])),
+          ...optional("threshold", toThreshold(data["threshold"])),
+        },
+      };
+    }
+
+    case "scenarioCompare": {
+      const measures = mapList(data["measures"], (item) => {
+        const key = str(item["key"]);
+        const label = str(item["label"]);
+        return key === undefined || label === undefined ? null : { key, label };
+      });
+      const scenarios = mapList(data["scenarios"], (item) => {
+        const name = str(item["name"]);
+        if (name === undefined) return null;
+        const rawValues = isRecord(item["values"]) ? item["values"] : {};
+        const values: Record<string, string> = {};
+        for (const measure of measures) {
+          const value = str(rawValues[measure.key]) ?? numText(rawValues[measure.key]);
+          if (value !== undefined) values[measure.key] = value;
+        }
+        return {
+          name,
+          values,
+          ...optional("probability", str(item["probability"])),
+          ...optional("assumption", str(item["assumption"])),
+          ...(item["likeliest"] === true ? { likeliest: true } : {}),
+        };
+      });
+      return measures.length === 0 || scenarios.length === 0
+        ? null
+        : { ...meta, component, data: { measures, scenarios } };
+    }
+
+    case "varianceBridge": {
+      const startValue = num(data["startValue"]);
+      const endValue = num(data["endValue"]);
+      if (startValue === undefined || endValue === undefined) return null;
+      const steps = mapList(data["steps"], (item) => {
+        const label = str(item["label"]);
+        const value = num(item["value"]);
+        return label === undefined || value === undefined
+          ? null
+          : { label, value, ...optional("formattedValue", str(item["formattedValue"])) };
+      });
+      return steps.length === 0
+        ? null
+        : {
+            ...meta,
+            component,
+            data: {
+              startLabel: str(data["startLabel"]) ?? "Plan",
+              startValue,
+              endLabel: str(data["endLabel"]) ?? "Actual",
+              endValue,
+              steps,
+              ...optional("startFormatted", str(data["startFormatted"])),
+              ...optional("endFormatted", str(data["endFormatted"])),
+            },
+          };
+    }
+
+    case "paceTracker": {
+      const label = str(data["label"]);
+      const actualToDate = num(data["actualToDate"]);
+      const target = num(data["target"]);
+      const projectedLanding = num(data["projectedLanding"]);
+      if (
+        label === undefined ||
+        actualToDate === undefined ||
+        target === undefined ||
+        projectedLanding === undefined
+      ) {
+        return null;
+      }
+      const elapsed = num(data["elapsedShare"]) ?? 0;
+      return {
+        ...meta,
+        component,
+        data: {
+          label,
+          actualToDate,
+          target,
+          projectedLanding,
+          elapsedShare: Math.min(100, Math.max(0, elapsed)),
+          ...optional("periodLabel", str(data["periodLabel"])),
+          ...optional("actualFormatted", str(data["actualFormatted"])),
+          ...optional("targetFormatted", str(data["targetFormatted"])),
+          ...optional("projectedFormatted", str(data["projectedFormatted"])),
+          ...optional("statusTone", paceStatus(data["statusTone"])),
+        },
+      };
+    }
+
     default:
       // A component this build cannot draw. Dropping it is honest; rendering a
       // placeholder would imply the report is complete.
@@ -485,6 +696,18 @@ export function toReport(
       ? { summary: methodSummary, steps: methodSteps }
       : undefined;
 
+  const forecastRaw = raw["forecastMeta"];
+  const forecastMeta = isRecord(forecastRaw)
+    ? {
+        keyAssumptions: strList(forecastRaw["keyAssumptions"]),
+        ...optional("asOf", str(forecastRaw["asOf"])),
+        ...optional("horizon", str(forecastRaw["horizon"])),
+        ...optional("method", str(forecastRaw["method"])),
+        ...optional("confidence", confidence(forecastRaw["confidence"])),
+        ...optional("confidenceRationale", str(forecastRaw["confidenceRationale"])),
+      }
+    : undefined;
+
   const appendixRaw = raw["appendix"];
   const assumptions = isRecord(appendixRaw) ? strList(appendixRaw["assumptions"]) : [];
   const dataGaps = isRecord(appendixRaw) ? strList(appendixRaw["dataGaps"]) : [];
@@ -495,6 +718,7 @@ export function toReport(
     reportTitle: str(raw["reportTitle"]) ?? "Report",
     ...optional("executiveSummary", executiveSummary),
     ...optional("howDataFound", howDataFound),
+    ...optional("forecastMeta", forecastMeta),
     blocks,
     recommendations,
     ...(assumptions.length > 0 || dataGaps.length > 0

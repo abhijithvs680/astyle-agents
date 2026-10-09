@@ -9,6 +9,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "template:sync": "node scripts/sync-report-template.mjs",
+    "template:check": "node scripts/sync-report-template.mjs --check",
     "format": "prettier --write ."
   },
   "overrides": {
