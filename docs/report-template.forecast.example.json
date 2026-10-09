@@ -1,0 +1,361 @@
+{
+  "sessionId": "7c41e0a2-9b3d-4f18-8a77-15cf2e9b4d60",
+  "conversationId": "3b8a1d54-c2e7-4a90-b611-9d7f4e2a8c33",
+  "mode": "deep-insights",
+  "reportTitle": "Where Linen Lands This Quarter",
+  "executiveSummary": {
+    "headline": "Linen is tracking about 7 percent under the quarter target.",
+    "narrative": "Linen sold well in the first six weeks and then slowed. At the current rate the category lands near 8.4 crore against a 9.0 crore target. The slowdown is not demand. Two of the three channels ran short of stock in weeks 7 and 8, and Rakuten has not been replenished since week 6. If stock is restored within two weeks the gap closes to about 2 percent.",
+    "keyFindings": [
+      "At the current run rate linen lands about 60 lakh under target.",
+      "Weeks 7 and 8 lost roughly 41 lakh to stockouts, not to weak demand.",
+      "Restoring Rakuten stock recovers most of the gap."
+    ]
+  },
+  "forecastMeta": {
+    "asOf": "2026-10-05",
+    "horizon": "Rest of the quarter, 5 weeks",
+    "method": "Weekly sell-through over the last 12 weeks, adjusted for the festive peak in weeks 11 and 12 and for the days each product was out of stock.",
+    "confidence": "medium",
+    "confidenceRationale": "Twelve weeks of clean history support the trend. Confidence is medium rather than high because the festive peak is based on one prior year, and because Shoplist sales data is missing for three days in September.",
+    "keyAssumptions": [
+      "Rakuten is replenished within two weeks.",
+      "The festive peak repeats at about last year's size.",
+      "No further price changes in the category this quarter."
+    ]
+  },
+  "howDataFound": {
+    "summary": "We read weekly sales and stock for the linen category across the three channels for the last 12 weeks, then projected the rest of the quarter from the stock-adjusted run rate.",
+    "steps": [
+      {
+        "title": "Collected weekly sales by channel",
+        "detail": "We totalled linen units and value for each of the last 12 weeks across Shopify, Rakuten and Shoplist.",
+        "sources": [
+          "Shopify",
+          "Rakuten",
+          "Shoplist"
+        ]
+      },
+      {
+        "title": "Adjusted for days out of stock",
+        "detail": "We counted the days each linen product was unavailable and scaled the affected weeks up to a full-availability rate, so the trend reflects demand rather than supply.",
+        "sources": [
+          "Inventory table",
+          "Sales table"
+        ]
+      },
+      {
+        "title": "Projected the remaining five weeks",
+        "detail": "We applied the adjusted run rate forward and widened the range around the two festive weeks, where last year's lift was largest and least certain.",
+        "sources": [
+          "Sales table"
+        ]
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "id": "quarter-headlines",
+      "component": "kpiRibbon",
+      "title": "Quarter at a glance",
+      "insight": "The gap is recent. It opened in the last two weeks, not across the quarter.",
+      "agentId": "demand-analyst",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "cards": [
+          {
+            "label": "Projected landing",
+            "value": "84000000",
+            "delta": "-7% vs target",
+            "deltaDirection": "down",
+            "deltaTone": "warning"
+          },
+          {
+            "label": "Quarter target",
+            "value": "90000000",
+            "deltaTone": "neutral"
+          },
+          {
+            "label": "Sold to date",
+            "value": "52400000",
+            "delta": "+12% vs last quarter",
+            "deltaDirection": "up",
+            "deltaTone": "good"
+          },
+          {
+            "label": "Lost to stockouts",
+            "value": "4100000",
+            "delta": "weeks 7-8",
+            "deltaDirection": "up",
+            "deltaTone": "critical"
+          }
+        ]
+      }
+    },
+    {
+      "id": "linen-forecast",
+      "component": "forecastTrend",
+      "eyebrow": "Projection",
+      "title": "Weekly linen sales through the quarter",
+      "insight": "The dip in weeks 7 and 8 is a supply gap. The projection assumes it is fixed; if it is not, the lower edge of the range is the realistic case.",
+      "agentId": "demand-analyst",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "xKey": "week",
+        "actualsThrough": "W8",
+        "horizonLabel": "Next 5 weeks",
+        "valueLabel": "Linen sales per week, in rupees",
+        "rows": [
+          {
+            "week": "W1",
+            "actual": 5800000
+          },
+          {
+            "week": "W2",
+            "actual": 6300000
+          },
+          {
+            "week": "W3",
+            "actual": 6900000
+          },
+          {
+            "week": "W4",
+            "actual": 7400000
+          },
+          {
+            "week": "W5",
+            "actual": 7100000
+          },
+          {
+            "week": "W6",
+            "actual": 6800000
+          },
+          {
+            "week": "W7",
+            "actual": 5900000
+          },
+          {
+            "week": "W8",
+            "actual": 6200000
+          },
+          {
+            "week": "W9",
+            "forecast": 6600000,
+            "lower": 5900000,
+            "upper": 7300000
+          },
+          {
+            "week": "W10",
+            "forecast": 6900000,
+            "lower": 6000000,
+            "upper": 7800000
+          },
+          {
+            "week": "W11",
+            "forecast": 8100000,
+            "lower": 6700000,
+            "upper": 9500000
+          },
+          {
+            "week": "W12",
+            "forecast": 8400000,
+            "lower": 6800000,
+            "upper": 10000000
+          },
+          {
+            "week": "W13",
+            "forecast": 7200000,
+            "lower": 5900000,
+            "upper": 8500000
+          }
+        ],
+        "threshold": {
+          "value": 6900000,
+          "label": "Weekly rate needed to hit target"
+        }
+      }
+    },
+    {
+      "id": "quarter-scenarios",
+      "component": "scenarioCompare",
+      "eyebrow": "Scenarios",
+      "title": "Three ways the quarter can end",
+      "insight": "The difference between upside and downside is almost entirely how fast Rakuten is replenished.",
+      "agentId": "demand-analyst",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "measures": [
+          {
+            "key": "landing",
+            "label": "Quarter landing"
+          },
+          {
+            "key": "gap",
+            "label": "Gap to target"
+          },
+          {
+            "key": "units",
+            "label": "Units"
+          }
+        ],
+        "scenarios": [
+          {
+            "name": "Base",
+            "probability": "55 percent",
+            "assumption": "Rakuten is replenished within two weeks and the festive peak matches last year.",
+            "likeliest": true,
+            "values": {
+              "landing": "8.4Cr",
+              "gap": "-6.0 percent",
+              "units": "47,200"
+            }
+          },
+          {
+            "name": "Upside",
+            "probability": "20 percent",
+            "assumption": "Rakuten is replenished this week and the festive peak runs 10 percent above last year.",
+            "values": {
+              "landing": "9.1Cr",
+              "gap": "+1.1 percent",
+              "units": "51,400"
+            }
+          },
+          {
+            "name": "Downside",
+            "probability": "25 percent",
+            "assumption": "Rakuten stays short through the festive weeks.",
+            "values": {
+              "landing": "7.6Cr",
+              "gap": "-15.6 percent",
+              "units": "42,800"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "gap-drivers",
+      "component": "varianceBridge",
+      "eyebrow": "Attribution",
+      "title": "What moved linen off plan",
+      "insight": "Stockouts and the Rakuten gap account for the shortfall twice over. Demand itself is ahead of plan.",
+      "agentId": "supply-analyst",
+      "dataSources": [
+        "Inventory table",
+        "Sales table"
+      ],
+      "data": {
+        "startLabel": "Plan",
+        "startValue": 90000000,
+        "startFormatted": "9.0Cr",
+        "steps": [
+          {
+            "label": "Demand above plan",
+            "value": 6400000,
+            "formattedValue": "+64L"
+          },
+          {
+            "label": "Stockouts W7-W8",
+            "value": -4100000,
+            "formattedValue": "-41L"
+          },
+          {
+            "label": "Rakuten not replenished",
+            "value": -5800000,
+            "formattedValue": "-58L"
+          },
+          {
+            "label": "Discounting",
+            "value": -2500000,
+            "formattedValue": "-25L"
+          }
+        ],
+        "endLabel": "Projected",
+        "endValue": 84000000,
+        "endFormatted": "8.4Cr"
+      }
+    },
+    {
+      "id": "quarter-pace",
+      "component": "paceTracker",
+      "eyebrow": "Pace",
+      "title": "Where the quarter lands at the current rate",
+      "insight": "Eight weeks in, linen needs about 69 lakh a week to reach target and is running at 62 lakh.",
+      "agentId": "demand-analyst",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "label": "Linen category revenue",
+        "periodLabel": "Quarter to date, week 8 of 13",
+        "elapsedShare": 62,
+        "actualToDate": 52400000,
+        "actualFormatted": "5.24Cr",
+        "target": 90000000,
+        "targetFormatted": "9.0Cr",
+        "projectedLanding": 84000000,
+        "projectedFormatted": "8.4Cr",
+        "statusTone": "atRisk"
+      }
+    },
+    {
+      "id": "channel-risk",
+      "component": "callout",
+      "title": "Rakuten is the decision",
+      "insight": "Everything else in this report is smaller than this one action.",
+      "agentId": "supply-analyst",
+      "dataSources": [
+        "Rakuten"
+      ],
+      "data": {
+        "tone": "warning",
+        "heading": "Rakuten has not been replenished since week 6",
+        "body": "Rakuten carried 31 percent of linen sales and is now near zero stock on four of the six best sellers. Replenishing it before the festive weeks is worth about 58 lakh this quarter."
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "title": "Replenish Rakuten linen this week",
+      "detail": "Four best sellers are near zero with five weeks left, two of them festive. This is the single largest recoverable item in the quarter.",
+      "priority": "high",
+      "owner": "Supply Chain"
+    },
+    {
+      "title": "Raise linen reorder points before week 11",
+      "detail": "The current points assume a normal week. The festive weeks run about 25 percent above that, which is what caused the weeks 7 and 8 gap.",
+      "priority": "high",
+      "owner": "Merchandising"
+    },
+    {
+      "title": "Hold linen discounting until week 12",
+      "detail": "Discounting cost about 25 lakh against plan while the category was already selling through. Demand does not need the support.",
+      "priority": "medium",
+      "owner": "Planning"
+    }
+  ],
+  "appendix": {
+    "assumptions": [
+      "Projected landing uses the stock-adjusted run rate of the last four weeks.",
+      "The festive lift is taken from the same two weeks last year."
+    ],
+    "dataGaps": [
+      "Shoplist sales data is missing for 3 to 5 September, so weeks 1 and 2 are slightly understated."
+    ]
+  },
+  "status": "ready"
+}

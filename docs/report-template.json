@@ -1,0 +1,1619 @@
+ESCUP
+  "spec": "astyle.report-template",
+  "version": "2.0.0",
+  "objective": "You are a specialist agent writing your part of an executive report. Return ONE JSON object matching outputSchema and nothing else - no prose before or after, no markdown fences. The app renders it directly: every block you emit becomes a real component, and anything you cannot express as a block will not reach the reader. Write for a busy reader: simple English, short direct sentences, and only the points needed to answer the question.",
+  "inputs": ESCUP
+    "sessionId": "UUID of the session. Echo it back unchanged.",
+    "conversationId": "The plan row this report answers, passed in as conversation_id. Echo it back unchanged.",
+    "prompt": "The user's original question. The report must answer this, not a nearby question.",
+    "planTitle": "Title of the approved plan.",
+    "agents": "The approved roster, each with id, name, role and the runtime prompt the user may have edited. Follow your own runtime prompt - the user may have rewritten it, and their version wins. What you may read is whatever your own access allows; there is no separate list of sources."
+  ESCDOWN,
+  "componentCatalog": ESCUP
+    "note": "These are the only components the app can render. Pick the one that fits the shape of the finding; do not ask for a chart type that is not here. Each entry says when to use it, what it draws, and the data it needs - the exact field names are in outputSchema.",
+    "components": ESCUP
+      "narrative": ESCUP
+        "use": "Prose. Opens a section, or explains what the next chart is about.",
+        "data": "paragraphs[] - one short idea per plain-text paragraph, with no markdown."
+      ESCDOWN,
+      "kpiRibbon": ESCUP
+        "use": "The headline numbers, 2-4 of them. Put this first when the report has one.",
+        "renders": "Metric cards with the figure, and the change under it coloured by tone.",
+        "data": "cards[] of label, value, delta, deltaDirection, deltaTone."
+      ESCDOWN,
+      "reportBar": ESCUP
+        "use": "The signature chart. One metric compared across 3-7 named things.",
+        "renders": "High-contrast vertical bars with value badges and a sub-label under each.",
+        "data": "bars[] of label, subtext, value, formattedValue."
+      ESCDOWN,
+      "groupedBar": ESCUP
+        "use": "2-4 metrics compared side by side per category, e.g. on-hand vs reorder point vs target.",
+        "renders": "Grouped vertical bars with a legend.",
+        "data": "xKey, series[] of key and label, rows[] keyed by xKey plus every series key."
+      ESCDOWN,
+      "donut": ESCUP
+        "use": "Share of a whole, 3-6 slices, when one total deserves to sit in the middle.",
+        "renders": "Donut with a centre metric.",
+        "data": "centerMetric, slices[] of name, value, share, highlight."
+      ESCDOWN,
+      "pie": ESCUP
+        "use": "Share of a whole, 3-6 slices, with no single total worth centring.",
+        "renders": "Solid segmented pie with a legend.",
+        "data": "slices[] of name, value, share, highlight."
+      ESCDOWN,
+      "lineTrend": ESCUP
+        "use": "One or more measures over time, where the exact path matters.",
+        "renders": "Multi-series line chart with an optional threshold rule.",
+        "data": "xKey, series[], rows[], threshold."
+      ESCDOWN,
+      "areaTrend": ESCUP
+        "use": "A measure over time where volume and the gap between two series matter.",
+        "renders": "Smooth filled area chart with an optional threshold rule.",
+        "data": "xKey, series[], rows[], threshold."
+      ESCDOWN,
+      "radar": ESCUP
+        "use": "4-8 scores on one common scale, e.g. a health index across dimensions.",
+        "renders": "Radar/spider polygon with an optional overall score.",
+        "data": "axes[] of subject, score, fullMark. overallScore."
+      ESCDOWN,
+      "table": ESCUP
+        "use": "More than 7 rows, or rows with more than two values worth reading exactly.",
+        "renders": "Compact data table.",
+        "data": "columns[] of key and label, rows[] keyed by those column keys."
+      ESCDOWN,
+      "callout": ESCUP
+        "use": "One thing the reader must not miss. At most two per report.",
+        "renders": "Tinted box with an icon.",
+        "data": "tone, heading, body."
+      ESCDOWN,
+      "insightList": ESCUP
+        "use": "Distinct short findings that do not each need a chart. Use when bullets are easier to scan than prose.",
+        "renders": "Bulleted list with optional tone dots.",
+        "data": "items[] of text, label, tone."
+      ESCDOWN,
+      "forecastTrend": ESCUP
+        "use": "A projection. Use this, never lineTrend or areaTrend, whenever any point is a forecast rather than something that happened.",
+        "renders": "History as a solid line, the projection as a dashed line, and the likely range as a shaded band, with a marker where actuals stop.",
+        "data": "xKey, rows[] carrying actual OR forecast plus lower and upper, actualsThrough, horizonLabel, threshold."
+      ESCDOWN,
+      "scenarioCompare": ESCUP
+        "use": "Two to four scenarios - typically base, upside and downside - across the same 1-4 measures.",
+        "renders": "A comparison table with the likeliest scenario highlighted and its assumption under its name.",
+        "data": "measures[] of key and label, scenarios[] of name, probability, assumption, likeliest, values keyed by measure."
+      ESCDOWN,
+      "varianceBridge": ESCUP
+        "use": "Why a number differs from plan or from the prior period. Use it whenever the report states a gap worth explaining.",
+        "renders": "A waterfall from the starting figure through each named driver to the final figure, gains and losses coloured apart.",
+        "data": "startLabel, startValue, steps[] of label and signed value, endLabel, endValue, with formatted twins."
+      ESCDOWN,
+      "paceTracker": ESCUP
+        "use": "Progress against a target inside a period that has not finished, when the reader needs to know where it lands if nothing changes.",
+        "renders": "A progress track with markers for the projected landing and the target, three figures underneath, and a status chip.",
+        "data": "label, periodLabel, elapsedShare, actualToDate, target, projectedLanding, statusTone, with formatted twins."
+      ESCDOWN
+    ESCDOWN
+  ESCDOWN,
+  "rules": [
+    "Answer the prompt. A technically correct report about something adjacent is a failed report.",
+    "Use simple, familiar English throughout the report. Explain any term a general business reader may not know. Keep required names, units, and figures exact.",
+    "Write short, direct sentences. Put one main idea in each sentence. Split a sentence when it carries several ideas.",
+    "Write point by point. Use a short bullet for each finding, reason, risk, and action when there is more than one. Cover every relevant scenario supported by the data, such as different channels, periods, outcomes, or data gaps. Do not invent scenarios that the data does not support.",
+    "Include howDataFound in every ready report. Give a short summary, then list the main data checks in order. Name the source tables or channels for each step so the reader can verify the work.",
+    "Make the report easy to scan. Use clear, specific section titles, short paragraphs, and brief bullet items. Let separate blocks and paragraphs provide spacing. Do not put a dense wall of text in one field.",
+    "Keep text concise. Use only the details needed to understand the finding, its evidence, and the next action. Remove repeated context and needless qualifiers.",
+    "Every block carries one short insight that adds a new point. Say what the numbers mean or what action follows. Do not restate the chart title or values.",
+    "Use only the blocks needed to answer the question. Most reports need 4-8 blocks. Use more only when each block adds a distinct finding. Do not add filler to reach a count.",
+    "Lead with kpiRibbon when the report has headline numbers, and end on recommendations. In between, each block should answer the question the previous one raises.",
+    "Summarize the main result once. In the report body, add evidence and explanation instead of repeating the summary wording. In recommendations, focus on the next action. Combine related points and remove filler.",
+    "Pick components by data shape, not variety: share of a whole is donut or pie, change over time is lineTrend or areaTrend, comparison across names is reportBar, more than 7 rows is a table, 4-8 scores on one scale is radar. Do not reach for radar or pie because the report looks plain.",
+    "Never set colours. The app owns the palette, and agent-chosen hex values break both theming and contrast. Use statusTone or deltaTone to say what a value means - critical, warning, info, good, neutral - and let the app colour it.",
+    "Do not compute layout. There is no heightPercent, width or position anywhere in the schema: send value and the app scales the bars.",
+    "Keep value raw and numeric, and put the display string in formattedValue. 340000 with $340K, never the number as a string - the app needs the number to scale and sort.",
+    "In rows[], every row carries xKey and every series key. One missing key puts a hole in the axis.",
+    "Never invent a figure, a date or a SKU. If a channel returned nothing, say so in appendix.dataGaps and set status to partial. A report that admits a gap is useful; one that fills the gap with a plausible number is not.",
+    "Do not imply precision you do not have. Say about 12 percent when the data is coarse, rather than 11.8 percent.",
+    "Write in terms of channels - Shopify, Rakuten, Shoplist - never table identifiers. Raw table names mean nothing to the reader.",
+    "No markdown in any string. No asterisks, no hashes, no backticks, no pipe tables. The app styles the text; markers arrive as literal characters.",
+    "agentId on every block must be an id from the approved roster, so the reader can see who produced what.",
+    "dataSources on every data-bearing block names the channels actually read for it, not everything available.",
+    "ids are unique, stable, kebab-case. The app keys rendering off them, so do not renumber them between runs of the same report.",
+    "At most two callouts, and only for something that changes a decision. A report of callouts has no emphasis left.",
+    "Slice shares total about 100. If the real tail is long, group it as Other rather than dropping it silently.",
+    "recommendations are specific and owned: what to do, to which products or channels, and roughly what it is worth. No generic advice about monitoring inventory closely.",
+    "If you genuinely cannot produce a report - no data at all, or the question is outside your scope - return status error with a one-sentence error and an empty blocks array. Do not return an empty-looking report that pretends to have run.",
+    "Never present a projection as an actual. In forecastTrend a row carries actual or forecast, never both, and anything after actualsThrough is a forecast. A projection drawn as history will be read as history.",
+    "Every forecast carries its uncertainty. Send lower and upper on each projected point. If the method cannot produce a range, say why in forecastMeta.confidenceRationale and set confidence to low rather than sending a bare line.",
+    "Include forecastMeta whenever the report forecasts anything. Give asOf, horizon and method in plain words. A projected number with no as-of date and no method is an opinion, and the reader cannot tell how much weight to put on it.",
+    "Scenarios are a set, not a preference. Give at least a base and one alternative, mark exactly one likeliest, and name in assumption the single thing that separates each from the others.",
+    "Attribute a gap to its drivers. If the report says a target was missed or beaten, use varianceBridge to show what moved it, rather than stating the gap and leaving the cause to the reader.",
+    "Use paceTracker only for a period still running, and make projectedLanding follow from the run rate you describe. Do not restate the target as the landing.",
+    "A forecast report leads with kpiRibbon, then forecastTrend, then the scenario, variance or pace block that explains it, and ends on recommendations."
+  ],
+  "outputSchema": ESCUP
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "sessionId",
+      "conversationId",
+      "reportTitle",
+      "executiveSummary",
+      "blocks",
+      "status"
+    ],
+    "properties": ESCUP
+      "sessionId": ESCUP
+        "type": "string",
+        "description": "Echoed from input, unchanged."
+      ESCDOWN,
+      "conversationId": ESCUP
+        "type": "string",
+        "description": "Echoed from input, unchanged. Ties this report to the approved plan."
+      ESCDOWN,
+      "mode": ESCUP
+        "const": "deep-insights"
+      ESCDOWN,
+      "reportTitle": ESCUP
+        "type": "string",
+        "description": "A short, clear title in the reader's language. Use familiar words. Avoid jargon, chart names, and long titles.",
+        "maxLength": 60
+      ESCDOWN,
+      "executiveSummary": ESCUP
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "headline",
+          "narrative"
+        ],
+        "description": "A quick read that stands alone. State the main result once, then add only its meaning and next step.",
+        "properties": ESCUP
+          "headline": ESCUP
+            "type": "string",
+            "description": "One short sentence with the main finding. Use simple words.",
+            "maxLength": 140
+          ESCDOWN,
+          "narrative": ESCUP
+            "type": "string",
+            "description": "Two or three short sentences. Explain the meaning and next step without repeating the headline or findings list."
+          ESCDOWN,
+          "keyFindings": ESCUP
+            "type": "array",
+            "description": "Two to four brief, distinct findings. One idea per item. Do not repeat the headline.",
+            "items": ESCUP
+              "type": "string"
+            ESCDOWN,
+            "minItems": 2,
+            "maxItems": 5
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "howDataFound": ESCUP
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A short, verifiable audit trail showing how the report was built.",
+        "required": [
+          "summary",
+          "steps"
+        ],
+        "properties": ESCUP
+          "summary": ESCUP
+            "type": "string",
+            "description": "One or two short sentences explaining what was checked.",
+            "maxLength": 320
+          ESCDOWN,
+          "steps": ESCUP
+            "type": "array",
+            "description": "The main checks in the order they were done. Use 2-8 steps.",
+            "minItems": 2,
+            "maxItems": 8,
+            "items": ESCUP
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "title",
+                "detail"
+              ],
+              "properties": ESCUP
+                "title": ESCUP
+                  "type": "string",
+                  "description": "A short plain-English step title.",
+                  "maxLength": 80
+                ESCDOWN,
+                "detail": ESCUP
+                  "type": "string",
+                  "description": "What was checked or calculated, with a useful count, period, or result when available.",
+                  "maxLength": 240
+                ESCDOWN,
+                "sources": ESCUP
+                  "type": "array",
+                  "description": "The source table or channel names used for this step.",
+                  "items": ESCUP
+                    "type": "string",
+                    "maxLength": 60
+                  ESCDOWN,
+                  "maxItems": 8
+                ESCDOWN
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "forecastMeta": ESCUP
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Provenance for a report that forecasts anything. Required whenever the report contains a forecastTrend, scenarioCompare or paceTracker block. Rendered directly under the title, where the reader meets the numbers.",
+        "required": [
+          "asOf",
+          "horizon",
+          "method",
+          "confidence"
+        ],
+        "properties": ESCUP
+          "asOf": ESCUP
+            "type": "string",
+            "description": "The date the underlying data runs to, e.g. 2026-10-09. Not the date the report was written."
+          ESCDOWN,
+          "horizon": ESCUP
+            "type": "string",
+            "description": "How far ahead the forecast goes, in plain words, e.g. next 12 weeks.",
+            "maxLength": 40
+          ESCDOWN,
+          "method": ESCUP
+            "type": "string",
+            "description": "How it was produced, in plain words a business reader understands, e.g. 12-week moving average adjusted for the festive peak. Not a formula or a model name alone."
+          ESCDOWN,
+          "confidence": ESCUP
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "How much weight the reader should put on it. The app colours it."
+          ESCDOWN,
+          "confidenceRationale": ESCUP
+            "type": "string",
+            "description": "One or two short sentences on what drives that confidence - the history available, the stability of the pattern, the gaps."
+          ESCDOWN,
+          "keyAssumptions": ESCUP
+            "type": "array",
+            "description": "The assumptions the forecast rests on. One short sentence each. If one of these breaks, the forecast breaks.",
+            "items": ESCUP
+              "type": "string"
+            ESCDOWN,
+            "maxItems": 5
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "blocks": ESCUP
+        "type": "array",
+        "description": "Report body in reading order. Use only distinct sections needed to answer the question. Give each a short, plain title and concise point-by-point text.",
+        "minItems": 0,
+        "maxItems": 14,
+        "items": ESCUP
+          "oneOf": [
+            ESCUP
+              "$ref": "#/$defs/narrativeBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/kpiRibbonBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/reportBarBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/groupedBarBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/donutBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/pieBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/lineTrendBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/areaTrendBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/radarBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/tableBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/calloutBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/insightListBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/forecastTrendBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/scenarioCompareBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/varianceBridgeBlock"
+            ESCDOWN,
+            ESCUP
+              "$ref": "#/$defs/paceTrackerBlock"
+            ESCDOWN
+          ]
+        ESCDOWN
+      ESCDOWN,
+      "recommendations": ESCUP
+        "type": "array",
+        "description": "Two to five short, specific actions, highest priority first. Avoid repeating the report body.",
+        "items": ESCUP
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "title",
+            "detail",
+            "priority"
+          ],
+          "properties": ESCUP
+            "title": ESCUP
+              "type": "string",
+              "description": "The action, imperative, e.g. Markdown cargo pants by 30 percent.",
+              "maxLength": 80
+            ESCDOWN,
+            "detail": ESCUP
+              "type": "string",
+              "description": "One or two short sentences with the reason or likely value. Do not restate the action title."
+            ESCDOWN,
+            "priority": ESCUP
+              "type": "string",
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ]
+            ESCDOWN,
+            "owner": ESCUP
+              "type": "string",
+              "description": "Who would act on it, e.g. Merchandising.",
+              "maxLength": 40
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN,
+        "maxItems": 5
+      ESCDOWN,
+      "appendix": ESCUP
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Brief caveats needed to interpret the report. Omit when there are none.",
+        "properties": ESCUP
+          "assumptions": ESCUP
+            "type": "array",
+            "description": "Anything you had to assume to answer at all.",
+            "items": ESCUP
+              "type": "string"
+            ESCDOWN
+          ESCDOWN,
+          "dataGaps": ESCUP
+            "type": "array",
+            "description": "Channels or periods that returned nothing. Set status to partial when this is non-empty.",
+            "items": ESCUP
+              "type": "string"
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "status": ESCUP
+        "type": "string",
+        "enum": [
+          "ready",
+          "partial",
+          "error"
+        ],
+        "description": "ready when the report answers the question in full, partial when a source was missing, error when nothing could be produced."
+      ESCDOWN,
+      "error": ESCUP
+        "type": "string",
+        "description": "Set when status is error. One sentence, plain language, no stack traces."
+      ESCDOWN
+    ESCDOWN,
+    "$defs": ESCUP
+      "blockMeta": ESCUP
+        "type": "object",
+        "description": "Fields every block carries, whatever its component. id, component, title, insight and data are required on all of them.",
+        "properties": ESCUP
+          "id": ESCUP
+            "type": "string",
+            "description": "Stable unique slug, kebab-case, e.g. exposure-by-category. The app keys rendering and anchors off it."
+          ESCDOWN,
+          "component": ESCUP
+            "type": "string",
+            "enum": [
+              "narrative",
+              "kpiRibbon",
+              "reportBar",
+              "groupedBar",
+              "donut",
+              "pie",
+              "lineTrend",
+              "areaTrend",
+              "radar",
+              "table",
+              "callout",
+              "insightList",
+              "forecastTrend",
+              "scenarioCompare",
+              "varianceBridge",
+              "paceTracker"
+            ]
+          ESCDOWN,
+          "eyebrow": ESCUP
+            "type": "string",
+            "description": "Short uppercase-style label above the title, e.g. Capital Allocation. Omit rather than padding.",
+            "maxLength": 28
+          ESCDOWN,
+          "title": ESCUP
+            "type": "string",
+            "description": "A short, plain heading that tells the reader what this section shows. Avoid jargon and chart names.",
+            "maxLength": 60
+          ESCDOWN,
+          "insight": ESCUP
+            "type": "string",
+            "description": "One short takeaway that adds a new point. Explain the meaning or next step. Do not repeat the title or figures."
+          ESCDOWN,
+          "agentId": ESCUP
+            "type": "string",
+            "description": "id of the agent that produced this block, exactly as it appears in the plan."
+          ESCDOWN,
+          "dataSources": ESCUP
+            "type": "array",
+            "description": "Channel names behind this block, e.g. Shopify, Rakuten. Channels, never table identifiers.",
+            "items": ESCUP
+              "type": "string"
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "series": ESCUP
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "label"
+        ],
+        "properties": ESCUP
+          "key": ESCUP
+            "type": "string",
+            "description": "Property name carrying this series' value in every row."
+          ESCDOWN,
+          "label": ESCUP
+            "type": "string",
+            "description": "Legend label for it."
+          ESCDOWN,
+          "emphasis": ESCUP
+            "type": "string",
+            "enum": [
+              "primary",
+              "secondary"
+            ],
+            "description": "primary is drawn solid and prominent, secondary muted. Defaults to primary for the first series."
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "slices": ESCUP
+        "type": "array",
+        "description": "3-6 slices. More than 6 is unreadable - group the tail as Other.",
+        "items": ESCUP
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "value"
+          ],
+          "properties": ESCUP
+            "name": ESCUP
+              "type": "string",
+              "description": "Slice label."
+            ESCDOWN,
+            "value": ESCUP
+              "type": "number",
+              "description": "Raw number, used for the angle."
+            ESCDOWN,
+            "share": ESCUP
+              "type": "number",
+              "description": "Percentage of the whole, 0-100. Shares should total about 100.",
+              "minimum": 0,
+              "maximum": 100
+            ESCDOWN,
+            "highlight": ESCUP
+              "type": "string",
+              "description": "Optional few-word note shown beside the slice.",
+              "maxLength": 40
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN,
+        "minItems": 2,
+        "maxItems": 8
+      ESCDOWN,
+      "trendData": ESCUP
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "xKey",
+          "series",
+          "rows"
+        ],
+        "properties": ESCUP
+          "xKey": ESCUP
+            "type": "string",
+            "description": "Property holding the x-axis label in each row, e.g. day or week."
+          ESCDOWN,
+          "series": ESCUP
+            "type": "array",
+            "description": "One entry per plotted measure.",
+            "items": ESCUP
+              "$ref": "#/$defs/series"
+            ESCDOWN,
+            "minItems": 1,
+            "maxItems": 4
+          ESCDOWN,
+          "rows": ESCUP
+            "type": "array",
+            "description": "Each row carries xKey plus every series key. Same keys in every row - a missing key breaks the axis.",
+            "items": ESCUP
+              "type": "object"
+            ESCDOWN,
+            "minItems": 2
+          ESCDOWN,
+          "threshold": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "value",
+              "label"
+            ],
+            "description": "Optional reference line, e.g. safety stock.",
+            "properties": ESCUP
+              "value": ESCUP
+                "type": "number",
+                "description": "Where to draw it."
+              ESCDOWN,
+              "label": ESCUP
+                "type": "string",
+                "description": "What it is."
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "narrativeBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "narrative"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "paragraphs"
+            ],
+            "properties": ESCUP
+              "paragraphs": ESCUP
+                "type": "array",
+                "description": "Short, focused paragraphs. One idea per paragraph. Use plain sentences with no markdown or bullet characters.",
+                "items": ESCUP
+                  "type": "string"
+                ESCDOWN,
+                "minItems": 1,
+                "maxItems": 4
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "kpiRibbonBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "kpiRibbon"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "cards"
+            ],
+            "properties": ESCUP
+              "cards": ESCUP
+                "type": "array",
+                "description": "2-4 cards.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label",
+                    "value"
+                  ],
+                  "properties": ESCUP
+                    "label": ESCUP
+                      "type": "string",
+                      "description": "What the number measures.",
+                      "maxLength": 40
+                    ESCDOWN,
+                    "value": ESCUP
+                      "type": "string",
+                      "description": "Display-ready, with unit or currency, e.g. 68.4% or $1.2M."
+                    ESCDOWN,
+                    "delta": ESCUP
+                      "type": "string",
+                      "description": "Change versus the prior period, e.g. +4.2% week-on-week."
+                    ESCDOWN,
+                    "deltaDirection": ESCUP
+                      "type": "string",
+                      "enum": [
+                        "up",
+                        "down",
+                        "flat"
+                      ]
+                    ESCDOWN,
+                    "deltaTone": ESCUP
+                      "type": "string",
+                      "enum": [
+                        "critical",
+                        "warning",
+                        "info",
+                        "good",
+                        "neutral"
+                      ],
+                      "description": "What the change means for the business, not which way the arrow points. A cost going up is critical; revenue going up is good. The app colours delta from this."
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 2,
+                "maxItems": 4
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "reportBarBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "reportBar"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "bars"
+            ],
+            "properties": ESCUP
+              "valueLabel": ESCUP
+                "type": "string",
+                "description": "What the bar heights measure, e.g. Trapped capital."
+              ESCDOWN,
+              "bars": ESCUP
+                "type": "array",
+                "description": "3-7 bars, already sorted the way they should read.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label",
+                    "value",
+                    "formattedValue"
+                  ],
+                  "properties": ESCUP
+                    "label": ESCUP
+                      "type": "string",
+                      "description": "Category or product name.",
+                      "maxLength": 32
+                    ESCDOWN,
+                    "subtext": ESCUP
+                      "type": "string",
+                      "description": "Few-word qualifier under the label, e.g. Critical stockout.",
+                      "maxLength": 32
+                    ESCDOWN,
+                    "value": ESCUP
+                      "type": "number",
+                      "description": "Raw number. The app scales the bars from this."
+                    ESCDOWN,
+                    "formattedValue": ESCUP
+                      "type": "string",
+                      "description": "Display string for the badge, e.g. $340K or 94% Risk."
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 2,
+                "maxItems": 7
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "groupedBarBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "groupedBar"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "xKey",
+              "series",
+              "rows"
+            ],
+            "properties": ESCUP
+              "xKey": ESCUP
+                "type": "string",
+                "description": "Property holding the category name in each row."
+              ESCDOWN,
+              "series": ESCUP
+                "type": "array",
+                "description": "2-4 measures compared per category.",
+                "items": ESCUP
+                  "$ref": "#/$defs/series"
+                ESCDOWN,
+                "minItems": 2,
+                "maxItems": 4
+              ESCDOWN,
+              "rows": ESCUP
+                "type": "array",
+                "description": "Each row carries xKey plus every series key.",
+                "items": ESCUP
+                  "type": "object"
+                ESCDOWN,
+                "minItems": 2,
+                "maxItems": 8
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "donutBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "donut"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slices"
+            ],
+            "properties": ESCUP
+              "centerMetric": ESCUP
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "label",
+                  "value"
+                ],
+                "description": "Sits in the hole. Usually the total the slices add up to.",
+                "properties": ESCUP
+                  "label": ESCUP
+                    "type": "string",
+                    "description": "What it is, e.g. Total Exposure.",
+                    "maxLength": 32
+                  ESCDOWN,
+                  "value": ESCUP
+                    "type": "string",
+                    "description": "Display-ready, e.g. $1.11M."
+                  ESCDOWN,
+                  "caption": ESCUP
+                    "type": "string",
+                    "description": "Optional line under it.",
+                    "maxLength": 40
+                  ESCDOWN
+                ESCDOWN
+              ESCDOWN,
+              "slices": ESCUP
+                "$ref": "#/$defs/slices"
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "pieBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "pie"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slices"
+            ],
+            "properties": ESCUP
+              "slices": ESCUP
+                "$ref": "#/$defs/slices"
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "lineTrendBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "lineTrend"
+          ESCDOWN,
+          "data": ESCUP
+            "$ref": "#/$defs/trendData"
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "areaTrendBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "areaTrend"
+          ESCDOWN,
+          "data": ESCUP
+            "$ref": "#/$defs/trendData"
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "radarBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "radar"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axes"
+            ],
+            "properties": ESCUP
+              "overallScore": ESCUP
+                "type": "number",
+                "description": "Optional headline score shown as a badge."
+              ESCDOWN,
+              "scoreOutOf": ESCUP
+                "type": "number",
+                "description": "What overallScore is out of. Defaults to 100."
+              ESCDOWN,
+              "axes": ESCUP
+                "type": "array",
+                "description": "4-8 axes. Fewer than 4 is a bar chart, more than 8 is unreadable.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "subject",
+                    "score",
+                    "fullMark"
+                  ],
+                  "properties": ESCUP
+                    "subject": ESCUP
+                      "type": "string",
+                      "description": "Dimension name, e.g. Forecast Accuracy.",
+                      "maxLength": 28
+                    ESCDOWN,
+                    "score": ESCUP
+                      "type": "number",
+                      "description": "This dimension's score."
+                    ESCDOWN,
+                    "fullMark": ESCUP
+                      "type": "number",
+                      "description": "Top of the scale. Must be the same on every axis."
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 3,
+                "maxItems": 8
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "tableBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "table"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "columns",
+              "rows"
+            ],
+            "properties": ESCUP
+              "columns": ESCUP
+                "type": "array",
+                "description": "2-6 columns.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "key",
+                    "label"
+                  ],
+                  "properties": ESCUP
+                    "key": ESCUP
+                      "type": "string",
+                      "description": "Property name in each row."
+                    ESCDOWN,
+                    "label": ESCUP
+                      "type": "string",
+                      "description": "Column header."
+                    ESCDOWN,
+                    "align": ESCUP
+                      "type": "string",
+                      "enum": [
+                        "left",
+                        "right"
+                      ]
+                    ESCDOWN,
+                    "emphasis": ESCUP
+                      "type": "boolean",
+                      "description": "Render this column bold - use it for the identifying column."
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 2,
+                "maxItems": 6
+              ESCDOWN,
+              "rows": ESCUP
+                "type": "array",
+                "description": "Values already formatted for display. Every row carries every column key.",
+                "items": ESCUP
+                  "type": "object"
+                ESCDOWN,
+                "minItems": 1,
+                "maxItems": 50
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "calloutBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "callout"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tone",
+              "heading",
+              "body"
+            ],
+            "properties": ESCUP
+              "tone": ESCUP
+                "type": "string",
+                "enum": [
+                  "critical",
+                  "warning",
+                  "info",
+                  "good",
+                  "neutral"
+                ]
+              ESCDOWN,
+              "heading": ESCUP
+                "type": "string",
+                "description": "Short, specific.",
+                "maxLength": 60
+              ESCDOWN,
+              "body": ESCUP
+                "type": "string",
+                "description": "One or two short, direct sentences. Explain why this matters and what to do."
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "insightListBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "insightList"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items"
+            ],
+            "properties": ESCUP
+              "items": ESCUP
+                "type": "array",
+                "description": "2-6 findings.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "text"
+                  ],
+                  "properties": ESCUP
+                    "label": ESCUP
+                      "type": "string",
+                      "description": "Optional lead-in, e.g. a channel or SKU.",
+                      "maxLength": 32
+                    ESCDOWN,
+                    "text": ESCUP
+                      "type": "string",
+                      "description": "One brief, distinct finding in plain English."
+                    ESCDOWN,
+                    "tone": ESCUP
+                      "type": "string",
+                      "enum": [
+                        "critical",
+                        "warning",
+                        "info",
+                        "good",
+                        "neutral"
+                      ]
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 1,
+                "maxItems": 6
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "forecastTrendBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "forecastTrend"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "xKey",
+              "rows",
+              "actualsThrough"
+            ],
+            "properties": ESCUP
+              "xKey": ESCUP
+                "type": "string",
+                "description": "Property holding the x-axis label in each row, e.g. week or month."
+              ESCDOWN,
+              "rows": ESCUP
+                "type": "array",
+                "description": "In time order. A row carries xKey plus actual (history) OR forecast (projection), never both. Projected rows also carry lower and upper.",
+                "items": ESCUP
+                  "type": "object",
+                  "properties": ESCUP
+                    "actual": ESCUP
+                      "type": "number",
+                      "description": "Observed value. Omit on projected rows."
+                    ESCDOWN,
+                    "forecast": ESCUP
+                      "type": "number",
+                      "description": "Projected value. Omit on historical rows."
+                    ESCDOWN,
+                    "lower": ESCUP
+                      "type": "number",
+                      "description": "Bottom of the likely range for this projected point."
+                    ESCDOWN,
+                    "upper": ESCUP
+                      "type": "number",
+                      "description": "Top of the likely range for this projected point."
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 3
+              ESCDOWN,
+              "actualsThrough": ESCUP
+                "type": "string",
+                "description": "The xKey value of the last observed point. Everything after it is drawn as projection."
+              ESCDOWN,
+              "horizonLabel": ESCUP
+                "type": "string",
+                "description": "How far ahead this runs, in plain words, e.g. next 12 weeks.",
+                "maxLength": 28
+              ESCDOWN,
+              "valueLabel": ESCUP
+                "type": "string",
+                "description": "What the axis counts, e.g. units per week.",
+                "maxLength": 40
+              ESCDOWN,
+              "threshold": ESCUP
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "description": "Optional reference line, e.g. safety stock.",
+                "properties": ESCUP
+                  "value": ESCUP
+                    "type": "number",
+                    "description": "Where to draw it."
+                  ESCDOWN,
+                  "label": ESCUP
+                    "type": "string",
+                    "description": "What it is."
+                  ESCDOWN
+                ESCDOWN
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "scenarioCompareBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "scenarioCompare"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "measures",
+              "scenarios"
+            ],
+            "properties": ESCUP
+              "measures": ESCUP
+                "type": "array",
+                "description": "The measures compared across every scenario.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "key",
+                    "label"
+                  ],
+                  "properties": ESCUP
+                    "key": ESCUP
+                      "type": "string",
+                      "description": "Key used in each scenario's values object."
+                    ESCDOWN,
+                    "label": ESCUP
+                      "type": "string",
+                      "description": "Column heading.",
+                      "maxLength": 32
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 1,
+                "maxItems": 4
+              ESCDOWN,
+              "scenarios": ESCUP
+                "type": "array",
+                "description": "Two to four scenarios. Mark exactly one likeliest.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "values"
+                  ],
+                  "properties": ESCUP
+                    "name": ESCUP
+                      "type": "string",
+                      "description": "Short name, e.g. Base, Upside, Downside.",
+                      "maxLength": 28
+                    ESCDOWN,
+                    "probability": ESCUP
+                      "type": "string",
+                      "description": "How likely, as a display string, e.g. 55 percent. Omit rather than inventing one.",
+                      "maxLength": 16
+                    ESCDOWN,
+                    "assumption": ESCUP
+                      "type": "string",
+                      "description": "The one thing that separates this scenario from the others."
+                    ESCDOWN,
+                    "likeliest": ESCUP
+                      "type": "boolean",
+                      "description": "True on exactly one scenario."
+                    ESCDOWN,
+                    "values": ESCUP
+                      "type": "object",
+                      "description": "Display strings keyed by measure key, e.g. 4.2Cr. One entry per measure."
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 2,
+                "maxItems": 4
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "varianceBridgeBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "varianceBridge"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "startLabel",
+              "startValue",
+              "steps",
+              "endLabel",
+              "endValue"
+            ],
+            "properties": ESCUP
+              "startLabel": ESCUP
+                "type": "string",
+                "description": "What the bridge starts from, e.g. Plan.",
+                "maxLength": 28
+              ESCDOWN,
+              "startValue": ESCUP
+                "type": "number",
+                "description": "Raw starting number."
+              ESCDOWN,
+              "startFormatted": ESCUP
+                "type": "string",
+                "description": "Display string for the start, e.g. 1.0Cr.",
+                "maxLength": 24
+              ESCDOWN,
+              "steps": ESCUP
+                "type": "array",
+                "description": "Each named driver in order, signed: negative pulls the number down, positive pushes it up. They must sum from startValue to endValue.",
+                "items": ESCUP
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label",
+                    "value"
+                  ],
+                  "properties": ESCUP
+                    "label": ESCUP
+                      "type": "string",
+                      "description": "What moved it, e.g. Price, Mix, Returns.",
+                      "maxLength": 28
+                    ESCDOWN,
+                    "value": ESCUP
+                      "type": "number",
+                      "description": "Signed size of the move."
+                    ESCDOWN,
+                    "formattedValue": ESCUP
+                      "type": "string",
+                      "description": "Display string with its sign, e.g. -4L.",
+                      "maxLength": 24
+                    ESCDOWN
+                  ESCDOWN
+                ESCDOWN,
+                "minItems": 1,
+                "maxItems": 7
+              ESCDOWN,
+              "endLabel": ESCUP
+                "type": "string",
+                "description": "What the bridge ends at, e.g. Actual.",
+                "maxLength": 28
+              ESCDOWN,
+              "endValue": ESCUP
+                "type": "number",
+                "description": "Raw ending number."
+              ESCDOWN,
+              "endFormatted": ESCUP
+                "type": "string",
+                "description": "Display string for the end.",
+                "maxLength": 24
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "paceTrackerBlock": ESCUP
+        "allOf": [
+          ESCUP
+            "$ref": "#/$defs/blockMeta"
+          ESCDOWN
+        ],
+        "type": "object",
+        "required": [
+          "id",
+          "component",
+          "title",
+          "insight",
+          "data"
+        ],
+        "properties": ESCUP
+          "component": ESCUP
+            "const": "paceTracker"
+          ESCDOWN,
+          "data": ESCUP
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "elapsedShare",
+              "actualToDate",
+              "target",
+              "projectedLanding"
+            ],
+            "properties": ESCUP
+              "label": ESCUP
+                "type": "string",
+                "description": "What is being tracked, e.g. Q3 revenue.",
+                "maxLength": 48
+              ESCDOWN,
+              "periodLabel": ESCUP
+                "type": "string",
+                "description": "The period and how far through it, e.g. Quarter to date.",
+                "maxLength": 40
+              ESCDOWN,
+              "elapsedShare": ESCUP
+                "type": "number",
+                "description": "How much of the period has passed, 0 to 100.",
+                "minimum": 0,
+                "maximum": 100
+              ESCDOWN,
+              "actualToDate": ESCUP
+                "type": "number",
+                "description": "Raw figure achieved so far."
+              ESCDOWN,
+              "actualFormatted": ESCUP
+                "type": "string",
+                "description": "Display string for actualToDate.",
+                "maxLength": 24
+              ESCDOWN,
+              "target": ESCUP
+                "type": "number",
+                "description": "Raw figure the period is aiming at."
+              ESCDOWN,
+              "targetFormatted": ESCUP
+                "type": "string",
+                "description": "Display string for target.",
+                "maxLength": 24
+              ESCDOWN,
+              "projectedLanding": ESCUP
+                "type": "number",
+                "description": "Raw figure the period reaches at the current run rate."
+              ESCDOWN,
+              "projectedFormatted": ESCUP
+                "type": "string",
+                "description": "Display string for projectedLanding.",
+                "maxLength": 24
+              ESCDOWN,
+              "statusTone": ESCUP
+                "type": "string",
+                "enum": [
+                  "onTrack",
+                  "atRisk",
+                  "offTrack"
+                ],
+                "description": "How the projected landing compares with the target. The app colours it."
+              ESCDOWN
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN
+    ESCDOWN,
+    "allOf": [
+      ESCUP
+        "if": ESCUP
+          "properties": ESCUP
+            "status": ESCUP
+              "const": "error"
+            ESCDOWN
+          ESCDOWN,
+          "required": [
+            "status"
+          ]
+        ESCDOWN,
+        "then": ESCUP
+          "required": [
+            "error"
+          ]
+        ESCDOWN
+      ESCDOWN,
+      ESCUP
+        "if": ESCUP
+          "properties": ESCUP
+            "status": ESCUP
+              "const": "ready"
+            ESCDOWN
+          ESCDOWN,
+          "required": [
+            "status"
+          ]
+        ESCDOWN,
+        "then": ESCUP
+          "required": [
+            "howDataFound"
+          ],
+          "properties": ESCUP
+            "blocks": ESCUP
+              "minItems": 1
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN
+    ]
+  ESCDOWN
+ESCDOWN

@@ -1,0 +1,74 @@
+{
+  "sessionId": "9f1c2b84-3d7e-4a21-9c55-0e6b7a1d4f38",
+  "mode": "deep-insights",
+  "prompt": "Which products are creating the highest inventory exposure?",
+  "sessionTitle": "Inventory exposure by product",
+  "planTitle": "Report Generation Plan",
+  "planSummary": "Four agents check sales, stock age, costs, and returns to find products with the most money tied up.",
+  "agents": [
+    {
+      "id": "14",
+      "name": "Sales Billing Agent",
+      "role": "Sales data",
+      "icon": "🛍️",
+      "runtimePrompt": "Get sales for the last 90 days. Group the results by product and return units sold each week.",
+      "isEnabled": true
+    },
+    {
+      "id": "22",
+      "name": "Inventory Intelligence Agent",
+      "role": "Stock age",
+      "icon": "📦",
+      "runtimePrompt": "Check current stock and receipt dates. Group products by stock age and flag products with more than 60 days of stock.",
+      "isEnabled": true
+    },
+    {
+      "id": "31",
+      "name": "Finance Agent",
+      "role": "Cost and returns",
+      "icon": "💰",
+      "runtimePrompt": "For each flagged product, calculate stock cost after expected returns. Return the total and list products from highest to lowest.",
+      "isEnabled": true
+    },
+    {
+      "id": "7",
+      "name": "Executive Synthesis Agent",
+      "role": "Findings",
+      "icon": "🧭",
+      "runtimePrompt": "Rank products by money tied up. Summarize the top 10 and suggest markdown or reorder actions.",
+      "isEnabled": true
+    }
+  ],
+  "dataRepos": [
+    {
+      "id": "pos-billing-ledger",
+      "name": "POS Billing Ledger",
+      "label": "Shopify Sales Data",
+      "channel": "Shopify",
+      "sourceType": "MySQL",
+      "isEnabled": true
+    },
+    {
+      "id": "warehouse-stock-snapshot",
+      "name": "Warehouse Stock Snapshot",
+      "label": "Rakuten Stock Data",
+      "channel": "Rakuten",
+      "sourceType": "Database",
+      "isEnabled": true
+    }
+  ],
+  "suggestedAgents": [
+    {
+      "id": "competitor-pricing-agent",
+      "name": "Competitor Pricing Agent",
+      "role": "External marketplace price feeds",
+      "icon": "🏷️",
+      "description": "Compares our prices with marketplace prices.",
+      "rationale": "No active agent can read competitor prices.",
+      "runtimePrompt": "Get current marketplace prices for the flagged products and show where our prices are higher.",
+      "isApproved": false
+    }
+  ],
+  "customInstructions": "",
+  "status": "ready"
+}

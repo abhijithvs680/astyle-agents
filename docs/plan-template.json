@@ -1,0 +1,223 @@
+ESCUP
+  "spec": "astyle.plan-generator",
+  "version": "1.0.0",
+  "objective": "Given the user's business question and the catalog of available agents, choose the agents and data sources that will answer it, and emit a plan object matching outputSchema exactly. Use simple English and short descriptions throughout. Emit JSON only - no prose, no markdown fence.",
+  "inputs": ESCUP
+    "prompt": "The user's question, verbatim.",
+    "sessionId": "UUID for this run. Echo it back unchanged in the output.",
+    "mode": "Always \"deep-insights\" for this workflow.",
+    "agentCatalog": "All rows of the agent table. See agentCatalog below for what each column means and how to use it."
+  ESCDOWN,
+  "agentCatalog": ESCUP
+    "description": "The standing roster of specialist agents, one row per agent. You select from these rows; you do not invent entries here.",
+    "columns": ESCUP
+      "ID": "System-generated identifier (UUID or numeric). Copy it into agents[].id verbatim, stringified. NEVER generate, invent, renumber, reformat or re-map an ID - the app toggles agents by it and reports it back, so a value you made up refers to no real agent. If a row has no ID, skip the row.",
+      "Title": "Human display name. Maps to agents[].name.",
+      "Prompt": "The agent's STORED system prompt - its standing definition. Input to you only: read it to judge whether the agent fits the question and to ground the runtimePrompt you write. NEVER copy it into the output; it is server-side material and may be long or sensitive. The frontend receives agents[].runtimePrompt instead - see below.",
+      "Description": "What the agent does in general. Input to you only. Do NOT emit it: the plan has no description field. Use it, with Prompt and Role, to write agents[].runtimePrompt.",
+      "Role": "Short domain label. Maps to agents[].role. Shorten to under 60 characters if the row is longer.",
+      "DBAccess": "Which data sources this agent can read. Use it to judge whether the agent can actually answer part of the question, and to ground its runtimePrompt in the right channels. It is never emitted in the output. Format varies (comma-separated names, JSON, or a single name) - parse defensively and skip entries you cannot read.",
+      "CreatedBy": "Metadata. Ignore.",
+      "CreatedOn": "Metadata. Ignore.",
+      "Status": "Row lifecycle. Select ONLY rows whose Status is Active (case-insensitive). Treat anything else - Inactive, Draft, Archived, empty, missing - as unavailable, and never place it in agents[]."
+    ESCDOWN,
+    "noColumnSupplies": ESCUP
+      "agents[].runtimePrompt": "You write this. It is the per-query instruction the orchestrator will send to the agent, derived from the user's question plus that row's Prompt/Description/Role. It is NOT the stored Prompt column, and NOT a description of the agent.",
+      "agents[].icon": "No column supplies this. Choose one emoji yourself from the agent's domain."
+    ESCDOWN
+  ESCDOWN,
+  "rules": [
+    "Select 3-6 agents. Fewer than 3 rarely answers a business question; more than 6 overflows the card.",
+    "Select only Status=Active rows. If fewer than 3 Active rows genuinely fit, return what fits rather than padding with irrelevant agents.",
+    "Order agents[] in execution order: data gathering first, synthesis last.",
+    "Use simple, familiar English in planTitle, planSummary, role, description, rationale, and runtimePrompt. Avoid jargon, long clauses, and vague wording.",
+    "Keep plan text short and direct. Use one clear idea per sentence. Keep planSummary to one short sentence, and keep each role, description, rationale, and runtimePrompt focused on the work for this question.",
+    "sessionTitle names the business question in 3-7 words, e.g. \"Inventory exposure by product\". Title case, no trailing punctuation, no agent names, no \"Report on...\" or \"Analysis of...\" prefix. The sidebar shows the raw prompt until this replaces it, so it has to be an improvement: distil the question, never echo the prompt verbatim and never exceed 60 characters.",
+    "Send sessionTitle on the FIRST plan of a session (new_session true). On later turns in the same session omit it, unless the conversation has genuinely moved to a different subject - the user may have renamed it, and resending overwrites their choice.",
+    "agents[].id must be the catalog ID copied verbatim and stringified. Never generate or alter an ID - the app toggles agents by it and reports it back, so an invented ID refers to no real agent.",
+    "Write agents[].runtimePrompt as the actual instruction you would send that agent to answer THIS question: what to compute, over which data, and what to return. Address the agent directly in the imperative. The user reads and edits this text before the run, and the edited text is what gets sent - so a description of the agent, or a restated job title, is a bug, not a style choice.",
+    "Never put the stored Prompt column in runtimePrompt. Use it as grounding, then write a fresh per-query instruction.",
+    "Write every runtimePrompt in terms of sales CHANNELS, not table identifiers. Say \"the Shopify stock data\", never \"ss_shopifystockfetchdata694e17bbaa6cf\". The user reads and edits this text, and raw table names are noise to them - each agent resolves the channel against its own DBAccess.",
+    "Set isEnabled true on every agent and repo that should run. Use false only for something you are offering but do not recommend.",
+    "Never emit the Prompt column in any field.",
+    "suggestedAgents[] is for capability gaps: a specialist the question needs that NO Active catalog row covers. If every need is covered, send an empty array - do not invent suggestions to fill the section. Give every suggestion a runtimePrompt too: the user edits and approves it in place, and it is sent as-is if they approve.",
+    "suggestedAgents[].id is a provisional kebab-case slug, never a catalog ID and never an invented UUID - the agent has no system ID until the user approves it and the row is created. Keep it unique across agents[] and suggestedAgents[].",
+    "suggestedAgents[].isApproved is always false. The user opts in; pre-approving an agent they never agreed to is a bug.",
+    "Give every suggestion a rationale naming the specific gap, e.g. \"None of the selected agents can read competitor pricing feeds.\" This is the sentence the user decides on.",
+    "At most 3 suggestions. This section interrupts the user, so only raise a gap that materially changes the answer.",
+    "If you cannot build a plan, emit status \"error\" with a human-readable error and empty arrays. Never emit a partial plan without an error - the UI waits forever on one."
+  ],
+  "outputSchema": ESCUP
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "sessionId",
+      "mode",
+      "prompt",
+      "agents",
+      "status"
+    ],
+    "properties": ESCUP
+      "sessionId": ESCUP
+        "type": "string",
+        "description": "Echo of the input sessionId. The client discards events whose sessionId it does not recognise."
+      ESCDOWN,
+      "mode": ESCUP
+        "const": "deep-insights"
+      ESCDOWN,
+      "prompt": ESCUP
+        "type": "string",
+        "description": "Echo of the user's question."
+      ESCDOWN,
+      "sessionTitle": ESCUP
+        "type": "string",
+        "maxLength": 60,
+        "description": "Short, meaningful title for this session, shown in the left sidebar. Until this arrives the sidebar shows the user's raw prompt, so this must read better than the prompt did - if you cannot improve on it, omit the key rather than echoing it back. Required on the first plan of a session; omit on later turns in the same session."
+      ESCDOWN,
+      "planTitle": ESCUP
+        "type": "string",
+        "maxLength": 60,
+        "description": "Short, simple heading for the plan card. Defaults to 'Report Generation Plan' when omitted."
+      ESCDOWN,
+      "planSummary": ESCUP
+        "type": "string",
+        "description": "One short, clear sentence explaining how these agents answer THIS question. No boilerplate."
+      ESCDOWN,
+      "agents": ESCUP
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 6,
+        "items": ESCUP
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "name",
+            "role",
+            "icon",
+            "runtimePrompt",
+            "isEnabled"
+          ],
+          "properties": ESCUP
+            "id": ESCUP
+              "type": "string",
+              "description": "Catalog ID (UUID or numeric) copied verbatim and stringified. Never generated by you."
+            ESCDOWN,
+            "name": ESCUP
+              "type": "string",
+              "maxLength": 40,
+              "description": "Short display name from Title. Use simple words."
+            ESCDOWN,
+            "role": ESCUP
+              "type": "string",
+              "maxLength": 60,
+              "description": "Short domain label from Role. Use simple words."
+            ESCDOWN,
+            "icon": ESCUP
+              "type": "string",
+              "description": "One emoji, chosen by you. Rendered as text, not a URL or an icon name."
+            ESCDOWN,
+            "runtimePrompt": ESCUP
+              "type": "string",
+              "description": "Short, direct instruction for THIS query. Use simple words, write in the imperative, and address the agent. Shown to the user and editable - the edited text is what gets sent. Never the stored Prompt column."
+            ESCDOWN,
+            "isEnabled": ESCUP
+              "type": "boolean"
+            ESCDOWN,
+            "isCustom": ESCUP
+              "type": "boolean",
+              "description": "Only true for agents the user added in an earlier turn."
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "suggestedAgents": ESCUP
+        "type": "array",
+        "maxItems": 3,
+        "description": "Capability gaps no Active catalog row covers. Empty array when there are none.",
+        "items": ESCUP
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "name",
+            "role",
+            "icon",
+            "description",
+            "rationale",
+            "runtimePrompt",
+            "isApproved"
+          ],
+          "properties": ESCUP
+            "id": ESCUP
+              "type": "string",
+              "description": "PROVISIONAL key, not a catalog ID. This agent does not exist in the table yet, so it has no system ID. Use a descriptive kebab-case slug, unique across agents[] and suggestedAgents[]. The system assigns the real ID when the user approves it and the row is created."
+            ESCDOWN,
+            "name": ESCUP
+              "type": "string",
+              "maxLength": 40
+            ESCDOWN,
+            "role": ESCUP
+              "type": "string",
+              "maxLength": 60
+            ESCDOWN,
+            "icon": ESCUP
+              "type": "string",
+              "description": "One emoji."
+            ESCDOWN,
+            "description": ESCUP
+              "type": "string",
+              "description": "One short line in plain English about what this agent would do if approved. The runtimePrompt carries the detail."
+            ESCDOWN,
+            "rationale": ESCUP
+              "type": "string",
+              "description": "One short, plain-English sentence naming the gap this fills. Shown to the user as \"Why: ...\"."
+            ESCDOWN,
+            "isApproved": ESCUP
+              "const": false
+            ESCDOWN,
+            "runtimePrompt": ESCUP
+              "type": "string",
+              "description": "Short, direct instruction for THIS query, written as for agents[].runtimePrompt. Use simple words and the imperative. Shown to the user and editable, so the edited text is what gets sent on approval."
+            ESCDOWN
+          ESCDOWN
+        ESCDOWN
+      ESCDOWN,
+      "customInstructions": ESCUP
+        "type": "string",
+        "description": "Pre-fill for the free-text instructions box. Empty string unless carried forward from an earlier turn."
+      ESCDOWN,
+      "status": ESCUP
+        "enum": [
+          "planning",
+          "ready",
+          "error"
+        ]
+      ESCDOWN,
+      "error": ESCUP
+        "type": "string",
+        "description": "Required when status is \"error\"."
+      ESCDOWN
+    ESCDOWN,
+    "allOf": [
+      ESCUP
+        "if": ESCUP
+          "properties": ESCUP
+            "status": ESCUP
+              "const": "error"
+            ESCDOWN
+          ESCDOWN,
+          "required": [
+            "status"
+          ]
+        ESCDOWN,
+        "then": ESCUP
+          "required": [
+            "error"
+          ]
+        ESCDOWN
+      ESCDOWN
+    ]
+  ESCDOWN
+ESCDOWN

@@ -1,0 +1,461 @@
+{
+  "sessionId": "2dba25d2-8185-4137-bfe7-0eb5247e4bbd",
+  "conversationId": "d999b675-db76-4c99-9342-676745bbb745",
+  "mode": "deep-insights",
+  "reportTitle": "Stockouts Causing the Greatest Sales Loss",
+  "executiveSummary": {
+    "headline": "Stockouts may have cost about $412,000 in 30 days.",
+    "narrative": "Five products caused most of the loss. Rakuten had four of those five products. Raise reorder points on these items first.",
+    "keyFindings": [
+      "Linen Blend Tops had the largest estimated loss: $118,000.",
+      "The five worst products had fewer than six days of stock cover.",
+      "Rakuten carried 44 percent of the loss."
+    ]
+  },
+  "howDataFound": {
+    "summary": "We checked stockout records, sales value, and days of cover across the three sales channels for the last 30 days.",
+    "steps": [
+      {
+        "title": "Collected stockout and sales records",
+        "detail": "We found 31 products that reached zero stock and matched them to recent sales value.",
+        "sources": [
+          "Shopify",
+          "Rakuten",
+          "Shoplist"
+        ]
+      },
+      {
+        "title": "Compared sales loss by product",
+        "detail": "We estimated lost sales from sales speed before each stockout and the number of days out of stock.",
+        "sources": [
+          "Sales table",
+          "Inventory table"
+        ]
+      },
+      {
+        "title": "Checked stock cover and reorder points",
+        "detail": "The five largest losses had fewer than six days of cover and fell below their reorder points.",
+        "sources": [
+          "Inventory table",
+          "Reorder table"
+        ]
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "id": "headline-kpis",
+      "component": "kpiRibbon",
+      "eyebrow": "Last 30 Days",
+      "title": "Stockout impact at a glance",
+      "insight": "Losses are concentrated in fewer products. Focus on the most costly stockouts.",
+      "agentId": "008",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "cards": [
+          {
+            "label": "Estimated lost revenue",
+            "value": "$412K",
+            "delta": "+18% vs prior 30 days",
+            "deltaDirection": "up",
+            "deltaTone": "critical"
+          },
+          {
+            "label": "Products affected",
+            "value": "31",
+            "delta": "-6 vs prior 30 days",
+            "deltaDirection": "down",
+            "deltaTone": "good"
+          },
+          {
+            "label": "Average days out of stock",
+            "value": "5.8",
+            "delta": "+1.1 days",
+            "deltaDirection": "up",
+            "deltaTone": "warning"
+          }
+        ]
+      }
+    },
+    {
+      "id": "loss-by-product",
+      "component": "reportBar",
+      "eyebrow": "Revenue At Risk",
+      "title": "Estimated lost sales by product",
+      "insight": "Linen Blend Tops caused the largest loss. Start there.",
+      "agentId": "008",
+      "dataSources": [
+        "Shopify",
+        "Rakuten"
+      ],
+      "data": {
+        "valueLabel": "Estimated lost revenue",
+        "bars": [
+          {
+            "label": "Linen Blend Tops",
+            "subtext": "11 days out",
+            "value": 118000,
+            "formattedValue": "$118K"
+          },
+          {
+            "label": "Silk Resort Shirts",
+            "subtext": "8 days out",
+            "value": 64000,
+            "formattedValue": "$64K"
+          },
+          {
+            "label": "Striped Poplin",
+            "subtext": "6 days out",
+            "value": 41000,
+            "formattedValue": "$41K"
+          },
+          {
+            "label": "Organic Rib Tanks",
+            "subtext": "5 days out",
+            "value": 28000,
+            "formattedValue": "$28K"
+          },
+          {
+            "label": "Oxford Button-Down",
+            "subtext": "3 days out",
+            "value": 19000,
+            "formattedValue": "$19K"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cover-vs-reorder",
+      "component": "groupedBar",
+      "eyebrow": "Comparative Variance",
+      "title": "Days of cover against reorder point and target",
+      "insight": "All five products fell below their reorder points. Earlier orders could have prevented the gaps.",
+      "agentId": "008",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "xKey": "product",
+        "series": [
+          {
+            "key": "daysOfCover",
+            "label": "Days of cover",
+            "emphasis": "primary"
+          },
+          {
+            "key": "reorderPoint",
+            "label": "Reorder point",
+            "emphasis": "secondary"
+          },
+          {
+            "key": "targetCover",
+            "label": "Target cover",
+            "emphasis": "secondary"
+          }
+        ],
+        "rows": [
+          {
+            "product": "Linen Blend Tops",
+            "daysOfCover": 3,
+            "reorderPoint": 10,
+            "targetCover": 21
+          },
+          {
+            "product": "Silk Resort Shirts",
+            "daysOfCover": 5,
+            "reorderPoint": 10,
+            "targetCover": 21
+          },
+          {
+            "product": "Striped Poplin",
+            "daysOfCover": 6,
+            "reorderPoint": 12,
+            "targetCover": 24
+          },
+          {
+            "product": "Organic Rib Tanks",
+            "daysOfCover": 8,
+            "reorderPoint": 12,
+            "targetCover": 24
+          },
+          {
+            "product": "Oxford Button-Down",
+            "daysOfCover": 9,
+            "reorderPoint": 10,
+            "targetCover": 18
+          }
+        ]
+      }
+    },
+    {
+      "id": "loss-by-channel",
+      "component": "donut",
+      "eyebrow": "Channel Split",
+      "title": "Where the loss falls",
+      "insight": "Rakuten has a larger share of the loss than of sales volume. Review its reorder cycle.",
+      "agentId": "008",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "centerMetric": {
+          "label": "Total lost revenue",
+          "value": "$412K",
+          "caption": "30 days, all channels"
+        },
+        "slices": [
+          {
+            "name": "Rakuten",
+            "value": 181000,
+            "share": 44,
+            "highlight": "Over-represented"
+          },
+          {
+            "name": "Shopify",
+            "value": 152000,
+            "share": 37
+          },
+          {
+            "name": "Shoplist",
+            "value": 79000,
+            "share": 19
+          }
+        ]
+      }
+    },
+    {
+      "id": "velocity-vs-stock",
+      "component": "areaTrend",
+      "eyebrow": "30-Day Velocity",
+      "title": "Demand against available stock",
+      "insight": "Demand stayed above available stock for 11 days. Stock did not recover in time.",
+      "agentId": "008",
+      "dataSources": [
+        "Shopify",
+        "Rakuten"
+      ],
+      "data": {
+        "xKey": "day",
+        "series": [
+          {
+            "key": "demand",
+            "label": "Demand",
+            "emphasis": "primary"
+          },
+          {
+            "key": "availableStock",
+            "label": "Available stock",
+            "emphasis": "secondary"
+          }
+        ],
+        "rows": [
+          {
+            "day": "Sep 01",
+            "demand": 1240,
+            "availableStock": 3100
+          },
+          {
+            "day": "Sep 06",
+            "demand": 1380,
+            "availableStock": 2480
+          },
+          {
+            "day": "Sep 11",
+            "demand": 1590,
+            "availableStock": 1760
+          },
+          {
+            "day": "Sep 16",
+            "demand": 1620,
+            "availableStock": 1180
+          },
+          {
+            "day": "Sep 21",
+            "demand": 1750,
+            "availableStock": 640
+          },
+          {
+            "day": "Sep 26",
+            "demand": 1850,
+            "availableStock": 320
+          },
+          {
+            "day": "Sep 30",
+            "demand": 1950,
+            "availableStock": 110
+          }
+        ],
+        "threshold": {
+          "value": 800,
+          "label": "Safety stock"
+        }
+      }
+    },
+    {
+      "id": "stockout-detail",
+      "component": "table",
+      "eyebrow": "Detail",
+      "title": "All products that reached zero stock",
+      "insight": "The top ten products account for most of the loss. Prioritize them.",
+      "agentId": "008",
+      "dataSources": [
+        "Shopify",
+        "Rakuten",
+        "Shoplist"
+      ],
+      "data": {
+        "columns": [
+          {
+            "key": "sku",
+            "label": "SKU",
+            "emphasis": true
+          },
+          {
+            "key": "channel",
+            "label": "Channel"
+          },
+          {
+            "key": "daysOut",
+            "label": "Days out",
+            "align": "right"
+          },
+          {
+            "key": "lostRevenue",
+            "label": "Lost revenue",
+            "align": "right"
+          }
+        ],
+        "rows": [
+          {
+            "sku": "SKU-4410 Linen Blend Scoop Top",
+            "channel": "Rakuten",
+            "daysOut": "11",
+            "lostRevenue": "$118,000"
+          },
+          {
+            "sku": "SKU-2288 Silk Resort Camp Shirt",
+            "channel": "Rakuten",
+            "daysOut": "8",
+            "lostRevenue": "$64,000"
+          },
+          {
+            "sku": "SKU-7730 Striped Poplin Shirt",
+            "channel": "Shopify",
+            "daysOut": "6",
+            "lostRevenue": "$41,000"
+          },
+          {
+            "sku": "SKU-6612 Organic Rib Tank",
+            "channel": "Rakuten",
+            "daysOut": "5",
+            "lostRevenue": "$28,000"
+          },
+          {
+            "sku": "SKU-1902 Oxford Button-Down",
+            "channel": "Shopify",
+            "daysOut": "3",
+            "lostRevenue": "$19,000"
+          },
+          {
+            "sku": "SKU-3340 Merino Gauge Polo",
+            "channel": "Shoplist",
+            "daysOut": "4",
+            "lostRevenue": "$16,400"
+          },
+          {
+            "sku": "SKU-8821 Pleated Wide Trouser",
+            "channel": "Shopify",
+            "daysOut": "3",
+            "lostRevenue": "$12,900"
+          },
+          {
+            "sku": "SKU-5517 Cotton Crew Tee",
+            "channel": "Shoplist",
+            "daysOut": "2",
+            "lostRevenue": "$9,300"
+          },
+          {
+            "sku": "SKU-2104 Relaxed Denim Shacket",
+            "channel": "Rakuten",
+            "daysOut": "2",
+            "lostRevenue": "$7,100"
+          },
+          {
+            "sku": "SKU-9940 Linen Band Shirt",
+            "channel": "Shopify",
+            "daysOut": "2",
+            "lostRevenue": "$6,000"
+          }
+        ]
+      }
+    },
+    {
+      "id": "secondary-findings",
+      "component": "insightList",
+      "eyebrow": "Also Worth Noting",
+      "title": "Smaller findings",
+      "insight": "These smaller losses add up. They point to the same reorder problem.",
+      "agentId": "008",
+      "dataSources": [
+        "Shopify",
+        "Shoplist"
+      ],
+      "data": {
+        "items": [
+          {
+            "label": "Shoplist",
+            "text": "Three products stocked out within 48 hours of a promotion, which suggests promotions are not feeding the demand forecast.",
+            "tone": "warning"
+          },
+          {
+            "label": "Shopify",
+            "text": "Returns on the two worst products run at 7.8 percent, so some replacement demand is being counted as new demand.",
+            "tone": "info"
+          },
+          {
+            "text": "Eleven products have a reorder point below 7 days but have not yet stocked out. They are the next cohort at risk.",
+            "tone": "warning"
+          }
+        ]
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "title": "Raise reorder points for the five worst products",
+      "detail": "Order before stock falls below 14 days of cover. This could recover about $280,000 at current sales rates.",
+      "priority": "high",
+      "owner": "Merchandising"
+    },
+    {
+      "title": "Replenish Rakuten twice a week",
+      "detail": "Its weekly cycle is too slow for products with six days of cover.",
+      "priority": "high",
+      "owner": "Supply Chain"
+    },
+    {
+      "title": "Add promotions to the demand forecast",
+      "detail": "Three Shoplist stockouts followed promotions. Better forecasts could protect about $21,000 in sales.",
+      "priority": "medium",
+      "owner": "Planning"
+    }
+  ],
+  "appendix": {
+    "assumptions": [
+      "Lost revenue uses each product's mean daily units over the 14 days before the stockout, at the then-current price.",
+      "A product is counted as out of stock when available quantity is zero on any channel it is listed on."
+    ],
+    "dataGaps": [
+      "Shoplist sales data is missing 3 to 5 September, so losses in that window are understated."
+    ]
+  },
+  "status": "partial"
+}

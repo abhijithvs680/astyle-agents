@@ -229,7 +229,8 @@ body {
   --surface-tint: oklch(0.982 0.005 85);
   --tile: oklch(0.966 0.006 85);
   --brand-blue: oklch(0.45 0.16 276);
-  --ink: oklch(0.26 0.085 276);
+  /* The app's original header navy (#072333). */
+  --ink: oklch(0.244 0.045 237.7);
   --ink-foreground: oklch(0.985 0.004 85);
   --positive: oklch(0.52 0.11 160);
   --negative: oklch(0.54 0.17 22);
