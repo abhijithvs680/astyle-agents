@@ -41,12 +41,6 @@ export const Route = createFileRoute("/welcome")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&display=swap",
-      },
-    ],
   }),
   component: WelcomePage,
 });
@@ -73,7 +67,7 @@ const services: ServiceItem[] = [
     dataCount: "14 clinical tables synced",
     summary: "Clinical records, inventory catalogs, and patient admissions are now synced.",
     icon: FileText,
-    tint: "bg-[oklch(0.93_0.05_255)] text-[oklch(0.5_0.16_255)]",
+    tint: "bg-[oklch(0.93_0.04_58)] text-[oklch(0.47_0.10_50)]",
   },
   {
     id: "goodBank",
@@ -83,7 +77,7 @@ const services: ServiceItem[] = [
     dataCount: "8 treasury accounts synced",
     summary: "Operating accounts, payment gateways, and ledger records are now connected.",
     icon: Landmark,
-    tint: "bg-[oklch(0.93_0.06_150)] text-[oklch(0.48_0.14_150)]",
+    tint: "bg-[oklch(0.93_0.04_120)] text-[oklch(0.45_0.08_130)]",
   },
   {
     id: "workflowAgent",
@@ -93,7 +87,7 @@ const services: ServiceItem[] = [
     dataCount: "6 execution pipelines active",
     summary: "Automated operational alerts and task schedulers are now live.",
     icon: Workflow,
-    tint: "bg-[oklch(0.93_0.06_300)] text-[oklch(0.52_0.15_300)]",
+    tint: "bg-[oklch(0.93_0.04_28)] text-[oklch(0.48_0.10_26)]",
   },
   {
     id: "snowflake",
@@ -103,7 +97,7 @@ const services: ServiceItem[] = [
     dataCount: "22 EDW tables synced",
     summary: "Enterprise warehouse schemas and analytics partitions are now integrated.",
     icon: Cloud,
-    tint: "bg-[oklch(0.93_0.05_220)] text-[oklch(0.5_0.15_220)]",
+    tint: "bg-[oklch(0.93_0.04_78)] text-[oklch(0.47_0.10_72)]",
   },
   {
     id: "bigQuery",
@@ -113,7 +107,7 @@ const services: ServiceItem[] = [
     dataCount: "18 analytics datasets synced",
     summary: "Streaming event pipelines and analytical models are now connected.",
     icon: Database,
-    tint: "bg-[oklch(0.94_0.05_40)] text-[oklch(0.52_0.14_40)]",
+    tint: "bg-[oklch(0.94_0.045_42)] text-[oklch(0.49_0.11_42)]",
   },
 ];
 
@@ -161,7 +155,7 @@ const SAMPLE_DATASETS_GUIDE: SampleDataSetGuide[] = [
     howItHelps:
       "Identify which campaigns are driving growth, where spend is inefficient, and which channels need attention",
     icon: Megaphone,
-    tint: "bg-[oklch(0.93_0.05_255)] text-[oklch(0.5_0.16_255)]",
+    tint: "bg-[oklch(0.93_0.04_58)] text-[oklch(0.47_0.10_50)]",
   },
   {
     dataset: "CRM Data",
@@ -169,7 +163,7 @@ const SAMPLE_DATASETS_GUIDE: SampleDataSetGuide[] = [
     howItHelps:
       "Understand pipeline health, customer movement, sales performance, and potential revenue risks",
     icon: Users,
-    tint: "bg-[oklch(0.93_0.06_150)] text-[oklch(0.48_0.14_150)]",
+    tint: "bg-[oklch(0.93_0.04_120)] text-[oklch(0.45_0.08_130)]",
   },
   {
     dataset: "Vendor Data",
@@ -177,7 +171,7 @@ const SAMPLE_DATASETS_GUIDE: SampleDataSetGuide[] = [
     howItHelps:
       "Identify vendor cost increases, purchasing inefficiencies, dependency risks, and potential savings",
     icon: ShoppingBag,
-    tint: "bg-[oklch(0.93_0.06_300)] text-[oklch(0.52_0.15_300)]",
+    tint: "bg-[oklch(0.93_0.04_28)] text-[oklch(0.48_0.10_26)]",
   },
   {
     dataset: "Internal Audit Reports",
@@ -185,7 +179,7 @@ const SAMPLE_DATASETS_GUIDE: SampleDataSetGuide[] = [
     howItHelps:
       "Surface recurring issues, unresolved risks, and areas requiring management attention",
     icon: ShieldCheck,
-    tint: "bg-[oklch(0.94_0.05_40)] text-[oklch(0.52_0.14_40)]",
+    tint: "bg-[oklch(0.94_0.045_42)] text-[oklch(0.49_0.11_42)]",
   },
   {
     dataset: "Financial Data",
@@ -193,7 +187,7 @@ const SAMPLE_DATASETS_GUIDE: SampleDataSetGuide[] = [
     howItHelps:
       "Compare actual performance against plans and identify financial trends, anomalies, and risks",
     icon: Landmark,
-    tint: "bg-[oklch(0.93_0.05_200)] text-[oklch(0.48_0.15_200)]",
+    tint: "bg-[oklch(0.93_0.04_96)] text-[oklch(0.45_0.09_96)]",
   },
   {
     dataset: "Sales Data",
@@ -201,7 +195,7 @@ const SAMPLE_DATASETS_GUIDE: SampleDataSetGuide[] = [
     howItHelps:
       "Identify revenue drivers, declining products, underperforming regions, and unusual sales patterns",
     icon: BarChart3,
-    tint: "bg-[oklch(0.94_0.06_70)] text-[oklch(0.52_0.16_70)]",
+    tint: "bg-[oklch(0.94_0.05_72)] text-[oklch(0.49_0.11_72)]",
   },
 ];
 
@@ -211,28 +205,28 @@ const unlocks = [
     title: "Case intelligence",
     body: "Surface ops drift as actionable cases.",
     icon: Radio,
-    tint: "bg-[oklch(0.93_0.05_255)] text-[oklch(0.5_0.16_255)]",
+    tint: "bg-[oklch(0.93_0.04_58)] text-[oklch(0.47_0.10_50)]",
   },
   {
     id: "connectors",
     title: "Live connectors",
     body: "Keep Good Doc and Good Bank in sync.",
     icon: Landmark,
-    tint: "bg-[oklch(0.93_0.06_150)] text-[oklch(0.48_0.14_150)]",
+    tint: "bg-[oklch(0.93_0.04_120)] text-[oklch(0.45_0.08_130)]",
   },
   {
     id: "feed",
     title: "Executive feed",
     body: "Revenue and care signals in one stream.",
     icon: TrendingUp,
-    tint: "bg-[oklch(0.94_0.05_40)] text-[oklch(0.52_0.14_40)]",
+    tint: "bg-[oklch(0.94_0.045_42)] text-[oklch(0.49_0.11_42)]",
   },
   {
     id: "intake",
     title: "Enterprise intake",
     body: "Upload internal files when systems lag.",
     icon: ShieldCheck,
-    tint: "bg-[oklch(0.93_0.04_280)] text-[oklch(0.5_0.12_280)]",
+    tint: "bg-[oklch(0.93_0.035_18)] text-[oklch(0.47_0.09_18)]",
   },
 ];
 
@@ -429,7 +423,7 @@ function WelcomePage() {
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-ink border-b border-ink-line flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <Link
             to="/"
@@ -466,7 +460,7 @@ function WelcomePage() {
           {onboardingSteps.map((label, i) => (
             <li key={label} className="flex items-center gap-2">
               <span
-                className={`grid size-6 place-items-center rounded-full text-xs font-['Archivo'] tabular-nums ${i < currentStepNum
+                className={`grid size-6 place-items-center rounded-full text-xs tabular-nums ${i < currentStepNum
                   ? "bg-emerald-500 text-white"
                   : i === currentStepNum
                     ? "bg-foreground text-surface font-semibold"
@@ -499,13 +493,12 @@ function WelcomePage() {
         {viewMode === "select" && (
           <div className="space-y-6">
             <section className="rounded-3xl bg-surface p-6 sm:p-8 border border-border/60">
-              <div className="welcome-app-banner rounded-2xl bg-[linear-gradient(135deg,oklch(0.94_0.03_230),oklch(0.97_0.01_250)_55%,oklch(0.95_0.025_200))] px-6 py-7">
+              <div className="welcome-app-banner rounded-2xl bg-[linear-gradient(135deg,oklch(0.945_0.028_72),oklch(0.975_0.012_84)_55%,oklch(0.95_0.022_50))] px-6 py-7">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-brand-blue">
                   Ready when your data is
                 </p>
                 <h1
                   className="mt-2 text-2xl sm:text-3xl font-semibold leading-tight tracking-tight text-foreground"
-                  style={{ fontFamily: "Syne, Archivo, sans-serif" }}
                 >
                   Welcome. Your Data ops, finally readable.
                 </h1>
@@ -596,7 +589,6 @@ function WelcomePage() {
                 <Sparkles className="size-4 text-brand-blue" />
                 <h2
                   className="text-base font-semibold text-foreground"
-                  style={{ fontFamily: "Syne, Archivo, sans-serif" }}
                 >
                   See what CXO unlocks
                 </h2>
@@ -650,7 +642,6 @@ function WelcomePage() {
               <div className="min-w-0">
                 <h2
                   className="text-xl sm:text-2xl font-semibold text-foreground"
-                  style={{ fontFamily: "Syne, Archivo, sans-serif" }}
                 >
                   Connecting {connectingService.name}
                 </h2>
@@ -666,7 +657,7 @@ function WelcomePage() {
                 <span className="font-medium text-foreground">
                   Step {Math.min(currentStepIndex + 1, 4)} of 4 · {CONNECTION_STEPS[Math.min(currentStepIndex, 3)]?.title ?? ""}
                 </span>
-                <span className="font-['Archivo'] tabular-nums font-semibold text-brand-blue">
+                <span className="tabular-nums font-semibold text-brand-blue">
                   {progressPercent}%
                 </span>
               </div>
@@ -805,7 +796,6 @@ function WelcomePage() {
               </div>
               <h2
                 className="text-2xl sm:text-3xl font-semibold text-foreground"
-                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
               >
                 {connectingService.name} connected
               </h2>
@@ -834,7 +824,6 @@ function WelcomePage() {
             <div className="text-center">
               <h2
                 className="text-2xl sm:text-3xl font-semibold text-foreground"
-                style={{ fontFamily: "Syne, Archivo, sans-serif" }}
               >
                 Have additional files to upload?
               </h2>
@@ -919,7 +908,7 @@ function WelcomePage() {
                       <span className="truncate font-medium text-foreground text-xs sm:text-sm">
                         {file.name}
                       </span>
-                      <span className="text-xs text-muted-foreground font-['Archivo'] shrink-0">
+                      <span className="text-xs text-muted-foreground shrink-0">
                         {file.size}
                       </span>
                     </div>

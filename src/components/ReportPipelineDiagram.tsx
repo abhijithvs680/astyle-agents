@@ -192,7 +192,7 @@ export function ReportPipelineDiagram({
   return (
     <div className={`space-y-2.5 ${className}`}>
       {/* Single card container without individual step boxes */}
-      <div className="relative z-0 rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs">
+      <div className="relative z-0 rounded-xl border border-slate-200/90 bg-surface p-4 sm:p-5 shadow-xs">
         {steps.map((item, idx) => {
           const isFirst = idx === 0;
           return (
@@ -217,7 +217,7 @@ export function ReportPipelineDiagram({
                             key={d.id}
                             type="button"
                             onClick={() => onSelectDataset?.(d.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-cyan-50/80 hover:border-cyan-600/30 text-xs sm:text-sm font-semibold text-slate-800 hover:text-cyan-700 transition cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-surface hover:bg-cyan-50/80 hover:border-cyan-600/30 text-xs sm:text-sm font-semibold text-slate-800 hover:text-cyan-700 transition cursor-pointer shadow-2xs"
                           >
                             <Table2 className="size-4 text-slate-600" />
                             <span>{d.badge || d.name}</span>
@@ -235,7 +235,7 @@ export function ReportPipelineDiagram({
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-200" />
                   </div>
-                  <div className="relative z-10 flex items-center justify-center size-6 rounded-full bg-white border border-slate-300 shadow-2xs">
+                  <div className="relative z-10 flex items-center justify-center size-6 rounded-full bg-surface border border-slate-300 shadow-2xs">
                     <ArrowDown className="size-3.5 text-slate-500" />
                   </div>
                 </div>

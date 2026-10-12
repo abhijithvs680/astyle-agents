@@ -1237,10 +1237,10 @@ export function CaseDetailsView({
           <article
             key="slide-0"
             id={anchorId}
-            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
+            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
           >
             {/* Top Ambient Header Banner */}
-            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-canvas/95 via-surface-tint/90 to-tile/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1263,7 +1263,7 @@ export function CaseDetailsView({
             </div>
 
             {/* Bottom Content Area: Executive Briefing Narrative + Quote + Metrics */}
-            <div className="p-6 sm:p-8 bg-white dark:bg-zinc-900 flex-1 space-y-5">
+            <div className="p-6 sm:p-8 bg-surface dark:bg-zinc-900 flex-1 space-y-5">
 
 
               {/* Point by Point Briefing Breakdown */}
@@ -1272,8 +1272,8 @@ export function CaseDetailsView({
                   <li key={pIdx} className="flex items-start gap-3">
                     <span className="mt-2 size-2 rounded-full bg-brand-blue shrink-0 ring-4 ring-brand-blue/15" />
                     <p
-                      style={{ fontWeight: 400, color: "#41485e" }}
-                      className="text-[15px] sm:text-[16px] leading-relaxed text-[#41485e] dark:text-slate-200"
+                      style={{ fontWeight: 400, color: "var(--muted-foreground)" }}
+                      className="text-[15px] sm:text-[16px] leading-relaxed text-ink-line dark:text-slate-200"
                     >
                       {pt}
                     </p>
@@ -1306,14 +1306,14 @@ export function CaseDetailsView({
                       </span>
                       <div className="flex flex-wrap items-baseline gap-1">
                         <span
-                          className={`text-sm sm:text-base font-['Archivo'] tabular-nums font-bold ${m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
+                          className={`text-sm sm:text-base tabular-nums font-bold ${m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
                             }`}
                         >
                           {mainVal}
                         </span>
                         {changeVal && (
                           <span
-                            className={`text-[11px] font-['Archivo'] tabular-nums font-medium ${m.alert ? "text-rose-600/80 dark:text-rose-400/80" : "text-slate-500 dark:text-slate-400"
+                            className={`text-[11px] tabular-nums font-medium ${m.alert ? "text-rose-600/80 dark:text-rose-400/80" : "text-slate-500 dark:text-slate-500"
                               }`}
                           >
                             {changeVal}
@@ -1333,10 +1333,10 @@ export function CaseDetailsView({
           <article
             key="slide-1"
             id={anchorId}
-            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
+            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
           >
             {/* Top Ambient Header Banner */}
-            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-canvas/95 via-surface-tint/90 to-tile/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1367,7 +1367,7 @@ export function CaseDetailsView({
                     <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Identified Drivers
                     </span>
-                    <span className="text-xl sm:text-2xl font-['Archivo'] tabular-nums font-bold text-amber-600 dark:text-amber-400">
+                    <span className="text-xl sm:text-2xl tabular-nums font-bold text-amber-600 dark:text-amber-400">
                       {currentCaseData.keyDataPoints.length} Core Factors
                     </span>
                     <span className="block text-[11px] text-muted-foreground pt-0.5">
@@ -1388,7 +1388,7 @@ export function CaseDetailsView({
             </div>
 
             {/* Bottom Content Area: 2-Column Insights */}
-            <div className="p-6 sm:p-8 bg-white dark:bg-zinc-900 flex-1 space-y-4">
+            <div className="p-6 sm:p-8 bg-surface dark:bg-zinc-900 flex-1 space-y-4">
               <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
                 <TrendingDown className="size-4.5 text-brand-blue shrink-0" />
                 <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1432,10 +1432,10 @@ export function CaseDetailsView({
           <article
             key="slide-2"
             id={anchorId}
-            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
+            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
           >
             {/* Top Ambient Header Banner */}
-            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-canvas/95 via-surface-tint/90 to-tile/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1466,7 +1466,7 @@ export function CaseDetailsView({
                     <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Tracked Variance KPIs
                     </span>
-                    <span className="text-xl sm:text-2xl font-['Archivo'] tabular-nums font-bold text-slate-800 dark:text-slate-200">
+                    <span className="text-xl sm:text-2xl tabular-nums font-bold text-slate-800 dark:text-slate-200">
                       {currentMetrics.length} Metrics
                     </span>
                     <span className="block text-[11px] text-muted-foreground pt-0.5">
@@ -1488,7 +1488,7 @@ export function CaseDetailsView({
             </div>
 
             {/* Bottom Content Area: Key Metrics Table */}
-            <div className="p-6 sm:p-8 bg-white dark:bg-zinc-900 flex-1 space-y-4">
+            <div className="p-6 sm:p-8 bg-surface dark:bg-zinc-900 flex-1 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <Table2 className="size-4.5 text-brand-blue shrink-0" />
@@ -1499,7 +1499,7 @@ export function CaseDetailsView({
                 <span className="text-xs font-medium text-muted-foreground">Variance vs. Target</span>
               </div>
 
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-surface dark:bg-zinc-900 shadow-2xs">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-200 font-semibold text-xs uppercase tracking-wider">
@@ -1515,15 +1515,15 @@ export function CaseDetailsView({
                         key={idx}
                         className={`transition-colors ${
                           idx % 2 === 0
-                            ? "bg-white dark:bg-zinc-900"
+                            ? "bg-surface dark:bg-zinc-900"
                             : "bg-slate-50/80 dark:bg-zinc-800/40"
                         } hover:bg-slate-100/70 dark:hover:bg-zinc-800/70`}
                       >
                         <td className="px-4 py-3 text-xs sm:text-sm font-medium text-foreground">{row.metric}</td>
-                        <td className="px-4 py-3 font-['Archivo'] tabular-nums text-xs sm:text-sm font-bold text-foreground text-right">{row.current}</td>
-                        <td className="px-4 py-3 font-['Archivo'] tabular-nums text-xs sm:text-sm text-muted-foreground text-right">{row.target}</td>
+                        <td className="px-4 py-3 tabular-nums text-xs sm:text-sm font-bold text-foreground text-right">{row.current}</td>
+                        <td className="px-4 py-3 tabular-nums text-xs sm:text-sm text-muted-foreground text-right">{row.target}</td>
                         <td className="px-4 py-3 text-right">
-                          <span className="inline-flex items-center font-['Archivo'] tabular-nums font-medium text-xs px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                          <span className="inline-flex items-center tabular-nums font-medium text-xs px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
                             {row.variance}
                           </span>
                         </td>
@@ -1547,10 +1547,10 @@ export function CaseDetailsView({
           <article
             key="slide-3"
             id={anchorId}
-            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
+            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
           >
             {/* Top Ambient Header Banner */}
-            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-canvas/95 via-surface-tint/90 to-tile/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1581,7 +1581,7 @@ export function CaseDetailsView({
                     <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Action Progress
                     </span>
-                    <span className="text-xl sm:text-2xl font-['Archivo'] tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xl sm:text-2xl tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
                       {completedCount} of {totalActions} Complete
                     </span>
                     <span className="block text-[11px] text-muted-foreground pt-0.5">
@@ -1602,7 +1602,7 @@ export function CaseDetailsView({
             </div>
 
             {/* Bottom Content Area: Action Items */}
-            <div className="p-6 sm:p-8 bg-white dark:bg-zinc-900 flex-1 space-y-4">
+            <div className="p-6 sm:p-8 bg-surface dark:bg-zinc-900 flex-1 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <CheckSquare className="size-4.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -1637,7 +1637,7 @@ export function CaseDetailsView({
                           }}
                           className={`mt-0.5 size-5 rounded-lg border flex items-center justify-center transition shrink-0 cursor-pointer shadow-2xs ${isDone
                             ? "bg-emerald-600 border-emerald-600 text-white"
-                            : "border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800"
+                            : "border-slate-300 bg-surface dark:border-zinc-600 dark:bg-zinc-800"
                             }`}
                           aria-label={`Mark action ${idx + 1} as ${isDone ? "incomplete" : "complete"}`}
                         >
@@ -1678,10 +1678,10 @@ export function CaseDetailsView({
           <article
             key="slide-4"
             id={anchorId}
-            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
+            className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
           >
             {/* Top Ambient Header Banner */}
-            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="p-6 sm:p-8 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-canvas/95 via-surface-tint/90 to-tile/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1709,7 +1709,7 @@ export function CaseDetailsView({
             </div>
 
             {/* Telemetry Table */}
-            <div className="p-4 sm:p-6 bg-white dark:bg-zinc-900 flex-1 space-y-3">
+            <div className="p-4 sm:p-6 bg-surface dark:bg-zinc-900 flex-1 space-y-3">
               <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <Activity className="size-4 text-brand-blue shrink-0" />
@@ -1722,7 +1722,7 @@ export function CaseDetailsView({
                 </span>
               </div>
 
-              <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs rounded-xl">
+              <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 bg-surface dark:bg-zinc-900 shadow-2xs rounded-xl">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-200 font-semibold text-[11px] uppercase tracking-wider">
@@ -1739,18 +1739,18 @@ export function CaseDetailsView({
                         key={idx}
                         className={`transition-colors ${
                           idx % 2 === 0
-                            ? "bg-white dark:bg-zinc-900"
+                            ? "bg-surface dark:bg-zinc-900"
                             : "bg-slate-50/80 dark:bg-zinc-800/40"
                         } hover:bg-slate-100/70 dark:hover:bg-zinc-800/70`}
                       >
-                        <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-xs font-semibold text-foreground whitespace-nowrap">{row.branchId}</td>
+                        <td className="px-3.5 py-2 tabular-nums text-xs font-semibold text-foreground whitespace-nowrap">{row.branchId}</td>
                         <td className="px-3.5 py-2 text-xs font-medium text-foreground whitespace-nowrap">{row.categoryItem}</td>
                         <td className="px-3.5 py-2 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
                             {row.issueDetected}
                           </span>
                         </td>
-                        <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-right text-xs font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                        <td className="px-3.5 py-2 tabular-nums text-right text-xs font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
                           {row.financialImpact}
                         </td>
                         <td className="px-3.5 py-2 text-xs text-foreground/80">{row.driver}</td>
@@ -1762,7 +1762,7 @@ export function CaseDetailsView({
                       <td colSpan={3} className="px-3.5 py-2 text-[11px] uppercase tracking-wider text-muted-foreground">
                         Total Sampled Exposure
                       </td>
-                      <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-right text-xs text-rose-600 dark:text-rose-400 font-bold whitespace-nowrap">
+                      <td className="px-3.5 py-2 tabular-nums text-right text-xs text-rose-600 dark:text-rose-400 font-bold whitespace-nowrap">
                         {currentTelemetry.totalExposure}
                       </td>
                       <td className="px-3.5 py-2 text-[11px] text-muted-foreground">
@@ -1791,10 +1791,10 @@ export function CaseDetailsView({
       <article
         key="slide-methodology"
         id={anchorId}
-        className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
+        className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden flex flex-col shadow-xs"
       >
         {/* Top Header Banner */}
-        <div className="p-6 sm:p-7 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+        <div className="p-6 sm:p-7 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-canvas/95 via-surface-tint/90 to-tile/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
           <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
 
@@ -1811,7 +1811,7 @@ export function CaseDetailsView({
         </div>
 
         {/* Content Area */}
-        <div className="p-6 sm:p-8 bg-white dark:bg-zinc-900 space-y-6">
+        <div className="p-6 sm:p-8 bg-surface dark:bg-zinc-900 space-y-6">
           {/* Visual Data Lineage & Report Generation Architecture */}
           <ReportPipelineDiagram
             caseId={activeCaseId || (customCase?.id ?? "case-1")}
@@ -1822,8 +1822,8 @@ export function CaseDetailsView({
             {item.paragraphs.map((para, pIdx) => (
               <p
                 key={pIdx}
-                style={{ color: "#41485e", lineHeight: 1.75 }}
-                className="text-sm sm:text-[15px] text-[#41485e] dark:text-slate-200 font-normal"
+                style={{ color: "var(--muted-foreground)", lineHeight: 1.75 }}
+                className="text-sm sm:text-[15px] text-ink-line dark:text-slate-200 font-normal"
               >
                 {para}
               </p>
@@ -2052,7 +2052,7 @@ export function CaseDetailsView({
               {hasThreeCircledUpdates && updatesForActiveCase && updatesForActiveCase.length > 0 && (
                 <section
                   id="slide-updates"
-                  className="rounded-3xl border border-sky-200/90 dark:border-sky-900/50 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden"
+                  className="rounded-3xl border border-sky-200/90 dark:border-sky-900/50 bg-surface dark:bg-zinc-900 shadow-sm overflow-hidden"
                 >
                   {/* Card Header with Update Pill */}
                   <div className="px-6 py-4.5 sm:px-8 border-b border-sky-100 dark:border-zinc-800/80 bg-linear-to-r from-sky-50/80 via-blue-50/40 to-transparent dark:from-sky-950/30 dark:via-zinc-900 dark:to-transparent flex flex-wrap items-center justify-between gap-3">
@@ -2102,8 +2102,8 @@ export function CaseDetailsView({
 
                         {/* Supporting context */}
                         <p
-                          style={{ color: "#41485e" }}
-                          className="text-sm sm:text-[15px] leading-relaxed text-[#41485e] dark:text-slate-300 font-normal"
+                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-sm sm:text-[15px] leading-relaxed text-ink-line dark:text-slate-300 font-normal"
                         >
                           {upd.subtext}
                         </p>
@@ -2120,7 +2120,7 @@ export function CaseDetailsView({
               <div id="case-conversation-box" className="pt-4 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-px bg-slate-200 dark:bg-zinc-800 flex-1" />
-                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-zinc-900 text-brand-blue border border-slate-200/90 dark:border-zinc-800 shadow-2xs">
+                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-surface dark:bg-zinc-900 text-brand-blue border border-slate-200/90 dark:border-zinc-800 shadow-2xs">
                     <MessageSquare className="size-3.5" />
                     <span>Follow-up Discussion {messages.length > 0 ? `(${messages.length})` : ""}</span>
                   </span>
@@ -2150,7 +2150,7 @@ export function CaseDetailsView({
                           key={i}
                           type="button"
                           onClick={() => handleSendMessage(undefined, sugg)}
-                          className="px-3.5 py-1.5 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-brand-blue/60 text-xs font-medium text-foreground hover:text-brand-blue transition cursor-pointer shadow-2xs"
+                          className="px-3.5 py-1.5 rounded-full bg-surface dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-brand-blue/60 text-xs font-medium text-foreground hover:text-brand-blue transition cursor-pointer shadow-2xs"
                         >
                           "{sugg}"
                         </button>
@@ -2171,7 +2171,7 @@ export function CaseDetailsView({
                         </div>
                       ) : (
                         <div key={m.id} className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-200">
-                          <div className="max-w-3xl w-full rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs space-y-3">
+                          <div className="max-w-3xl w-full rounded-2xl sm:rounded-3xl bg-surface dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs space-y-3">
                             <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
                               <div className="flex items-center gap-2">
                                 <div className="size-6 rounded-lg bg-brand-blue/10 text-brand-blue flex items-center justify-center">
@@ -2194,7 +2194,7 @@ export function CaseDetailsView({
                     {/* Agent Thinking / Calculating Indicator */}
                     {isAiReplying && (
                       <div className="flex justify-start animate-in fade-in duration-200">
-                        <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 px-5 py-3.5 shadow-xs flex items-center gap-3">
+                        <div className="rounded-2xl sm:rounded-3xl bg-surface dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 px-5 py-3.5 shadow-xs flex items-center gap-3">
                           <div className="size-6 rounded-lg bg-brand-blue/10 text-brand-blue flex items-center justify-center animate-pulse">
                             <Sparkles className="size-3.5" />
                           </div>

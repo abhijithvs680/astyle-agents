@@ -91,7 +91,7 @@ export function AIAssistantDefaultView({
 
         {/* Chat Box Container (Clean input area with send button only) */}
         <div
-          className={`w-full rounded-[22px] bg-white dark:bg-zinc-900 border transition-all duration-200 p-3.5 sm:p-4 shadow-xs ${isFocused
+          className={`w-full rounded-[22px] bg-surface dark:bg-zinc-900 border transition-all duration-200 p-3.5 sm:p-4 shadow-xs ${isFocused
               ? "border-blue-400 ring-2 ring-blue-100 dark:ring-blue-950 shadow-sm"
               : "border-[#bfdbfe] hover:border-blue-300 dark:border-blue-900/60"
             }`}
@@ -105,7 +105,7 @@ export function AIAssistantDefaultView({
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 placeholder={t("chatInput.continueAsk", { defaultValue: "Continue, ask anything" })}
-                className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-slate-400 dark:placeholder:text-zinc-500 outline-none py-1"
+                className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-slate-500 dark:placeholder:text-zinc-500 outline-none py-1"
               />
             </div>
 
@@ -133,9 +133,9 @@ export function AIAssistantDefaultView({
               key={idx}
               type="button"
               onClick={() => handleSuggestionClick(suggestion)}
-              className="group w-full flex items-center gap-2.5 text-left text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-foreground transition-colors py-1 cursor-pointer"
+              className="group w-full flex items-center gap-2.5 text-left text-xs sm:text-sm text-slate-600 dark:text-slate-500 hover:text-foreground transition-colors py-1 cursor-pointer"
             >
-              <ArrowRight className="size-3.5 text-slate-400 dark:text-zinc-500 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+              <ArrowRight className="size-3.5 text-slate-500 dark:text-zinc-500 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
               <span className="leading-snug">
                 <TranslatableText text={suggestion} />
               </span>

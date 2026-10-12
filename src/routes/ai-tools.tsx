@@ -102,7 +102,7 @@ Ready to commit and deploy this schema definition to your active data center bra
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground flex flex-col">
       {/* Header matching CXO app */}
-      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-ink border-b border-ink-line flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <Link
             to="/ask-ai"

@@ -270,7 +270,7 @@ function FoldersPage() {
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header (Fixed on scroll) */}
-      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-ink border-b border-ink-line flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <Link
             to="/ask-ai"
@@ -611,7 +611,7 @@ function FoldersPage() {
                   value={folderName}
                   onChange={(e) => setFolderName(e.target.value)}
                   placeholder="e.g. Surgical Services, Trauma Triage..."
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  className="w-full rounded-xl border border-border/80 bg-surface dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
@@ -624,7 +624,7 @@ function FoldersPage() {
                   value={folderDepartment}
                   onChange={(e) => setFolderDepartment(e.target.value)}
                   placeholder="e.g. Surgery & Anesthesia"
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  className="w-full rounded-xl border border-border/80 bg-surface dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
@@ -637,7 +637,7 @@ function FoldersPage() {
                   value={folderDescription}
                   onChange={(e) => setFolderDescription(e.target.value)}
                   placeholder="Brief description of the cases to be grouped here..."
-                  className="w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs resize-none"
+                  className="w-full rounded-xl border border-border/80 bg-surface dark:bg-zinc-900 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs resize-none"
                 />
               </div>
 

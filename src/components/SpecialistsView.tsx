@@ -28,12 +28,19 @@ function statusStyle(status: string | null): string {
   return "bg-slate-100 text-slate-600 ring-slate-200";
 }
 
-export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
+export function SpecialistsView({
+  refreshKey,
+  initialAgentId = null,
+}: {
+  refreshKey: number;
+  /** Opened directly, e.g. from a report's agent pill. */
+  initialAgentId?: string | null;
+}) {
   const { t } = useLanguage();
   const [specialists, setSpecialists] = useState<Array<Specialist>>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialAgentId);
   const [search, setSearch] = useState("");
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(initialAgentId !== null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -153,9 +160,14 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
       .then((items) => {
         if (!current) return;
         setSpecialists(items);
-        setSelectedId((previous) =>
-          items.some((item) => item.id === previous) ? previous : (items[0]?.id ?? null),
-        );
+        setSelectedId((previous) => {
+          const requested =
+            initialAgentId !== null && items.some((item) => item.id === initialAgentId)
+              ? initialAgentId
+              : null;
+          if (requested !== null) return requested;
+          return items.some((item) => item.id === previous) ? previous : (items[0]?.id ?? null);
+        });
       })
       .catch((reason: unknown) => {
         if (!current) return;
@@ -169,7 +181,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
     return () => {
       current = false;
     };
-  }, [refreshKey, reloadKey]);
+  }, [refreshKey, reloadKey, initialAgentId]);
 
   useEffect(() => {
     if (selectedId === null) return;
@@ -213,14 +225,14 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
   }, [specialists, search]);
 
   return (
-    <div className="flex min-h-0 flex-1 bg-[#eaf5f8]">
+    <div className="flex min-h-0 flex-1 bg-canvas">
       <aside
-        className={`flex w-full shrink-0 flex-col border-r border-slate-200 bg-white lg:w-[370px] ${isDetailOpen ? "hidden lg:flex" : "flex"}`}
+        className={`flex w-full shrink-0 flex-col border-r border-slate-200 bg-surface lg:w-[370px] ${isDetailOpen ? "hidden lg:flex" : "flex"}`}
       >
-        <div className="border-b border-slate-200 px-5 py-5">
+        <div className="border-b border-slate-200 px-5 pt-14 pb-5 lg:pt-5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-9 place-items-center rounded-xl bg-cyan-50 text-[#0e7490]">
+              <span className="grid size-9 place-items-center rounded-xl bg-cyan-50 text-accent-clay">
                 <UsersRound className="size-5" aria-hidden="true" />
               </span>
               <div>
@@ -235,20 +247,20 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
               onClick={() => setReloadKey((value) => value + 1)}
               aria-label={t("specialists.refresh", { defaultValue: "Refresh specialists" })}
               title={t("specialists.refresh", { defaultValue: "Refresh specialists" })}
-              className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0e7490]"
+              className="grid size-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-accent-clay"
             >
               <RefreshCw className={`size-4 ${isLoading ? "animate-spin" : ""}`} />
             </button>
           </div>
           <div className="relative mt-4">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t("specialists.searchPlaceholder", { defaultValue: "Search specialists" })}
               aria-label={t("specialists.searchPlaceholder", { defaultValue: "Search specialists" })}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-9 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/15"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-9 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-accent-clay focus:ring-2 focus:ring-accent-clay/15"
             />
           </div>
         </div>
@@ -266,7 +278,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
               <button
                 type="button"
                 onClick={() => setReloadKey((value) => value + 1)}
-                className="mt-3 font-semibold text-[#0e7490] hover:underline"
+                className="mt-3 font-semibold text-accent-clay hover:underline"
               >
                 {t("specialists.tryAgain", { defaultValue: "Try again" })}
               </button>
@@ -294,7 +306,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                   className={`w-full rounded-xl border p-4 text-left transition ${
                     selectedId === item.id
                       ? "border-cyan-400 bg-cyan-50 shadow-sm"
-                      : "border-slate-200 bg-white hover:border-cyan-200 hover:bg-slate-50"
+                      : "border-slate-200 bg-surface hover:border-cyan-200 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -308,7 +320,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                     )}
                   </div>
                   {item.role !== null && (
-                    <p className="mt-1 text-xs font-medium text-[#0e7490]"><TranslatableText text={item.role} /></p>
+                    <p className="mt-1 text-xs font-medium text-accent-clay"><TranslatableText text={item.role} /></p>
                   )}
                   {item.description !== null && (
                     <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-600">
@@ -323,7 +335,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
       </aside>
 
       <section
-        className={`min-h-0 min-w-0 flex-1 flex-col bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] ${isDetailOpen ? "flex" : "hidden lg:flex"}`}
+        className={`min-h-0 min-w-0 flex-1 flex-col bg-gradient-to-b from-canvas via-canvas-mid to-canvas-deep ${isDetailOpen ? "flex" : "hidden lg:flex"}`}
       >
         {selectedId === null ? (
           <div className="flex h-full items-center justify-center text-center text-sm text-slate-500">
@@ -334,13 +346,13 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
             <button
               type="button"
               onClick={() => setIsDetailOpen(false)}
-              className="mx-4 mt-4 inline-flex items-center gap-1.5 self-start text-sm font-medium text-[#0e7490] lg:hidden"
+              className="mx-4 mt-4 inline-flex items-center gap-1.5 self-start text-sm font-medium text-accent-clay lg:hidden"
             >
               <ArrowLeft className="size-4" /> {t("specialists.backToSpecialists", { defaultValue: "Back to specialists" })}
             </button>
             <div
               ref={conversationScrollRef}
-              className="subtle-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6"
+              className="subtle-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pt-14 pb-6 sm:px-6"
             >
               <div className="mx-auto max-w-[58rem]">
                 {conversationsError !== null ? (
@@ -349,7 +361,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                     <button
                       type="button"
                       onClick={() => setConversationReloadKey((value) => value + 1)}
-                      className="mt-3 font-semibold text-[#0e7490] hover:underline"
+                      className="mt-3 font-semibold text-accent-clay hover:underline"
                     >
                       {t("specialists.tryAgain", { defaultValue: "Try again" })}
                     </button>
@@ -368,7 +380,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                     {visibleTurns.map((turn) => (
                       <div key={turn.id} className="space-y-4">
                         <div className="flex justify-end">
-                          <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                          <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
                             <span><TranslatableText text={turn.query} /></span>
                             <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                               <User className="size-3.5" aria-hidden="true" />
@@ -388,7 +400,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                 )}
               </div>
             </div>
-            <div className="pointer-events-none shrink-0 bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 to-transparent px-4 pt-8 pb-4 sm:px-6">
+            <div className="pointer-events-none shrink-0 bg-gradient-to-t from-canvas-deep via-canvas-deep/90 to-transparent px-4 pt-8 pb-4 sm:px-6">
               <form
                 onFocus={() => setIsComposerFocused(true)}
                 onBlur={(event) => {
@@ -397,10 +409,10 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                   }
                 }}
                 onSubmit={sendMessage}
-                className={`pointer-events-auto mx-auto flex items-center gap-3 rounded-2xl border-2 border-slate-300 bg-white px-4 py-2 shadow-md transition-all hover:border-slate-400 hover:shadow-lg focus-within:border-[#0e7490] focus-within:ring-4 focus-within:ring-[#0e7490]/20 sm:rounded-full sm:px-5 ${isComposerFocused || draft.trim() ? "max-w-3xl" : "max-w-2xl"}`}
+                className={`pointer-events-auto mx-auto flex items-center gap-3 rounded-2xl border-2 border-slate-300 bg-surface px-4 py-2 shadow-md transition-all hover:border-slate-400 hover:shadow-lg focus-within:border-accent-clay focus-within:ring-4 focus-within:ring-accent-clay/20 sm:rounded-full sm:px-5 ${isComposerFocused || draft.trim() ? "max-w-3xl" : "max-w-2xl"}`}
               >
                 <Search
-                  className="size-5 shrink-0 text-[#0e7490] stroke-[2.2]"
+                  className="size-5 shrink-0 text-accent-clay stroke-[2.2]"
                   aria-hidden="true"
                 />
                 <input
@@ -409,14 +421,14 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                   onChange={(event) => updateDraft(event.target.value)}
                   placeholder={t("specialists.askPlaceholder", { defaultValue: "Ask this specialist a question..." })}
                   aria-label={t("specialists.askPlaceholder", { defaultValue: "Ask this specialist a question..." })}
-                  className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500 sm:text-base"
                 />
                 {draft !== "" && (
                   <button
                     type="button"
                     onClick={() => updateDraft("")}
                     aria-label={t("specialists.clearMessage", { defaultValue: "Clear message" })}
-                    className="rounded-full p-1 text-slate-400 transition hover:text-slate-700"
+                    className="rounded-full p-1 text-slate-500 transition hover:text-slate-700"
                   >
                     <X className="size-4" />
                   </button>
@@ -424,7 +436,7 @@ export function SpecialistsView({ refreshKey }: { refreshKey: number }) {
                 <button
                   type="submit"
                   disabled={draft.trim() === "" || isReplyPending}
-                  className="shrink-0 rounded-xl bg-[#0e7490] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0c627a] disabled:cursor-not-allowed disabled:opacity-40 sm:rounded-full sm:px-5 sm:text-sm"
+                  className="shrink-0 rounded-xl bg-accent-clay px-4 py-2 text-xs font-semibold text-white transition hover:bg-accent-clay-strong disabled:cursor-not-allowed disabled:opacity-40 sm:rounded-full sm:px-5 sm:text-sm"
                 >
                   {t("specialists.analyze", { defaultValue: "Analyze" })}
                 </button>

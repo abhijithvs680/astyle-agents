@@ -20,10 +20,10 @@ function MarkdownAnswer({ markdown }: { markdown: string }) {
 
   return (
     <div data-chat-answer-card className={`flex items-start gap-3 ${isLoading ? "opacity-80 transition-opacity" : ""}`}>
-      <div className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#0e7490] text-white shadow-2xs">
+      <div className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent-clay text-white shadow-2xs">
         <Sparkles className="size-4" aria-hidden="true" />
       </div>
-      <div className="min-w-0 max-w-2xl flex-1 rounded-2xl border border-slate-200/90 bg-white p-4 text-sm text-slate-800 shadow-2xs sm:p-5">
+      <div className="min-w-0 max-w-2xl flex-1 rounded-2xl border border-slate-200/90 bg-surface p-4 text-sm text-slate-800 shadow-2xs sm:p-5">
         <div className="break-words leading-relaxed">
           <Markdown
             remarkPlugins={[remarkGfm]}
@@ -68,7 +68,7 @@ function MarkdownAnswer({ markdown }: { markdown: string }) {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-[#0e7490] underline underline-offset-2 hover:text-[#075d73]"
+                  className="font-medium text-accent-clay underline underline-offset-2 hover:text-[#075d73]"
                 >
                   {children}
                 </a>

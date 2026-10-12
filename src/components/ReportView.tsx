@@ -16,10 +16,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Layers,
   Maximize2,
   Minus,
-  Quote,
   Table2,
   TrendingDown,
   TrendingUp,
@@ -49,6 +47,7 @@ import {
 } from "recharts";
 
 import type { Report, ReportBlock, SeriesSpec, Slice, Tone, TrendData } from "../lib/report";
+import { useAgentDirectory } from "../lib/agent-directory";
 import { useChartTheme, type ChartTheme } from "../lib/chart-theme";
 import { axisTick, compactStatValue, formatDisplayValue } from "../lib/report-format";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -90,11 +89,52 @@ const TONE_STYLES: Record<Tone, { text: string; bg: string; border: string; dot:
   },
 };
 
-const PRIORITY_STYLES: Record<string, string> = {
-  high: "bg-rose-50 border-rose-200 text-rose-700",
-  medium: "bg-amber-50 border-amber-200 text-amber-700",
-  low: "bg-tile border-border text-muted-foreground",
+/** Priority on an action card: a ring marker plus one word, never a chip. */
+const PRIORITY_DOTS: Record<string, string> = {
+  high: "border-rose-400",
+  medium: "border-amber-400",
+  low: "border-border",
 };
+
+const PRIORITY_TEXT: Record<string, string> = {
+  high: "text-rose-600",
+  medium: "text-amber-600",
+  low: "text-muted-foreground",
+};
+
+/**
+ * Short label for a section whose own eyebrow is missing or just repeats
+ * the heading.
+ *
+ * The capsule is there to say what kind of thing the section is before the
+ * heading says what it found, so echoing the heading wastes the slot.
+ */
+const COMPONENT_EYEBROW: Record<string, string> = {
+  narrative: "Context",
+  callout: "Note",
+  insightList: "Findings",
+  kpiRibbon: "Key figures",
+  table: "Detail",
+  reportBar: "Comparison",
+  groupedBar: "Comparison",
+  donut: "Breakdown",
+  pie: "Breakdown",
+  lineTrend: "Trend",
+  areaTrend: "Trend",
+  forecastTrend: "Forecast",
+  scenarioCompare: "Scenarios",
+  varianceBridge: "Variance",
+  paceTracker: "Pace",
+  radar: "Diagnostic",
+};
+
+function blockEyebrow(block: ReportBlock): string {
+  const fallback = COMPONENT_EYEBROW[block.component] ?? "Section";
+  const eyebrow = block.eyebrow?.trim();
+  if (eyebrow === undefined || eyebrow === "") return fallback;
+  // An eyebrow that only restates the heading tells the reader nothing.
+  return eyebrow.toLowerCase() === block.title.trim().toLowerCase() ? fallback : eyebrow;
+}
 
 /** Two-digit section index: "01", "02", … */
 function sectionNumber(index: number): string {
@@ -154,7 +194,7 @@ function ChartFrame({
   expanded?: boolean;
 }) {
   return (
-    <div className={expanded ? "h-[min(62vh,600px)] w-full" : "h-64 w-full sm:h-72"}>
+    <div className={expanded ? "h-[min(62vh,600px)] w-full" : "h-40 w-full sm:h-48"}>
       <ResponsiveContainer width="100%" height="100%">
         {children}
       </ResponsiveContainer>
@@ -222,10 +262,10 @@ function ReportBarChart({
         </span>
       ) : null}
 
-      <div className="overflow-x-auto pb-1">
-        <div className="min-w-[500px]">
+      <div className="no-scrollbar overflow-x-auto pb-1">
+        <div className="min-w-[300px]">
           <div
-            className={`relative flex w-full items-end justify-around px-4 pt-10 sm:px-8 ${expanded ? "h-[min(52vh,500px)]" : "h-48 sm:h-56"}`}
+            className={`relative flex w-full items-end justify-around px-4 pt-10 sm:px-8 ${expanded ? "h-[min(52vh,500px)]" : "h-32 sm:h-40"}`}
           >
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
               {[0, 1, 2, 3].map((line) => (
@@ -236,9 +276,9 @@ function ReportBarChart({
             {data.bars.map((bar) => (
               <div
                 key={bar.label}
-                className="group relative z-20 flex h-full flex-col items-center justify-end"
+                className="group relative z-20 flex h-full min-w-0 flex-1 flex-col items-center justify-end"
               >
-                <div className="mb-2 whitespace-nowrap font-numeric text-base tabular-nums text-foreground">
+                <div className="mb-2 whitespace-nowrap font-numeric-compact text-base tabular-nums text-foreground">
                   {bar.formattedValue}
                 </div>
                 <div
@@ -246,7 +286,7 @@ function ReportBarChart({
                     height: `${Math.max(4, (Math.abs(bar.value) / max) * 100)}%`,
                     background: colors.series[0],
                   }}
-                  className="w-12 rounded-t-md transition-all duration-500 sm:w-16"
+                  className="w-full max-w-10 rounded-t-md transition-all duration-500 sm:max-w-14"
                 />
               </div>
             ))}
@@ -256,7 +296,7 @@ function ReportBarChart({
 
           <div className="flex items-start justify-around px-2 pt-3 sm:px-6">
             {data.bars.map((bar) => (
-              <div key={bar.label} className="w-24 space-y-0.5 text-center sm:w-32">
+              <div key={bar.label} className="min-w-0 flex-1 space-y-0.5 px-1 text-center">
                 <span className="block truncate text-xs font-semibold leading-tight text-foreground sm:text-sm">
                   <TranslatableText text={bar.label} />
                 </span>
@@ -298,6 +338,55 @@ function KpiRibbon({ data }: { data: Extract<ReportBlock, { component: "kpiRibbo
 }
 
 type KpiCard = Extract<ReportBlock, { component: "kpiRibbon" }>["data"]["cards"][number];
+
+/**
+ * Headline figure for the summary strip: number first, then what it is.
+ *
+ * Reading order is deliberate — the figure is the point, the label only tells
+ * you which figure it was. A critical reading is set in the negative colour so
+ * the strip can be scanned without reading any of the captions.
+ */
+function StatCell({ card }: { card: KpiCard }) {
+  const { short, full } = compactStatValue(card.value);
+  const caption = card.delta ?? full;
+
+  return (
+    <div className="min-w-0">
+      <span
+        className={`block truncate whitespace-nowrap font-numeric text-[25px] leading-none sm:text-[29px] ${
+          card.deltaTone === "critical" ? "text-negative" : "text-foreground"
+        }`}
+        title={full ?? short}
+      >
+        {short}
+      </span>
+      <span
+        className="mt-2.5 block text-[10px] font-semibold uppercase leading-tight tracking-[0.13em] text-foreground/70"
+        title={card.label}
+      >
+        <TranslatableText text={card.label} />
+      </span>
+      {caption !== null && caption !== undefined ? (
+        <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+          {caption}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/** The four-up headline strip that closes the summary card. */
+function StatStrip({ cards }: { cards: Array<KpiCard> }) {
+  return (
+    <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-9 border-t border-border/70 pt-9 sm:grid-cols-4 sm:gap-x-0 sm:divide-x sm:divide-border/70">
+      {cards.map((card) => (
+        <div key={card.label} className="min-w-0 sm:px-5 sm:first:pl-0 sm:last:pr-0">
+          <StatCell card={card} />
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 function KpiCardBody({ card, valueClass }: { card: KpiCard; valueClass: string }) {
   const Icon =
@@ -368,8 +457,8 @@ function SliceChart({
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={donut ? "58%" : 0}
-                outerRadius="82%"
+                innerRadius={donut ? "66%" : 0}
+                outerRadius="88%"
                 paddingAngle={donut ? 2 : 0}
               >
                 {slices.map((slice, index) => (
@@ -386,14 +475,14 @@ function SliceChart({
 
           {donut && centerMetric !== undefined ? (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 <TranslatableText text={centerMetric.label} />
               </span>
-              <span className="font-numeric text-[28px] leading-tight tabular-nums text-foreground">
+              <span className="font-numeric text-[22px] leading-tight tabular-nums text-foreground">
                 <TranslatableText text={centerMetric.value} />
               </span>
               {centerMetric.caption !== undefined ? (
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-[10px] leading-tight text-muted-foreground">
                   <TranslatableText text={centerMetric.caption} />
                 </span>
               ) : null}
@@ -418,7 +507,7 @@ function SliceChart({
                   </span>
                 ) : null}
               </span>
-              <span className="shrink-0 font-numeric tabular-nums text-muted-foreground">
+              <span className="shrink-0 font-numeric-compact tabular-nums text-muted-foreground">
                 {slice.share !== undefined ? `${slice.share}%` : slice.value.toLocaleString()}
               </span>
             </div>
@@ -597,6 +686,33 @@ function RadarDiagnostic({
   );
 }
 
+/**
+ * A column that only counts the rows.
+ *
+ * Agents sometimes lead a table with a 1..n index. It costs a column and
+ * tells the reader nothing the row order does not, so it is dropped before
+ * the table is laid out.
+ */
+function isRowNumberColumn(
+  column: { key: string; label: string },
+  rows: Array<Record<string, unknown>>,
+): boolean {
+  const label = column.label.trim().toLowerCase().replace(/[.\s]/g, "");
+  const labelled = ["", "#", "no", "sno", "slno", "srno", "index", "row", "rowno"].includes(
+    label,
+  );
+  if (!labelled) return false;
+  // Only when the values really are the row numbers: a column called "No"
+  // could legitimately hold something else.
+  return rows.every((row, index) => {
+    const value = row[column.key];
+    return (
+      value === index + 1 ||
+      (typeof value === "string" && value.trim() === String(index + 1))
+    );
+  });
+}
+
 function DataTable({
   data,
   expanded = false,
@@ -604,17 +720,21 @@ function DataTable({
   data: Extract<ReportBlock, { component: "table" }>["data"];
   expanded?: boolean;
 }) {
+  const columns = data.columns.filter(
+    (column, index) => !(index === 0 && isRowNumberColumn(column, data.rows)),
+  );
+
   return (
     <div
-      className={`rounded-2xl border border-border/80 bg-surface ${expanded ? "max-h-[calc(90dvh-10rem)] overflow-auto" : "overflow-x-auto"}`}
+      className={`subtle-scrollbar overflow-hidden rounded-2xl border border-border/70 bg-surface ${expanded ? "max-h-[calc(90dvh-10rem)] overflow-auto" : "overflow-x-auto"}`}
     >
       <table className="w-full min-w-max text-sm">
         <thead>
-          <tr className="border-b border-border bg-tile/50">
-            {data.columns.map((column) => (
+          <tr>
+            {columns.map((column) => (
               <th
                 key={column.key}
-                className={`sticky top-0 bg-tile px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground ${
+                className={`sticky top-0 bg-foreground px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-background ${
                   column.align === "right" ? "text-right" : "text-left"
                 }`}
               >
@@ -626,10 +746,10 @@ function DataTable({
         <tbody className="divide-y divide-border/70">
           {data.rows.map((row, index) => (
             <tr key={index} className="transition-colors hover:bg-tile/40">
-              {data.columns.map((column) => (
+              {columns.map((column) => (
                 <td
                   key={column.key}
-                  className={`px-5 py-3.5 ${column.align === "right" ? "text-right font-numeric tabular-nums" : "text-left"} ${
+                  className={`px-6 py-4 ${column.align === "right" ? "text-right font-numeric-compact tabular-nums" : "text-left"} ${
                     column.emphasis === true
                       ? "font-semibold text-foreground"
                       : "text-foreground/80"
@@ -815,8 +935,8 @@ function ScenarioCompare({
   const { t } = useLanguage();
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-border/80 bg-surface">
-      <table className="w-full min-w-[520px] text-left">
+    <div className="subtle-scrollbar overflow-x-auto rounded-2xl border border-border/80 bg-surface">
+      <table className="w-full min-w-[420px] text-left">
         <thead>
           <tr className="border-b border-border bg-tile/50">
             <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -851,7 +971,7 @@ function ScenarioCompare({
                     </span>
                   ) : null}
                   {scenario.probability !== undefined ? (
-                    <span className="font-numeric text-xs tabular-nums text-muted-foreground">
+                    <span className="font-numeric-compact text-xs tabular-nums text-muted-foreground">
                       {scenario.probability}
                     </span>
                   ) : null}
@@ -865,7 +985,7 @@ function ScenarioCompare({
               {data.measures.map((measure) => (
                 <td key={measure.key} className="px-5 py-4 text-right align-top">
                   <span
-                    className={`font-numeric text-[20px] leading-none tabular-nums ${
+                    className={`font-numeric whitespace-nowrap text-[20px] leading-none tabular-nums ${
                       scenario.likeliest === true ? "text-foreground" : "text-foreground/70"
                     }`}
                   >
@@ -948,7 +1068,7 @@ function VarianceBridge({
 
   return (
     <Card>
-      <div className="h-72 w-full">
+      <div className="h-48 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={bars} margin={{ top: 20, right: 10, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
@@ -984,7 +1104,7 @@ function VarianceBridge({
             <span className="text-muted-foreground">
               <TranslatableText text={bar.label} />
             </span>
-            <span className="font-numeric tabular-nums text-foreground">{bar.formatted}</span>
+            <span className="font-numeric-compact tabular-nums text-foreground">{bar.formatted}</span>
           </span>
         ))}
       </div>
@@ -1217,39 +1337,214 @@ function canExpand(block: ReportBlock): boolean {
   ].includes(block.component);
 }
 
-/** Count pill text for the blocks where a count tells the reader something. */
-function blockCount(block: ReportBlock, t: ReturnType<typeof useLanguage>["t"]): string | null {
-  switch (block.component) {
-    case "table":
-      return t("reportView.rowCount", {
-        defaultValue: "{{count}} rows",
-        count: block.data.rows.length,
-      });
-    case "insightList":
-      return t("reportView.insightCount", {
-        defaultValue: "{{count}} insights",
-        count: block.data.items.length,
-      });
-    default:
-      return null;
-  }
+/** Spread helper: keeps `role` absent rather than explicitly undefined. */
+function optionalRole(role: string | null | undefined): { role?: string } {
+  return role === null || role === undefined || role.trim() === "" ? {} : { role };
 }
 
-// --------------------------------------------------------------- the document
+/** An agent credited on a report, as the cover pill shows it. */
+export type ReportAgent = { id: string; name: string; role?: string };
 
-/** Section frame: numbered eyebrow, serif title, optional right-side meta. */
+/** Tile tints for the stacked avatars, picked per agent so they stay stable. */
+const AGENT_TINTS = [
+  "bg-blue-100 text-blue-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-slate-200 text-slate-700",
+];
+
+function agentTint(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return AGENT_TINTS[hash % AGENT_TINTS.length]!;
+}
+
+/**
+ * Abstract marks instead of initials.
+ *
+ * Two agents often share a first letter, so an initial identified nothing; a
+ * pattern is at least reliably distinct at this size. The name is still
+ * spelled out in the list the pill opens, which is where identification
+ * actually happens.
+ */
+const AGENT_PATTERNS = [
+  // grid
+  "M0 3h12M0 6h12M0 9h12M3 0v12M6 0v12M9 0v12",
+  // diagonal hatch
+  "M-2 4L4 -2M0 10L10 0M2 14L14 2",
+  // concentric
+  "M6 1.5a4.5 4.5 0 100 9 4.5 4.5 0 100-9M6 4a2 2 0 100 4 2 2 0 100-4",
+  // dot grid
+  "M3 3h0.01M6 3h0.01M9 3h0.01M3 6h0.01M6 6h0.01M9 6h0.01M3 9h0.01M6 9h0.01M9 9h0.01",
+  // waves
+  "M0 4q1.5 -2 3 0t3 0t3 0t3 0M0 8q1.5 -2 3 0t3 0t3 0t3 0",
+];
+
+function agentPattern(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 17 + id.charCodeAt(i)) >>> 0;
+  return AGENT_PATTERNS[hash % AGENT_PATTERNS.length]!;
+}
+
+function AgentTile({ agent, className = "" }: { agent: ReportAgent; className?: string }) {
+  return (
+    <span
+      className={`grid place-items-center overflow-hidden rounded-lg ${agentTint(agent.id)} ${className}`}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 12 12" className="size-full p-[3px]">
+        <path
+          d={agentPattern(agent.id)}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.1"
+          strokeLinecap="round"
+          opacity={0.85}
+        />
+      </svg>
+    </span>
+  );
+}
+
+/**
+ * The capsule that opens every section.
+ *
+ * It carries the section's index and kind in one short line, which is what
+ * lets the heading underneath be the finding itself rather than a label.
+ */
+function SectionBadge({ num, label }: { num?: string; label: string }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-1.5 self-start rounded-full bg-section-badge px-3 py-[5px] text-[10px] font-semibold uppercase leading-none tracking-[0.13em] text-background">
+      {num !== undefined ? <span className="tabular-nums">{num}.</span> : null}
+      <span className="truncate">
+        <TranslatableText text={label} />
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Who produced this report, in place of the old status chip.
+ *
+ * The chip said "Report · Partial", which told the reader about the run
+ * rather than about the work. The agents are the more useful thing to put at
+ * the top, and each one opens its own conversation.
+ */
+function AgentsPill({
+  agents,
+  onSelectAgent,
+}: {
+  agents: Array<ReportAgent>;
+  onSelectAgent?: ((agentId: string) => void) | undefined;
+}) {
+  const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent) {
+        if (event.key === "Escape") setOpen(false);
+        return;
+      }
+      if (event.target instanceof Node && containerRef.current?.contains(event.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+
+  const label =
+    agents.length === 1
+      ? t("reportView.oneAgent", { defaultValue: "1 agent" })
+      : t("reportView.agentCount", { defaultValue: `${agents.length} agents`, count: agents.length });
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="inline-flex cursor-pointer items-center gap-2.5 rounded-full border border-border bg-surface py-1 pl-1 pr-3 shadow-xs transition-colors hover:border-foreground/25 hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <span className="flex items-center">
+          {agents.slice(0, 4).map((agent, index) => (
+            <AgentTile
+              key={agent.id}
+              agent={agent}
+              className={`size-7 ring-2 ring-surface ${index === 0 ? "" : "-ml-2"}`}
+            />
+          ))}
+        </span>
+        <span className="text-[13px] font-medium text-foreground">{label}</span>
+        <ChevronDown
+          className={`size-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
+          aria-label={t("reportView.agentsOnReport", { defaultValue: "Agents on this report" })}
+          className="absolute left-0 top-[calc(100%+0.5rem)] z-50 w-[min(22rem,calc(100vw-2.5rem))] overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150"
+        >
+          <p className="px-2.5 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">
+            {t("reportView.agentsOnReport", { defaultValue: "Agents on this report" })}
+          </p>
+          {agents.map((agent) => (
+            <button
+              key={agent.id}
+              type="button"
+              role="menuitem"
+              disabled={onSelectAgent === undefined}
+              onClick={() => {
+                setOpen(false);
+                onSelectAgent?.(agent.id);
+              }}
+              className="flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-accent disabled:cursor-default disabled:hover:bg-transparent"
+            >
+              <AgentTile agent={agent} className="mt-0.5 size-7 shrink-0" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-medium text-foreground">
+                  <TranslatableText text={agent.name} />
+                </span>
+                {agent.role !== undefined && agent.role !== "" ? (
+                  <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+                    <TranslatableText text={agent.role} />
+                  </span>
+                ) : null}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function Section({
   id,
   num,
   eyebrow,
   title,
+  lede,
   meta,
   children,
 }: {
   id: string;
-  num: string;
+  num?: string;
   eyebrow?: string;
   title: string;
+  /** One muted line under the heading — the section's point, not a recap. */
+  lede?: string;
   meta?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -1257,18 +1552,19 @@ function Section({
     <section
       id={id}
       data-report-section
-      className="scroll-mt-24 border-t border-border/70 pt-8 first:border-t-0 first:pt-0"
+      className="scroll-mt-24 rounded-3xl border border-border/60 bg-surface px-6 py-8 sm:px-10 sm:py-10"
     >
-      <header className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div className="min-w-0 space-y-1.5">
-          <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="font-mono tabular-nums text-brand-blue">{num}</span>
-            <span className="h-px w-6 bg-border" aria-hidden="true" />
-            {eyebrow !== undefined ? <TranslatableText text={eyebrow} /> : null}
-          </p>
-          <h2 className="text-[21px] font-semibold leading-[1.2] tracking-tight text-foreground sm:text-[25px]">
+      <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div className="flex min-w-0 flex-col gap-4">
+          <SectionBadge label={eyebrow ?? title} {...(num !== undefined ? { num } : {})} />
+          <h2 className="max-w-2xl text-[20px] font-medium leading-[1.3] text-foreground sm:text-[24px]">
             <TranslatableText text={title} />
           </h2>
+          {lede !== undefined && lede !== "" ? (
+            <p className="max-w-2xl text-[14px] leading-[1.75] text-muted-foreground">
+              <TranslatableText text={formatDisplayValue(lede)} />
+            </p>
+          ) : null}
         </div>
         {meta !== undefined ? <div className="shrink-0">{meta}</div> : null}
       </header>
@@ -1281,11 +1577,8 @@ function Block({ block, num }: { block: ReportBlock; num: string }) {
   const { t } = useLanguage();
   const expandable = canExpand(block);
   const contentType = block.component === "table" ? "table" : "chart";
-  const count = blockCount(block, t);
-
   const meta = (
     <div className="flex items-center gap-2">
-      {count !== null ? <CountPill label={count} /> : null}
       {expandable ? (
         <Dialog>
           <DialogTrigger asChild>
@@ -1323,18 +1616,13 @@ function Block({ block, num }: { block: ReportBlock; num: string }) {
       num={num}
       title={block.title}
       meta={meta}
-      {...(block.eyebrow !== undefined ? { eyebrow: block.eyebrow } : {})}
+      eyebrow={blockEyebrow(block)}
+      {...(block.insight !== undefined ? { lede: block.insight } : {})}
     >
       <BlockBody block={block} />
 
-      {block.insight !== undefined ? (
-        <p className="mt-5 border-l-2 border-brand-blue/40 pl-4 text-[15px] leading-relaxed text-foreground/80">
-          <TranslatableText text={formatDisplayValue(block.insight)} />
-        </p>
-      ) : null}
-
       {block.dataSources !== undefined && block.dataSources.length > 0 ? (
-        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+        <div className="mt-7 flex flex-wrap items-center gap-2">
           {block.dataSources.map((source) => (
             <span
               key={source}
@@ -1353,53 +1641,49 @@ function Block({ block, num }: { block: ReportBlock; num: string }) {
 /** Collapsible methodology panel: numbered steps, source chips, evidence. */
 function EvidencePanel({
   id,
+  num,
   method,
 }: {
   id: string;
+  num: string;
   method: NonNullable<Report["howDataFound"]>;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const { t } = useLanguage();
 
   return (
     <section
       id={id}
       data-report-section
-      className="scroll-mt-24 rounded-2xl border border-border/80 bg-tile/30"
+      className="scroll-mt-24 rounded-3xl border border-border/60 bg-surface px-6 py-8 sm:px-10 sm:py-10"
     >
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left transition-colors hover:bg-tile/50 sm:px-6"
-      >
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-border bg-surface">
-            <Layers className="size-4 text-brand-blue" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-foreground">
-              {t("reportView.evidence", { defaultValue: "Evidence" })}
-            </h3>
-            <p className="truncate text-xs text-muted-foreground">
-              {t("reportView.howDataFound", { defaultValue: "How the data was found" })}
-            </p>
-          </div>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div className="flex min-w-0 flex-col gap-4">
+          <SectionBadge num={num} label={t("reportView.evidence", { defaultValue: "Evidence" })} />
+          <h2 className="text-[20px] font-medium leading-[1.25] text-foreground sm:text-[24px]">
+            {t("reportView.howDataFound", { defaultValue: "How the data was found" })}
+          </h2>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={`${id}-detail`}
+          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/70 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+        >
           {open
             ? t("reportView.hide", { defaultValue: "Hide" })
             : t("reportView.show", { defaultValue: "Show" })}
           {open ? (
-            <ChevronUp className="size-4" aria-hidden="true" />
+            <ChevronUp className="size-3.5" aria-hidden="true" />
           ) : (
-            <ChevronDown className="size-4" aria-hidden="true" />
+            <ChevronDown className="size-3.5" aria-hidden="true" />
           )}
-        </span>
-      </button>
+        </button>
+      </div>
 
       {open ? (
-        <div className="space-y-6 px-5 pb-6 pt-1 sm:px-6">
+        <div id={`${id}-detail`} className="mt-8 space-y-8">
           {method.summary !== "" ? (
             <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
               <TranslatableText text={formatDisplayValue(method.summary)} />
@@ -1477,7 +1761,7 @@ function ForecastMetaStrip({ meta }: { meta: NonNullable<Report["forecastMeta"]>
   }
 
   return (
-    <section className="border-b border-border/70 bg-tile/30 px-5 py-5 sm:px-7">
+    <section className="rounded-3xl border border-border/60 bg-surface px-6 py-8 sm:px-10 sm:py-10">
       <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
         {facts.map((fact) => (
           <div key={fact.label} className="min-w-0">
@@ -1523,135 +1807,19 @@ function ForecastMetaStrip({ meta }: { meta: NonNullable<Report["forecastMeta"]>
   );
 }
 
-type NavSection = { id: string; label: string };
-
-/**
- * Sticky jump bar. Clicking scrolls to a section; the active chip follows the
- * reader. An IntersectionObserver is used rather than a scroll handler because
- * the report does not own its scroll container — it sits inside the chat
- * stream, and on a dedicated page it sits inside the page scroller.
- */
-function SectionNav({ sections }: { sections: Array<NavSection> }) {
-  const [activeId, setActiveId] = useState<string>(sections[0]?.id ?? "");
-  const { t } = useLanguage();
-
-  // Keyed on the ids, not the array: `sections` is rebuilt on every render
-  // (its labels run through `t`), so depending on its identity would re-bind
-  // the listener continuously.
-  const sectionKey = sections.map((section) => section.id).join("|");
-
-  useEffect(() => {
-    const ids = sectionKey === "" ? [] : sectionKey.split("|");
-    if (ids.length === 0) return;
-
-    /**
-     * Measured from the elements rather than with an IntersectionObserver:
-     * the report does not own its scroll container — it sits inside the chat
-     * stream on one page and inside the page scroller on another — and this
-     * stays correct wherever it is mounted, with no root to configure.
-     */
-    const update = () => {
-      // The last section whose top has passed under the nav is the one being
-      // read; before any has, the first section stays active.
-      let current = ids[0]!;
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el === null) continue;
-        if (el.getBoundingClientRect().top <= 120) current = id;
-      }
-
-      // The final sections are short enough that their tops may never reach
-      // the threshold, so at the end of the scroll the last one wins outright.
-      const last = document.getElementById(ids[ids.length - 1]!);
-      if (last !== null && last.getBoundingClientRect().bottom <= window.innerHeight + 8) {
-        current = ids[ids.length - 1]!;
-      }
-
-      setActiveId(current);
-    };
-
-    update();
-    // Capture phase: scroll does not bubble, so a listener on the document
-    // only sees it this way, whichever ancestor happens to be scrolling.
-    document.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-    return () => {
-      document.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-    };
-  }, [sectionKey]);
-
-  const jump = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    setActiveId(id);
-  };
-
-  return (
-    <nav
-      aria-label={t("reportView.sectionNav", { defaultValue: "Report sections" })}
-      className="no-scrollbar sticky top-0 z-20 -mx-5 mb-2 flex items-center gap-1.5 overflow-x-auto border-b border-border/70 bg-surface/85 px-5 py-2.5 backdrop-blur-xl sm:-mx-7 sm:px-7"
-    >
-      {sections.map((section, index) => (
-        <NavChip
-          key={section.id}
-          section={section}
-          index={index}
-          isActive={activeId === section.id}
-          onSelect={jump}
-        />
-      ))}
-    </nav>
-  );
-}
-
-/**
- * One jump chip.
- *
- * A component rather than markup inside the map because the label is block
- * text from the agent and has to go through `useTranslate` — in Japanese the
- * section headings translate, and a chip row still in English would not match
- * what the reader is scrolling through.
- */
-function NavChip({
-  section,
-  index,
-  isActive,
-  onSelect,
+export function ReportView({
+  report,
+  planAgents,
+  onSelectAgent,
 }: {
-  section: NavSection;
-  index: number;
-  isActive: boolean;
-  onSelect: (id: string) => void;
+  report: Report;
+  /** The roster the run was dispatched with, when the caller still has it. */
+  planAgents?: Array<ReportAgent> | undefined;
+  onSelectAgent?: ((agentId: string) => void) | undefined;
 }) {
-  const { text: label } = useTranslate(section.label);
-
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(section.id)}
-      aria-current={isActive ? "true" : undefined}
-      title={label}
-      className={`inline-flex max-w-[11rem] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
-        isActive
-          ? "border border-blue-200/80 bg-blue-50 font-semibold text-blue-700 shadow-2xs"
-          : "border border-transparent text-muted-foreground hover:bg-tile hover:text-foreground"
-      }`}
-    >
-      <span
-        className={`inline-flex size-4 items-center justify-center rounded-full text-[10px] font-bold tabular-nums transition-colors ${
-          isActive ? "bg-blue-600 text-white" : "bg-tile text-muted-foreground"
-        }`}
-      >
-        {index + 1}
-      </span>
-      <span className="truncate">{label}</span>
-    </button>
-  );
-}
-
-export function ReportView({ report }: { report: Report }) {
   const { t } = useLanguage();
   const rootRef = useRef<HTMLElement>(null);
+  const directory = useAgentDirectory();
 
   // The template tells agents to lead with a kpiRibbon. When they do, it
   // belongs to the cover as a headline strip rather than as a section of its
@@ -1664,33 +1832,42 @@ export function ReportView({ report }: { report: Report }) {
     return [null, report.blocks] as const;
   }, [report.blocks]);
 
+  /**
+   * Who to credit.
+   *
+   * The plan is the better source when the caller has it — it is the roster
+   * the run was actually dispatched with. A report read back from history
+   * has no plan in memory, so the block `agentId`s stand in; either way the
+   * catalog supplies the name, falling back to the id so an unresolvable
+   * agent is still listed rather than silently dropped.
+   */
+  const agents = useMemo<Array<ReportAgent>>(() => {
+    const ids =
+      planAgents !== undefined && planAgents.length > 0
+        ? planAgents.map((agent) => agent.id)
+        : report.blocks
+            .map((block) => block.agentId)
+            .filter((id): id is string => id !== undefined);
+
+    const seen = new Set<string>();
+    const list: Array<ReportAgent> = [];
+    for (const id of ids) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const fromPlan = planAgents?.find((agent) => agent.id === id);
+      const fromCatalog = directory.get(id);
+      list.push({
+        id,
+        name: fromCatalog?.title ?? fromPlan?.name ?? id,
+        ...optionalRole(fromCatalog?.role ?? fromPlan?.role),
+      });
+    }
+    return list;
+  }, [planAgents, report.blocks, directory]);
+
   const summaryId = `${report.sessionId}-summary`;
   const evidenceId = `${report.sessionId}-evidence`;
   const actionsId = `${report.sessionId}-actions`;
-
-  const sections = useMemo<Array<NavSection>>(() => {
-    const list: Array<NavSection> = [];
-    if (report.executiveSummary !== undefined) {
-      list.push({ id: summaryId, label: t("reportView.summary", { defaultValue: "Summary" }) });
-    }
-    for (const block of bodyBlocks) list.push({ id: block.id, label: block.title });
-    if (report.howDataFound !== undefined) {
-      list.push({ id: evidenceId, label: t("reportView.evidence", { defaultValue: "Evidence" }) });
-    }
-    if (report.recommendations.length > 0) {
-      list.push({ id: actionsId, label: t("reportView.actions", { defaultValue: "Actions" }) });
-    }
-    return list;
-  }, [
-    bodyBlocks,
-    report.executiveSummary,
-    report.howDataFound,
-    report.recommendations.length,
-    summaryId,
-    evidenceId,
-    actionsId,
-    t,
-  ]);
 
   // Numbering runs across the whole document, so the nav chip index and the
   // section's own eyebrow number agree.
@@ -1701,61 +1878,37 @@ export function ReportView({ report }: { report: Report }) {
     <article
       ref={rootRef}
       data-report-card
-      className="mb-5 overflow-hidden rounded-[28px] border border-border/80 bg-surface shadow-sm animate-in fade-in duration-300"
+      className="mb-6 rounded-[28px] border border-border bg-report-canvas p-4 shadow-sm animate-in fade-in duration-300 sm:p-7"
     >
-      {/* Cover */}
-      <div className="border-b border-border/70 bg-[radial-gradient(120%_120%_at_100%_0%,var(--color-blue-50)_0%,transparent_55%)] px-5 pb-7 pt-7 sm:px-7 sm:pb-8 sm:pt-9">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          <span className="text-brand-blue">
-            {t("reportView.reportLabel", { defaultValue: "Report" })}
-          </span>
-          {report.status === "partial" ? (
-            <>
-              <span className="size-1 rounded-full bg-border" aria-hidden="true" />
-              <span>{t("reportView.partial", { defaultValue: "Partial" })}</span>
-            </>
-          ) : null}
+      {/* Cover: sits on the page tint, not in a card, so the title reads as the
+          document's own rather than as the first section's. */}
+      <header className="px-1 py-0 sm:px-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Who produced this, in place of the old report/partial chips. */}
+          {agents.length > 0 ? (
+            <AgentsPill agents={agents} onSelectAgent={onSelectAgent} />
+          ) : (
+            <SectionBadge label={t("reportView.reportLabel", { defaultValue: "Report" })} />
+          )}
         </div>
 
-        <h1 className="mt-4 max-w-4xl text-[27px] font-semibold leading-[1.12] tracking-tight text-foreground sm:text-[34px]">
+        <h1 className="mt-5 max-w-3xl text-[27px] font-medium leading-[1.2] text-foreground sm:text-[33px]">
           <TranslatableText text={report.reportTitle} />
         </h1>
 
-        {report.executiveSummary !== undefined && report.executiveSummary.headline !== "" ? (
-          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
-            <TranslatableText text={formatDisplayValue(report.executiveSummary.headline)} />
+        {report.executiveSummary !== undefined && report.executiveSummary.narrative !== "" ? (
+          <p className="mt-4 max-w-2xl text-[14px] leading-[1.75] text-muted-foreground">
+            <TranslatableText text={formatDisplayValue(report.executiveSummary.narrative)} />
           </p>
         ) : null}
-      </div>
+      </header>
 
-      {report.forecastMeta !== undefined ? <ForecastMetaStrip meta={report.forecastMeta} /> : null}
+      <div className="pt-4">
+        <div className="space-y-5 pt-2 sm:space-y-6">
+          {report.forecastMeta !== undefined ? (
+            <ForecastMetaStrip meta={report.forecastMeta} />
+          ) : null}
 
-      {/* Headline numbers */}
-      {coverKpis !== null && coverKpis.data.cards.length > 0 ? (
-        <dl
-          className={`grid grid-cols-1 divide-y divide-border/70 border-b border-border/70 sm:divide-x sm:divide-y-0 ${
-            coverKpis.data.cards.length === 2
-              ? "sm:grid-cols-2"
-              : coverKpis.data.cards.length === 3
-                ? "sm:grid-cols-3"
-                : "sm:grid-cols-2 lg:grid-cols-4"
-          }`}
-        >
-          {coverKpis.data.cards.map((card) => (
-            <div key={card.label} className="min-w-0 px-5 py-6 sm:px-7">
-              <KpiCardBody
-                card={card}
-                valueClass="font-numeric text-[32px] sm:text-[38px] leading-none tracking-tight tabular-nums text-foreground"
-              />
-            </div>
-          ))}
-        </dl>
-      ) : null}
-
-      <div className="px-5 pb-8 sm:px-7">
-        {sections.length > 1 ? <SectionNav sections={sections} /> : null}
-
-        <div className="space-y-10 pt-6">
           {report.status === "error" ? (
             <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden="true" />
@@ -1780,50 +1933,44 @@ export function ReportView({ report }: { report: Report }) {
               eyebrow={t("reportView.executiveSummary", { defaultValue: "Executive summary" })}
               title={report.executiveSummary.headline}
             >
-              <div className="grid grid-cols-1 gap-7 lg:grid-cols-12 lg:gap-10">
-                <div className="min-w-0 space-y-4 lg:col-span-7">
-                  {report.executiveSummary.narrative !== "" ? (
-                    <p className="text-[16px] leading-[1.7] text-foreground/90 sm:text-[17px]">
-                      <TranslatableText
-                        text={formatDisplayValue(report.executiveSummary.narrative)}
+              {/* No narrative here and no pull quote: the narrative is the
+                  cover's standfirst, and the quote only ever repeated the
+                  first key finding. */}
+              {report.executiveSummary.keyFindings.length > 0 ? (
+                <ul className="grid gap-x-10 gap-y-3.5 sm:grid-cols-2">
+                  {report.executiveSummary.keyFindings.map((finding, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 text-[14px] leading-[1.7] text-foreground/85"
+                    >
+                      <CheckCircle2
+                        className="mt-[3px] size-3.5 shrink-0 text-brand-blue"
+                        aria-hidden="true"
                       />
-                    </p>
-                  ) : null}
-                  {report.executiveSummary.keyFindings.length > 0 ? (
-                    <ul className="space-y-2.5 pt-1">
-                      {report.executiveSummary.keyFindings.map((finding, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-3 text-[15px] text-foreground/85"
-                        >
-                          <CheckCircle2
-                            className="mt-0.5 size-4 shrink-0 text-brand-blue"
-                            aria-hidden="true"
-                          />
-                          <span className="leading-relaxed">
-                            <TranslatableText text={formatDisplayValue(finding)} />
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
+                      <TranslatableText text={formatDisplayValue(finding)} />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
 
-                {report.executiveSummary.keyFindings.length > 0 ? (
-                  <figure className="relative self-start rounded-2xl border border-border/70 bg-tile/60 p-6 lg:col-span-5">
-                    <Quote className="size-6 text-brand-blue/70" aria-hidden="true" />
-                    <blockquote className="mt-3 text-[19px] font-medium leading-[1.4] tracking-tight text-foreground sm:text-[20px]">
-                      <TranslatableText
-                        text={formatDisplayValue(report.executiveSummary.keyFindings[0])}
-                      />
-                    </blockquote>
-                    <figcaption className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      {t("reportView.keyFinding", { defaultValue: "Key finding" })}
-                    </figcaption>
-                  </figure>
-                ) : null}
-              </div>
+              {coverKpis !== null && coverKpis.data.cards.length > 0 ? (
+                <StatStrip cards={coverKpis.data.cards} />
+              ) : null}
             </Section>
+          ) : null}
+
+          {/* Headline figures ride in the summary card. Without one they still
+              need a home, so they get a card of their own. */}
+          {report.executiveSummary === undefined &&
+          coverKpis !== null &&
+          coverKpis.data.cards.length > 0 ? (
+            <section className="rounded-3xl border border-border/60 bg-surface px-6 py-8 sm:px-10 sm:py-10">
+              <SectionBadge
+                num={nextNum()}
+                label={t("reportView.headlineFigures", { defaultValue: "Headline figures" })}
+              />
+              <StatStrip cards={coverKpis.data.cards} />
+            </section>
           ) : null}
 
           {/* Body */}
@@ -1833,7 +1980,7 @@ export function ReportView({ report }: { report: Report }) {
 
           {/* Evidence */}
           {report.howDataFound !== undefined ? (
-            <EvidencePanel id={evidenceId} method={report.howDataFound} />
+            <EvidencePanel id={evidenceId} num={nextNum()} method={report.howDataFound} />
           ) : null}
 
           {/* Recommendations */}
@@ -1844,33 +1991,39 @@ export function ReportView({ report }: { report: Report }) {
               eyebrow={t("reportView.nextSteps", { defaultValue: "Next steps" })}
               title={t("reportView.recommendations", { defaultValue: "Recommendations" })}
             >
-              <div className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/80 bg-surface">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {report.recommendations.map((item, index) => (
-                  <div key={index} className="flex items-start gap-4 p-5">
-                    <span className="mt-0.5 font-numeric text-[22px] leading-none tabular-nums text-blue-200">
-                      {sectionNumber(index)}
-                    </span>
+                  <div
+                    key={index}
+                    className="flex items-start gap-3.5 rounded-2xl border border-border/70 bg-surface-tint/70 p-5 sm:p-6"
+                  >
+                    <span
+                      className={`mt-[3px] size-3.5 shrink-0 rounded-full border-2 ${
+                        PRIORITY_DOTS[item.priority] ?? PRIORITY_DOTS["low"]
+                      }`}
+                      aria-hidden="true"
+                    />
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[15px] font-semibold text-foreground">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="text-[14px] font-semibold text-foreground">
                           <TranslatableText text={item.title} />
                         </span>
                         <span
-                          className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
-                            PRIORITY_STYLES[item.priority] ?? PRIORITY_STYLES["low"]
+                          className={`text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                            PRIORITY_TEXT[item.priority] ?? PRIORITY_TEXT["low"]
                           }`}
                         >
                           {item.priority}
                         </span>
-                        {item.owner !== undefined ? (
-                          <span className="text-[11px] font-medium text-muted-foreground">
-                            <TranslatableText text={item.owner} />
-                          </span>
-                        ) : null}
                       </div>
                       {item.detail !== "" ? (
-                        <p className="mt-1.5 text-sm leading-relaxed text-foreground/80">
+                        <p className="mt-2 text-[14px] leading-[1.7] text-muted-foreground">
                           <TranslatableText text={formatDisplayValue(item.detail)} />
+                        </p>
+                      ) : null}
+                      {item.owner !== undefined ? (
+                        <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                          <TranslatableText text={item.owner} />
                         </p>
                       ) : null}
                     </div>
@@ -1883,30 +2036,42 @@ export function ReportView({ report }: { report: Report }) {
           {/* Appendix */}
           {report.appendix !== undefined &&
           (report.appendix.dataGaps.length > 0 || report.appendix.assumptions.length > 0) ? (
-            <section className="grid gap-5 border-t border-border/70 pt-7 md:grid-cols-2">
+            <section className="grid gap-5 md:grid-cols-2">
               {report.appendix.dataGaps.length > 0 ? (
-                <div className="rounded-2xl border border-amber-200/70 bg-amber-50/50 p-5">
-                  <h4 className="eyebrow text-amber-700">
+                <div className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+                  <h4 className="eyebrow">
                     {t("reportView.dataGaps", { defaultValue: "Data gaps" })}
                   </h4>
-                  <ul className="mt-2.5 space-y-2">
+                  <ul className="mt-4 space-y-3">
                     {report.appendix.dataGaps.map((gap, index) => (
-                      <li key={index} className="text-[13px] leading-relaxed text-foreground/80">
-                        <TranslatableText text={formatDisplayValue(gap)} />
+                      <li
+                        key={index}
+                        className="flex items-start gap-2.5 text-[14px] leading-[1.75] text-foreground/80"
+                      >
+                        <span className="mt-[0.6rem] size-1.5 shrink-0 rounded-full bg-amber-500" />
+                        <span>
+                          <TranslatableText text={formatDisplayValue(gap)} />
+                        </span>
                       </li>
                     ))}
                   </ul>
                 </div>
               ) : null}
               {report.appendix.assumptions.length > 0 ? (
-                <div className="rounded-2xl border border-border/80 bg-tile/40 p-5">
+                <div className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
                   <h4 className="eyebrow">
                     {t("reportView.assumptions", { defaultValue: "Assumptions" })}
                   </h4>
-                  <ul className="mt-2.5 space-y-2">
+                  <ul className="mt-4 space-y-3">
                     {report.appendix.assumptions.map((assumption, index) => (
-                      <li key={index} className="text-[13px] leading-relaxed text-foreground/80">
-                        <TranslatableText text={formatDisplayValue(assumption)} />
+                      <li
+                        key={index}
+                        className="flex items-start gap-2.5 text-[14px] leading-[1.75] text-foreground/80"
+                      >
+                        <span className="mt-[0.6rem] size-1.5 shrink-0 rounded-full bg-border" />
+                        <span>
+                          <TranslatableText text={formatDisplayValue(assumption)} />
+                        </span>
                       </li>
                     ))}
                   </ul>

@@ -24,9 +24,12 @@ const noop = () => {
 export function ConversationList({
   entries,
   isLoading,
+  onSelectAgent,
 }: {
   entries: Array<ConversationEntry>;
   isLoading: boolean;
+  /** Opens an agent from a stored report’s agent pill. */
+  onSelectAgent?: ((agentId: string) => void) | undefined;
 }) {
   const { t } = useLanguage();
 
@@ -56,7 +59,9 @@ export function ConversationList({
       {entries.map((entry) => {
         if (entry.kind === "report") {
           const report = toReport(safeParse(entry.reportJson), "");
-          return report === null ? null : <ReportView key={entry.id} report={report} />;
+          return report === null ? null : (
+            <ReportView key={entry.id} report={report} onSelectAgent={onSelectAgent} />
+          );
         }
 
         if (entry.kind === "chat") {
@@ -77,7 +82,7 @@ export function ConversationList({
             <div key={entry.id}>
               {entry.showPrompt && plan.prompt !== "" ? (
                 <div className="mb-4 flex justify-end">
-                  <div className="max-w-xl rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                  <div className="max-w-xl rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
                     <TranslatableText text={plan.prompt} />
                   </div>
                 </div>
@@ -110,7 +115,7 @@ export function ConversationList({
             className={`flex ${entry.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-xl whitespace-pre-line rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm shadow-2xs ${
+              className={`max-w-xl whitespace-pre-line rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm shadow-2xs ${
                 entry.role === "user" ? "font-medium text-slate-900" : "text-slate-700"
               }`}
             >

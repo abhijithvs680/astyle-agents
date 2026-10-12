@@ -61,7 +61,7 @@ import { ConversationList } from "./ConversationList";
 import { ChatResponseCard } from "./ChatResponseCard";
 import { SpecialistsView } from "./SpecialistsView";
 import { ReportPlanCard, type ContinueStage } from "./ReportPlanCard";
-import { ReportView } from "./ReportView";
+import { ReportView, type ReportAgent } from "./ReportView";
 import { useSocket } from "./SocketProvider";
 import { parseReportEvent, REPORT_EVENT, type Report } from "../lib/report";
 import { CHAT_RESPONSE_EVENT, parseChatResponseEvent, type ChatAnswer } from "../lib/chat-response";
@@ -226,7 +226,7 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           value: 2.8,
           formattedValue: "₹2.8 Cr",
           subtext: "124 days avg age · ↓ 42% sales",
-          color: "bg-[#0e7490]",
+          color: "bg-accent-clay",
         },
         {
           label: "Women's Kurti",
@@ -1386,7 +1386,7 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           value: 42.6,
           formattedValue: "42.6%",
           subtext: "₹12.8 Cr/mo revenue contribution",
-          color: "bg-[#0e7490]",
+          color: "bg-accent-clay",
         },
         {
           label: "Coimbatore Mill Sourcing Share",
@@ -1667,7 +1667,7 @@ export const cxoStructuredAnswers: Record<string, CxoStructuredAnswer> = {
           label: "Core Sizes (S, M, L, XL)",
           value: "3,270 pcs (38.8%)",
           percentage: 38.8,
-          color: "bg-[#0e7490]",
+          color: "bg-accent-clay",
         },
       ],
       bars: [
@@ -2892,15 +2892,38 @@ function readPendingAnalysis(): PendingAnalysis | null {
   }
 }
 
+/**
+ * A pending request to focus the question field, held outside the component.
+ *
+ * The sidebar logo can be clicked from /specialists, which unmounts this
+ * component on the way to /ask-ai — so the request has to outlive the
+ * instance that made it.
+ */
+let wantsAskFocus = false;
+
+/**
+ * Set when the sidebar logo asks for a blank question.
+ *
+ * Navigating to /ask-ai remounts this component, and a fresh mount reopens
+ * whatever run is still in flight. That is right after a reload and wrong
+ * here, so the logo leaves this behind for the next mount to honour. Like
+ * the focus request it is cleared on a timer, so a click that does not
+ * remount anything cannot suppress a genuine restore later.
+ */
+let skipPendingRestore = false;
+
 export function CxoDashboard({
   initialView = "chat",
   initialSessions = [],
   initialHistoryOpen = false,
+  initialAgentId = null,
 }: {
   initialView?: "chat" | "inbox";
   /** Session history from the API. The sidebar has no other source. */
   initialSessions?: HistorySession[];
   initialHistoryOpen?: boolean;
+  /** An agent to open straight away, e.g. from a report's agent pill. */
+  initialAgentId?: string | null;
 }) {
   const navigate = useNavigate();
 
@@ -2956,6 +2979,10 @@ export function CxoDashboard({
   );
   const geminiTimersRef = useRef<NodeJS.Timeout[]>([]);
   const askAiHeroScrollRef = useRef<HTMLDivElement>(null);
+  /* Whichever of the two question fields is mounted: the hero field on an
+     empty session, the composer once a conversation exists. */
+  const heroInputRef = useRef<HTMLInputElement | null>(null);
+  const composerInputRef = useRef<HTMLInputElement | null>(null);
   const conversationStreamRef = useRef<HTMLDivElement>(null);
   const activeTurnRef = useRef<HTMLDivElement>(null);
   const continueTurnRef = useRef<HTMLDivElement>(null);
@@ -3163,6 +3190,75 @@ export function CxoDashboard({
     setPastTurns([]);
   };
 
+  /**
+   * Put the caret in the question field.
+   *
+   * A request, not an action: navigating to /ask-ai is async, so the field
+   * usually does not exist yet when the click ends. `attachAskInput` claims
+   * the request when a field mounts; the frame below covers the case where
+   * one is already mounted and so never re-attaches. The timer makes sure a
+   * request that is never claimed cannot steal focus later.
+   */
+  const focusAskInput = () => {
+    wantsAskFocus = true;
+    requestAnimationFrame(() => {
+      if (!wantsAskFocus) return;
+      const node = heroInputRef.current ?? composerInputRef.current;
+      if (node === null) return;
+      wantsAskFocus = false;
+      node.focus();
+    });
+    window.setTimeout(() => {
+      wantsAskFocus = false;
+    }, 1500);
+  };
+
+  const attachAskInput =
+    (ref: React.RefObject<HTMLInputElement | null>) => (node: HTMLInputElement | null) => {
+      ref.current = node;
+      if (node === null || !wantsAskFocus) return;
+      wantsAskFocus = false;
+      node.focus();
+    };
+
+  /** The enabled agents on a plan, in the shape the report pill wants. */
+  const planRoster = (plan: ReportPlan | null): Array<ReportAgent> | undefined =>
+    plan === null
+      ? undefined
+      : plan.agents
+          .filter((agent) => agent.isEnabled)
+          .map((agent) => ({ id: agent.id, name: agent.name, role: agent.role }));
+
+  /** A report's agent pill: open that agent's own conversation. */
+  const handleOpenAgent = (agentId: string) => {
+    void navigate({ to: "/specialists", search: { agent: agentId } });
+  };
+
+  /**
+   * The sidebar logo: back to Ask AI, ready to type.
+   *
+   * Deliberately not `handleGoToAskAi`, which reopens a run that is still
+   * in flight — that is right for the Chat button but wrong here, where the
+   * whole point is to get to a blank question. The run is driven by the
+   * socket and its pending markers survive, so it keeps going and is still
+   * reachable from history; nothing here has to wait for it.
+   */
+  const handleLogoClick = () => {
+    skipPendingRestore = true;
+    window.setTimeout(() => {
+      skipPendingRestore = false;
+    }, 1500);
+    handleNewSession();
+    const resetScroll = () => {
+      askAiHeroScrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      conversationStreamRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+    resetScroll();
+    requestAnimationFrame(resetScroll);
+    void navigate({ to: "/ask-ai", search: { history: undefined } });
+    focusAskInput();
+  };
+
   const handleGoToAskAi = () => {
     const pendingAnalysisForSession = readPendingAnalysis();
     const pendingReportSession = readPendingReportSession();
@@ -3208,6 +3304,13 @@ export function CxoDashboard({
 
   useEffect(() => {
     if (initialView !== "chat" || restoredPendingActivityRef.current) return;
+    // The logo asked for a blank question. The run keeps going and stays in
+    // history; it just does not get to reclaim the screen.
+    if (skipPendingRestore) {
+      skipPendingRestore = false;
+      restoredPendingActivityRef.current = true;
+      return;
+    }
     const pendingAnalysisForSession = readPendingAnalysis();
     const pendingReportSession = readPendingReportSession();
     const pendingSessionId = pendingAnalysisForSession?.sessionId ?? pendingReportSession;
@@ -3255,6 +3358,25 @@ export function CxoDashboard({
   const [isReportFormatMode, setIsReportFormatMode] = useState(true);
   const [logoRotation, setLogoRotation] = useState(0);
   const { language, setLanguage, t } = useLanguage();
+
+  /* Copy for the two modes. Deep insights produces a report, chat answers in
+     place, so the same field is labelled for the thing it is about to do. */
+  const askLabel = isReportFormatMode
+    ? t("hero.analyze", { defaultValue: "Analyze" })
+    : t("hero.ask", { defaultValue: "Ask" });
+  const heroTitle = isReportFormatMode
+    ? t("hero.title", { defaultValue: "What should AI analyze?" })
+    : t("hero.askTitle", { defaultValue: "What would you like to ask?" });
+  const heroPlaceholder = isReportFormatMode
+    ? t("hero.inputPlaceholder", {
+        defaultValue: "Ask anything (e.g. Products creating highest inventory exposure...)",
+      })
+    : t("hero.askInputPlaceholder", {
+        defaultValue: "Ask a question about your data...",
+      });
+  const followUpPlaceholder = isReportFormatMode
+    ? t("chatInput.followUp", { defaultValue: "Ask follow-up question or instruct AI..." })
+    : t("chatInput.askFollowUp", { defaultValue: "Ask anything about this answer..." });
   const currentUser = useCurrentUser();
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
@@ -4475,7 +4597,7 @@ export function CxoDashboard({
               <div className="absolute size-24 rounded-full bg-sky-400/20 blur-xl animate-pulse" />
               <div className="relative size-20 flex items-center justify-center">
                 <img
-                  src="/flower-logo.png"
+                  src="/flower-logo.svg"
                   alt="Loading..."
                   className="size-16 sm:size-18 object-contain animate-spin select-none"
                   style={{ animationDuration: "2.8s" }}
@@ -4502,7 +4624,7 @@ export function CxoDashboard({
                   className={`size-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                     connectingStep >= 1
                       ? "bg-emerald-500 text-white shadow-2xs"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
+                      : "bg-slate-100 text-slate-500 border border-slate-200"
                   }`}
                 >
                   {connectingStep >= 1 ? (
@@ -4512,7 +4634,7 @@ export function CxoDashboard({
                   )}
                 </div>
                 <span
-                  className={connectingStep >= 1 ? "text-slate-800 font-medium" : "text-slate-400"}
+                  className={connectingStep >= 1 ? "text-slate-800 font-medium" : "text-slate-500"}
                 >
                   Analyzing apparel inventory & merchandising query...
                 </span>
@@ -4525,7 +4647,7 @@ export function CxoDashboard({
                       ? "bg-emerald-500 text-white shadow-2xs"
                       : connectingStep === 1
                         ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
-                        : "bg-slate-100 text-slate-400 border border-slate-200"
+                        : "bg-slate-100 text-slate-500 border border-slate-200"
                   }`}
                 >
                   {connectingStep >= 2 ? (
@@ -4542,7 +4664,7 @@ export function CxoDashboard({
                       ? "text-slate-800 font-medium"
                       : connectingStep === 1
                         ? "text-slate-700 font-medium"
-                        : "text-slate-400"
+                        : "text-slate-500"
                   }
                 >
                   Routing to Merchandising & Inventory Agents...
@@ -4556,7 +4678,7 @@ export function CxoDashboard({
                       ? "bg-emerald-500 text-white shadow-2xs"
                       : connectingStep === 2
                         ? "bg-sky-50 text-sky-600 border border-sky-300 ring-2 ring-sky-100"
-                        : "bg-slate-100 text-slate-400 border border-slate-200"
+                        : "bg-slate-100 text-slate-500 border border-slate-200"
                   }`}
                 >
                   {connectingStep >= 3 ? (
@@ -4573,7 +4695,7 @@ export function CxoDashboard({
                       ? "text-slate-800 font-medium"
                       : connectingStep === 2
                         ? "text-slate-700 font-medium"
-                        : "text-slate-400"
+                        : "text-slate-500"
                   }
                 >
                   Synthesizing SKU sell-through, stock & store telemetry...
@@ -4584,99 +4706,103 @@ export function CxoDashboard({
         </div>
       )}
 
-      {/* UNIFIED TOP HEADER - IDENTICAL ON ASK ASTYLE & INBOX */}
-      <header
+      {/* ACCOUNT CLUSTER - there is no header bar and no wordmark any more, so
+          the language switcher and the signed-in identity float over the
+          workspace at the top right. It fades with the rest of the chat chrome
+          so a long report is never read around it. */}
+      <div
         aria-hidden={activeView === "chat" && !showChatChrome}
         inert={activeView === "chat" && !showChatChrome}
-        className={`sticky top-0 z-40 shrink-0 bg-ink flex items-center justify-between px-3 sm:px-6 gap-3 transition-[height,opacity] duration-200 ${
-          activeView === "chat" && !showChatChrome
-            ? "h-0 overflow-hidden border-b-0 opacity-0"
-            : "h-12 overflow-visible border-b border-white/10 opacity-100"
+        className={`absolute right-3 top-3 z-40 flex items-center gap-1.5 rounded-full border border-border/60 bg-surface/75 py-1 pr-1 pl-1.5 shadow-xs backdrop-blur-md transition-opacity duration-200 sm:right-5${
+          activeView === "chat" && !showChatChrome ? " opacity-0" : " opacity-100"
         }`}
       >
-        <div className="flex items-center gap-3 shrink-0">
+        <div ref={languageMenuRef} className="relative">
           <button
             type="button"
-            onClick={handleGoToAskAi}
-            className="text-base sm:text-lg font-extrabold tracking-wider text-white hover:text-sky-200 transition cursor-pointer flex items-center whitespace-nowrap select-none"
-            title="ASTYLE — Go to Chat"
+            onClick={() => setIsLanguageMenuOpen((open) => !open)}
+            aria-haspopup="menu"
+            aria-expanded={isLanguageMenuOpen}
+            aria-label="Choose language"
+            className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-foreground transition-colors hover:bg-tile focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
-            ASTYLE
+            <Languages className="size-3.5 text-muted-foreground" aria-hidden="true" />
+            <span>{language === "ja" ? "日本語" : "English"}</span>
+            <ChevronDown
+              className={`size-3.5 text-muted-foreground transition-transform ${isLanguageMenuOpen ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
           </button>
-        </div>
 
-        <div className="flex-1" />
-
-        {/* Profile on right top end */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div ref={languageMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setIsLanguageMenuOpen((open) => !open)}
-              aria-haspopup="menu"
-              aria-expanded={isLanguageMenuOpen}
-              aria-label="Choose language"
-              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-sky-200/35 bg-white/10 px-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:border-sky-100/60 hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
+          {isLanguageMenuOpen && (
+            <div
+              role="menu"
+              aria-label="Language options"
+              className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-36 overflow-hidden rounded-xl border border-border bg-popover p-1.5 text-sm shadow-xl animate-in fade-in zoom-in-95 duration-150"
             >
-              <Languages className="size-3.5 text-sky-200" aria-hidden="true" />
-              <span>{language === "ja" ? "日本語" : "English"}</span>
-              <ChevronDown
-                className={`size-3.5 text-sky-200 transition-transform ${isLanguageMenuOpen ? "rotate-180" : ""}`}
-                aria-hidden="true"
-              />
-            </button>
-
-            {isLanguageMenuOpen && (
-              <div
-                role="menu"
-                aria-label="Language options"
-                className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-36 overflow-hidden rounded-xl border border-border bg-popover p-1.5 text-sm shadow-xl animate-in fade-in zoom-in-95 duration-150"
-              >
-                {[
-                  { value: "en" as const, label: "English" },
-                  { value: "ja" as const, label: "日本語" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={language === option.value}
-                    onClick={() => {
-                      setLanguage(option.value);
-                      setIsLanguageMenuOpen(false);
-                    }}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left font-medium transition-colors ${
-                      language === option.value
-                        ? "bg-chip-active text-chip-active-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    }`}
-                  >
-                    <span>{option.label}</span>
-                    {language === option.value ? (
-                      <Check className="size-3.5" aria-hidden="true" />
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="text-right hidden sm:block">
-            <p className="text-xs font-medium leading-none text-white">{currentUser.name}</p>
-            <p className="text-[10px] text-sky-200/70 mt-0.5">{currentUser.email}</p>
-          </div>
-          <span className="grid size-7 sm:size-8 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-xs sm:text-sm font-medium text-white shadow-xs">
-            {currentUser.initial}
-          </span>
+              {[
+                { value: "en" as const, label: "English" },
+                { value: "ja" as const, label: "日本語" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={language === option.value}
+                  onClick={() => {
+                    setLanguage(option.value);
+                    setIsLanguageMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left font-medium transition-colors ${
+                    language === option.value
+                      ? "bg-chip-active text-chip-active-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  {language === option.value ? (
+                    <Check className="size-3.5" aria-hidden="true" />
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </header>
+        <span className="hidden h-4 w-px bg-border/70 sm:block" aria-hidden="true" />
+        <div className="hidden pr-0.5 text-right sm:block">
+          <p className="text-xs font-medium leading-none text-foreground">{currentUser.name}</p>
+          <p className="mt-0.5 text-[10px] leading-none text-muted-foreground">
+            {currentUser.email}
+          </p>
+        </div>
+        <span className="grid size-7 place-items-center rounded-full bg-[oklch(0.68_0.15_55)] text-xs font-medium text-white shadow-xs">
+          {currentUser.initial}
+        </span>
+      </div>
 
       {/* MAIN CONTAINER WITH UNIFIED NAVIGATION RAIL */}
       <div className="relative flex flex-1 min-h-0 overflow-hidden">
         {/* Navigation Rail - SAME across both views */}
         <nav
           aria-label="Main menu"
-          className="flex w-14 md:w-[72px] shrink-0 flex-col items-center gap-2 pt-3 border-r border-border dark:border-zinc-800 overflow-visible bg-surface z-10"
+          className="flex w-14 md:w-[72px] shrink-0 flex-col items-center gap-2 overflow-visible bg-transparent pt-3 z-10"
         >
+          {/* Logo: the shortest path back to a blank question. */}
+          <div className="group relative mb-1 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={handleLogoClick}
+              aria-label={t("nav.newQuestion", { defaultValue: "ASTYLE — ask a new question" })}
+              className="grid size-12 cursor-pointer place-items-center rounded-full transition-colors duration-200 hover:bg-tile focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <img src="/flower-logo.svg" alt="" className="size-7 object-contain" />
+            </button>
+            <div className="pointer-events-none absolute left-[calc(100%+12px)] z-50 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-all duration-150 group-hover:translate-x-0.5 group-hover:opacity-100">
+              {t("nav.newQuestion", { defaultValue: "ASTYLE — ask a new question" })}
+              <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+            </div>
+          </div>
+
           {/* Chat */}
           <div className="relative group flex items-center justify-center">
             <button
@@ -4773,7 +4899,7 @@ export function CxoDashboard({
               /* ASK ASTYLE CHAT HERO VIEW */
               <div
                 ref={askAiHeroScrollRef}
-                className="subtle-scrollbar relative min-h-0 flex-1 snap-y snap-proximity scroll-smooth overflow-x-hidden overflow-y-auto bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5] px-4 text-foreground"
+                className="subtle-scrollbar relative min-h-0 flex-1 snap-y snap-proximity scroll-smooth overflow-x-hidden overflow-y-auto bg-gradient-to-b from-canvas via-canvas-mid to-canvas-deep px-4 text-foreground"
               >
                 {/* Subtle Ambient Radial Orbs contained inside */}
                 <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
@@ -4782,13 +4908,15 @@ export function CxoDashboard({
                 <div className="relative z-10 flex min-h-full w-full snap-start flex-col items-center justify-center py-6">
                   <div
                     className={`w-full flex flex-col items-center text-center py-2 transition-all duration-300 ease-out ${
-                      isSearchFocused || chatQuery.trim() ? "max-w-2xl sm:max-w-3xl" : "max-w-xl"
+                      isSearchFocused || chatQuery.trim()
+                        ? "max-w-3xl sm:max-w-4xl"
+                        : "max-w-2xl sm:max-w-3xl"
                     }`}
                   >
                     {/* Flower Logo above title */}
                     <div className="flex items-center justify-center mb-3 sm:mb-4 group">
                       <img
-                        src="/flower-logo.png"
+                        src="/flower-logo.svg"
                         alt="Logo"
                         onClick={() => {
                           setLogoRotation((prev) => prev + 60);
@@ -4803,22 +4931,22 @@ export function CxoDashboard({
                     {/* Title: What should AI analyze? with bottom spacing */}
                     <h1
                       style={{ fontWeight: 400 }}
-                      className="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-[#142a38] leading-tight select-none mb-3 sm:mb-4"
+                      className="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-foreground leading-tight select-none mb-3 sm:mb-4"
                     >
-                      {t("hero.title", { defaultValue: "What should AI analyze?" })}
+                      {heroTitle}
                     </h1>
 
                     {/* Centered Search Card with Top-Docked Deep Insights / Chat Mode Toggle */}
                     <div className="w-full space-y-3.5 flex flex-col items-center">
                       {/* Mode Toggle Switch docked close on top of search box */}
                       <div className="relative z-20 -mb-2.5 sm:-mb-3">
-                        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white border border-slate-300 shadow-xs">
+                        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-surface border border-slate-300 shadow-xs">
                           <button
                             type="button"
                             onClick={() => setIsReportFormatMode(true)}
                             className={`text-xs sm:text-sm transition-all cursor-pointer ${
                               isReportFormatMode
-                                ? "font-semibold text-[#0e7490]"
+                                ? "font-semibold text-accent-clay"
                                 : "font-normal text-slate-500 hover:text-slate-800"
                             }`}
                           >
@@ -4836,7 +4964,7 @@ export function CxoDashboard({
                             }
                           >
                             <span
-                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out mt-px ${
+                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-accent-clay shadow-sm transition duration-200 ease-in-out mt-px ${
                                 isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
                               }`}
                             />
@@ -4847,7 +4975,7 @@ export function CxoDashboard({
                             onClick={() => setIsReportFormatMode(false)}
                             className={`text-xs sm:text-sm transition-all cursor-pointer ${
                               !isReportFormatMode
-                                ? "font-semibold text-[#0e7490]"
+                                ? "font-semibold text-accent-clay"
                                 : "font-normal text-slate-500 hover:text-slate-800"
                             }`}
                           >
@@ -4867,23 +4995,24 @@ export function CxoDashboard({
                           e.preventDefault();
                           handleAskQuestion();
                         }}
-                        className="w-full relative shadow-lg hover:shadow-xl rounded-2xl sm:rounded-full bg-white border-2 border-slate-300 hover:border-slate-400 focus-within:border-[#0e7490] focus-within:ring-4 focus-within:ring-[#0e7490]/20 flex items-center px-4 sm:px-5 py-2 sm:py-2.5 gap-3 transition-all ring-1 ring-black/5"
+                        className="w-full relative shadow-lg hover:shadow-xl rounded-2xl sm:rounded-full bg-surface border-2 border-slate-300 hover:border-slate-400 focus-within:border-accent-clay focus-within:ring-4 focus-within:ring-accent-clay/20 flex items-center px-4 sm:px-5 py-2 sm:py-2.5 gap-3 transition-all ring-1 ring-black/5"
                       >
-                        <Search className="size-5 text-[#0e7490] shrink-0 stroke-[2.2]" />
+                        <Search className="size-5 text-accent-clay shrink-0 stroke-[2.2]" />
                         <input
+                          ref={attachAskInput(heroInputRef)}
                           type="text"
                           value={chatQuery}
                           onFocus={() => setIsSearchFocused(true)}
                           onClick={() => setIsSearchFocused(true)}
                           onChange={(e) => setChatQuery(e.target.value)}
-                          placeholder={t("hero.inputPlaceholder", { defaultValue: "Ask anything (e.g. Products creating highest inventory exposure...)" })}
-                          className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
+                          placeholder={heroPlaceholder}
+                          className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-500 outline-none font-normal"
                         />
                         {chatQuery && (
                           <button
                             type="button"
                             onClick={() => setChatQuery("")}
-                            className="text-slate-400 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
+                            className="text-slate-500 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
                             aria-label="Clear search"
                           >
                             <X className="size-4" />
@@ -4892,9 +5021,9 @@ export function CxoDashboard({
                         <button
                           type="submit"
                           disabled={!chatQuery.trim() && !isVoiceActive}
-                          className="px-5 sm:px-6 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
+                          className="px-5 sm:px-6 py-2 rounded-xl sm:rounded-full bg-accent-clay hover:bg-accent-clay-strong disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
                         >
-                          {t("hero.analyze", { defaultValue: "Analyze" })}
+                          {askLabel}
                         </button>
                       </form>
 
@@ -4907,7 +5036,7 @@ export function CxoDashboard({
                             className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-medium transition cursor-pointer shadow-sm hover:shadow active:scale-98 ${
                               isVoiceActive
                                 ? "bg-rose-600 hover:bg-rose-700 text-white animate-pulse"
-                                : "bg-[#0e7490] hover:bg-[#0c627a] text-white"
+                                : "bg-accent-clay hover:bg-accent-clay-strong text-white"
                             }`}
                           >
                             <Mic className="size-3.5 sm:size-4 text-white" />
@@ -4918,9 +5047,11 @@ export function CxoDashboard({
                     </div>
 
                     {/* Highly Readable Suggested Queries - Transparent Background */}
-                    <div className="pt-6 sm:pt-8 w-full max-w-xl flex flex-col items-center gap-2.5">
+                    <div className="flex w-full max-w-2xl flex-col items-center gap-2.5 pt-6 sm:max-w-3xl sm:pt-8">
                       <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                        {t("hero.suggestedQueries", { defaultValue: "Suggested Queries" })}
+                        {isReportFormatMode
+                          ? t("hero.suggestedQueries", { defaultValue: "Suggested Queries" })
+                          : t("hero.suggestedQuestions", { defaultValue: "Suggested Questions" })}
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
                         {suggestedQueries.map((query, idx) => (
@@ -4928,9 +5059,9 @@ export function CxoDashboard({
                             key={idx}
                             type="button"
                             onClick={() => handleAskQuestion(query)}
-                            className="px-4 py-2.5 rounded-2xl sm:rounded-full bg-transparent hover:bg-white/40 border border-slate-300 hover:border-[#0e7490]/60 text-xs sm:text-sm text-slate-800 hover:text-[#0e7490] transition cursor-pointer flex items-center gap-2.5 text-left group"
+                            className="px-4 py-2.5 rounded-2xl sm:rounded-full bg-transparent hover:bg-white/40 border border-slate-300 hover:border-accent-clay/60 text-xs sm:text-sm text-slate-800 hover:text-accent-clay transition cursor-pointer flex items-center gap-2.5 text-left group"
                           >
-                            <Sparkles className="size-3.5 text-[#0e7490] shrink-0" />
+                            <Sparkles className="size-3.5 text-accent-clay shrink-0" />
                             <span className="leading-snug font-medium line-clamp-1">
                               <TranslatableText text={query} />
                             </span>
@@ -4946,7 +5077,7 @@ export function CxoDashboard({
                     }
                     aria-label="Scroll to recent chats"
                     title="More below"
-                    className="absolute bottom-3 left-1/2 grid size-8 -translate-x-1/2 place-items-center rounded-full border border-slate-300/80 bg-white/70 text-[#0e7490] shadow-xs transition hover:bg-white hover:translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e7490]"
+                    className="absolute bottom-3 left-1/2 grid size-8 -translate-x-1/2 place-items-center rounded-full border border-slate-300/80 bg-white/70 text-accent-clay shadow-xs transition hover:bg-surface hover:translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-clay"
                   >
                     <ChevronDown className="size-4" aria-hidden="true" />
                   </button>
@@ -4954,13 +5085,13 @@ export function CxoDashboard({
 
                 <div
                   ref={recentSectionRef}
-                  className="relative z-10 mx-auto min-h-full w-full max-w-xl snap-start pb-10 pt-8 text-left"
+                  className="relative z-10 mx-auto min-h-full w-full max-w-2xl snap-start pb-10 pt-8 text-left sm:max-w-3xl"
                 >
-                  <span className="block text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <span className="block text-center text-[13px] font-semibold uppercase tracking-wider text-slate-600">
                     {t("hero.recents", { defaultValue: "Recents" })}
                   </span>
                   {sessionHistoryList.length === 0 ? (
-                    <p className="mt-2 text-center text-xs text-slate-500">{t("hero.noRecentChats", { defaultValue: "No recent chats yet" })}</p>
+                    <p className="mt-2 text-center text-[13px] text-slate-600">{t("hero.noRecentChats", { defaultValue: "No recent chats yet" })}</p>
                   ) : (
                     <div className="mt-2 flex flex-col gap-1">
                       {sessionHistoryList.map((session) => (
@@ -4968,16 +5099,16 @@ export function CxoDashboard({
                           key={session.id}
                           type="button"
                           onClick={() => handleSelectSession(session)}
-                          className="group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-[#0e7490]"
+                          className="group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-accent-clay"
                         >
                           <History
-                            className="size-3.5 shrink-0 text-[#0e7490]/70"
+                            className="size-4 shrink-0 text-accent-clay/80"
                             aria-hidden="true"
                           />
-                          <span className="min-w-0 flex-1 truncate text-sm text-slate-700 group-hover:text-[#0e7490]">
+                          <span className="min-w-0 flex-1 truncate text-[15px] text-slate-700 group-hover:text-accent-clay">
                             <TranslatableText text={session.title} />
                           </span>
-                          <span className="shrink-0 text-[11px] text-slate-400">
+                          <span className="shrink-0 text-xs text-slate-600">
                             {session.timestamp}
                           </span>
                         </button>
@@ -4988,7 +5119,7 @@ export function CxoDashboard({
               </div>
             ) : (
               /* GEMINI BEHAVIOR CONVERSATION STREAM ON HOME PAGE */
-              <div className="relative flex min-h-0 flex-1 flex-col overflow-clip bg-gradient-to-b from-[#eaf5f8] via-[#e4f1f5] to-[#def0f5]">
+              <div className="relative flex min-h-0 flex-1 flex-col overflow-clip bg-gradient-to-b from-canvas via-canvas-mid to-canvas-deep">
                 {/* Subtle Ambient Radial Orbs */}
                 <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-cyan-200/40 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-24 -right-24 size-80 rounded-full bg-teal-200/35 blur-3xl" />
@@ -4997,7 +5128,7 @@ export function CxoDashboard({
                 <div
                   ref={conversationStreamRef}
                   onScroll={handleConversationScroll}
-                  className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-6 pb-28 z-10"
+                  className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-14 pb-28 z-10"
                 >
                   <div className="mx-auto max-w-[58rem] space-y-6 pb-6">
                     {/* Stored messages are always older than turns created in
@@ -5007,6 +5138,7 @@ export function CxoDashboard({
                         <ConversationList
                           entries={conversationEntries}
                           isLoading={isLoadingConversations}
+                          onSelectAgent={handleOpenAgent}
                         />
                       </div>
                     )}
@@ -5018,7 +5150,7 @@ export function CxoDashboard({
                       >
                         {/* USER QUERY BUBBLE */}
                         <div className="flex justify-end">
-                          <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
+                          <div className="max-w-xl rounded-2xl bg-surface border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
                             <span><TranslatableText text={msg.query} /></span>
                             <div className="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-700">
                               <User className="size-3.5" />
@@ -5028,10 +5160,10 @@ export function CxoDashboard({
 
                         {!isReportFormatMode ? (
                           <div className="flex items-start gap-3">
-                            <div className="size-7 rounded-lg bg-[#0e7490] flex items-center justify-center shrink-0 text-white shadow-2xs mt-1">
+                            <div className="size-7 rounded-lg bg-accent-clay flex items-center justify-center shrink-0 text-white shadow-2xs mt-1">
                               <Sparkles className="size-4" />
                             </div>
-                            <div className="flex-1 max-w-2xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs p-4 sm:p-5 text-slate-800 text-sm space-y-3">
+                            <div className="flex-1 max-w-2xl rounded-2xl bg-surface border border-slate-200/90 shadow-2xs p-4 sm:p-5 text-slate-800 text-sm space-y-3">
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                 <h3 className="font-bold text-slate-900 text-base">
                                   <TranslatableText text={msg.structuredAnswer.reportTitle} />
@@ -5077,7 +5209,7 @@ export function CxoDashboard({
                                         <div className="space-y-5 pt-1">
                                           {/* 1. AGENTS - SIMPLE LIST VIEW (Minimum 14px font size) */}
                                           <div className="space-y-2.5">
-                                            <div className="divide-y divide-slate-200/80 rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
+                                            <div className="divide-y divide-slate-200/80 rounded-xl border border-slate-200 bg-surface shadow-2xs overflow-hidden">
                                               {plan.map((agent, index) => {
                                                 const isEditing = editingAgentId === agent.id;
 
@@ -5086,7 +5218,7 @@ export function CxoDashboard({
                                                     key={agent.id}
                                                     className={`p-4 sm:p-5 transition-colors ${
                                                       agent.isEnabled
-                                                        ? "bg-white hover:bg-slate-50/60"
+                                                        ? "bg-surface hover:bg-slate-50/60"
                                                         : "bg-slate-50/50 opacity-60"
                                                     }`}
                                                   >
@@ -5114,7 +5246,7 @@ export function CxoDashboard({
                                                                 onChange={(e) =>
                                                                   setEditedTaskText(e.target.value)
                                                                 }
-                                                                className="w-full text-sm p-3 rounded-xl border-2 border-[#0e7490] bg-white outline-none text-slate-900 resize-none shadow-inner leading-relaxed"
+                                                                className="w-full text-sm p-3 rounded-xl border-2 border-accent-clay bg-surface outline-none text-slate-900 resize-none shadow-inner leading-relaxed"
                                                                 placeholder="Customize what this agent will do in this plan..."
                                                               />
                                                               <div className="flex items-center justify-end gap-2.5">
@@ -5135,7 +5267,7 @@ export function CxoDashboard({
                                                                       agent.id,
                                                                     )
                                                                   }
-                                                                  className="px-4 py-1.5 text-sm font-semibold text-white bg-[#0e7490] hover:bg-[#0c627a] rounded-lg transition cursor-pointer shadow-2xs"
+                                                                  className="px-4 py-1.5 text-sm font-semibold text-white bg-accent-clay hover:bg-accent-clay-strong rounded-lg transition cursor-pointer shadow-2xs"
                                                                 >
                                                                   Save
                                                                 </button>
@@ -5153,7 +5285,7 @@ export function CxoDashboard({
                                                             onClick={() =>
                                                               handleStartEditAgent(agent)
                                                             }
-                                                            className="text-sm font-medium text-[#0e7490] hover:text-[#0c627a] hover:underline cursor-pointer flex items-center gap-1.5"
+                                                            className="text-sm font-medium text-accent-clay hover:text-accent-clay-strong hover:underline cursor-pointer flex items-center gap-1.5"
                                                             title="Edit agent plan"
                                                           >
                                                             <Pencil className="size-3.5" />
@@ -5171,7 +5303,7 @@ export function CxoDashboard({
                                                           }
                                                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${
                                                             agent.isEnabled
-                                                              ? "bg-[#0e7490]"
+                                                              ? "bg-accent-clay"
                                                               : "bg-slate-300"
                                                           }`}
                                                           title={
@@ -5181,7 +5313,7 @@ export function CxoDashboard({
                                                           }
                                                         >
                                                           <span
-                                                            className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out mt-0.5 ${
+                                                            className={`pointer-events-none inline-block size-5 transform rounded-full bg-surface shadow-sm transition duration-200 ease-in-out mt-0.5 ${
                                                               agent.isEnabled
                                                                 ? "translate-x-5.5"
                                                                 : "translate-x-0.5"
@@ -5208,14 +5340,14 @@ export function CxoDashboard({
                                                   value={newAgentName}
                                                   onChange={(e) => setNewAgentName(e.target.value)}
                                                   placeholder="Agent Name (e.g. Quality & Fit Inspector)"
-                                                  className="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#0e7490]"
+                                                  className="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 bg-surface outline-none focus:border-accent-clay"
                                                 />
                                                 <input
                                                   type="text"
                                                   value={newAgentRole}
                                                   onChange={(e) => setNewAgentRole(e.target.value)}
                                                   placeholder="Role Focus (e.g. Fabric Tear & Stitch Audits)"
-                                                  className="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#0e7490]"
+                                                  className="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 bg-surface outline-none focus:border-accent-clay"
                                                 />
                                               </div>
                                               <textarea
@@ -5223,7 +5355,7 @@ export function CxoDashboard({
                                                 value={newAgentTask}
                                                 onChange={(e) => setNewAgentTask(e.target.value)}
                                                 placeholder="What will this agent do in this plan? (e.g. Will inspect fabric quality certificates and audit supplier lot defect rates...)"
-                                                className="w-full text-sm p-3 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#0e7490] resize-none leading-relaxed"
+                                                className="w-full text-sm p-3 rounded-xl border border-slate-300 bg-surface outline-none focus:border-accent-clay resize-none leading-relaxed"
                                               />
                                               <div className="flex items-center justify-end gap-2.5">
                                                 <button
@@ -5236,7 +5368,7 @@ export function CxoDashboard({
                                                 <button
                                                   type="button"
                                                   onClick={() => handleAddCustomAgent(msg.id)}
-                                                  className="px-4 py-1.5 text-sm font-semibold text-white bg-[#0e7490] hover:bg-[#0c627a] rounded-xl cursor-pointer shadow-xs"
+                                                  className="px-4 py-1.5 text-sm font-semibold text-white bg-accent-clay hover:bg-accent-clay-strong rounded-xl cursor-pointer shadow-xs"
                                                 >
                                                   Add to Plan
                                                 </button>
@@ -5271,7 +5403,7 @@ export function CxoDashboard({
                                                     key={agent.id}
                                                     className="flex items-start gap-3 p-3.5"
                                                   >
-                                                    <div className="size-9 shrink-0 rounded-lg bg-white border border-amber-200 flex items-center justify-center text-base">
+                                                    <div className="size-9 shrink-0 rounded-lg bg-surface border border-amber-200 flex items-center justify-center text-base">
                                                       {agent.icon}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
@@ -5300,12 +5432,12 @@ export function CxoDashboard({
                                                       }
                                                       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
                                                         agent.isApproved
-                                                          ? "bg-[#0e7490]"
+                                                          ? "bg-accent-clay"
                                                           : "bg-slate-300"
                                                       }`}
                                                     >
                                                       <span
-                                                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow-sm transition duration-200 ${
+                                                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-surface shadow-sm transition duration-200 ${
                                                           agent.isApproved
                                                             ? "translate-x-4"
                                                             : "translate-x-0.5"
@@ -5336,7 +5468,7 @@ export function CxoDashboard({
                                                 }))
                                               }
                                               placeholder="Provide specific instructions or constraints for the agents (e.g. Focus analysis specifically on South zone retail doors, exclude promotional discounts under 20% margin, or prioritize high-ticket winter wear...)"
-                                              className="w-full text-sm p-3.5 rounded-xl border border-slate-300 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#0e7490] focus:ring-1 focus:ring-[#0e7490] transition text-slate-900 resize-none shadow-2xs leading-relaxed"
+                                              className="w-full text-sm p-3.5 rounded-xl border border-slate-300 bg-surface placeholder:text-slate-500 focus:outline-none focus:border-accent-clay focus:ring-1 focus:ring-accent-clay transition text-slate-900 resize-none shadow-2xs leading-relaxed"
                                             />
                                           </div>
 
@@ -5347,7 +5479,7 @@ export function CxoDashboard({
                                                 <button
                                                   type="button"
                                                   onClick={() => setIsAddingAgentMsgId(msg.id)}
-                                                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-white text-sm font-medium text-slate-700 hover:text-slate-900 transition cursor-pointer shadow-2xs"
+                                                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-surface text-sm font-medium text-slate-700 hover:text-slate-900 transition cursor-pointer shadow-2xs"
                                                 >
                                                   <Plus className="size-4 text-slate-500" />
                                                   <span>Add Agent</span>
@@ -5358,7 +5490,7 @@ export function CxoDashboard({
                                             <button
                                               type="button"
                                               onClick={() => handleRerunWithCustomPlan(msg)}
-                                              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0e7490] hover:bg-[#0c627a] text-white text-sm sm:text-base font-semibold transition cursor-pointer shadow-xs hover:shadow active:scale-98"
+                                              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-accent-clay hover:bg-accent-clay-strong text-white text-sm sm:text-base font-semibold transition cursor-pointer shadow-xs hover:shadow active:scale-98"
                                             >
                                               <span>Continue</span>
                                               <ArrowRight className="size-4" />
@@ -5369,7 +5501,7 @@ export function CxoDashboard({
                                     );
                                   })()}
 
-                                  <div className="rounded-2xl border border-slate-200/90 bg-white overflow-hidden shadow-xs">
+                                  <div className="rounded-2xl border border-slate-200/90 bg-surface overflow-hidden shadow-xs">
                                     {/* Top Ambient Header Banner - EXACT INBOX REPORT STYLE */}
                                     <div className="p-6 sm:p-8 border-b border-slate-200/80 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95">
                                       <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 blur-3xl" />
@@ -5520,17 +5652,17 @@ export function CxoDashboard({
                                                   setActiveEvidenceDataset(customDs);
                                                 }
                                               }}
-                                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#0e7490] hover:border-[#0e7490]/40 transition shadow-2xs cursor-pointer group"
+                                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-surface hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-800 hover:text-accent-clay hover:border-accent-clay/40 transition shadow-2xs cursor-pointer group"
                                               title="Open full width data table with search, filters and export"
                                             >
-                                              <Table2 className="size-4 text-slate-600 group-hover:text-[#0e7490]" />
+                                              <Table2 className="size-4 text-slate-600 group-hover:text-accent-clay" />
                                               <span>Open Table</span>
-                                              <ExternalLink className="size-3.5 text-slate-400 group-hover:text-[#0e7490]" />
+                                              <ExternalLink className="size-3.5 text-slate-500 group-hover:text-accent-clay" />
                                             </button>
                                           </div>
 
                                           {/* List on chat itself with clear, readable fonts */}
-                                          <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-2xs divide-y divide-slate-100">
+                                          <div className="rounded-xl border border-slate-200/90 bg-surface p-3 sm:p-4 shadow-2xs divide-y divide-slate-100">
                                             {msg.structuredAnswer.topProducts.map((p, pIdx) => (
                                               <div
                                                 key={pIdx}
@@ -5547,13 +5679,13 @@ export function CxoDashboard({
                                                   </span>
                                                 </div>
                                                 <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-                                                  <span className="font-bold text-slate-950 font-['Archivo'] tabular-nums text-sm sm:text-base">
+                                                  <span className="font-bold text-slate-950 tabular-nums text-sm sm:text-base">
                                                     {p.inventory}
                                                   </span>
                                                   <span className="text-xs sm:text-sm text-slate-500 hidden sm:inline">
                                                     {p.age}
                                                   </span>
-                                                  <span className="text-xs sm:text-sm font-bold text-rose-600 font-['Archivo'] tabular-nums">
+                                                  <span className="text-xs sm:text-sm font-bold text-rose-600 tabular-nums">
                                                     {p.salesTrend}
                                                   </span>
                                                 </div>
@@ -5570,7 +5702,7 @@ export function CxoDashboard({
                                               Aggregating Products List...
                                             </span>
                                           </div>
-                                          <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 space-y-3 shadow-2xs">
+                                          <div className="rounded-xl border border-slate-200/90 bg-surface p-3 sm:p-4 space-y-3 shadow-2xs">
                                             {[1, 2, 3].map((i) => (
                                               <div
                                                 key={i}
@@ -5610,7 +5742,7 @@ export function CxoDashboard({
                                                   </span>
                                                 </div>
 
-                                                <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
+                                                <div className="rounded-xl border border-slate-200/90 bg-surface p-4 shadow-2xs">
                                                   <div className="overflow-x-auto pb-0.5">
                                                     <div className="min-w-[400px]">
                                                       <div className="relative h-36 sm:h-40 w-full flex items-end justify-around px-3 sm:px-6 pt-6">
@@ -5635,7 +5767,7 @@ export function CxoDashboard({
                                                               key={bIdx}
                                                               className="flex flex-col items-center h-full justify-end group relative z-20"
                                                             >
-                                                              <div className="mb-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200/90 text-xs font-bold text-slate-800 shadow-2xs whitespace-nowrap tabular-nums font-['Archivo']">
+                                                              <div className="mb-1.5 px-2.5 py-0.5 rounded-full bg-surface border border-slate-200/90 text-xs font-bold text-slate-800 shadow-2xs whitespace-nowrap tabular-nums">
                                                                 {bar.formattedValue}
                                                               </div>
 
@@ -5643,7 +5775,7 @@ export function CxoDashboard({
                                                                 style={{
                                                                   height: `${colHeightPercent}%`,
                                                                 }}
-                                                                className="w-10 sm:w-14 rounded-t-lg transition-all duration-500 shadow-xs relative flex flex-col justify-start overflow-hidden bg-gradient-to-t from-[#0e7490] via-[#0891b2] to-cyan-400 border-t border-x border-cyan-200"
+                                                                className="w-10 sm:w-14 rounded-t-lg transition-all duration-500 shadow-xs relative flex flex-col justify-start overflow-hidden bg-gradient-to-t from-accent-clay via-[#0891b2] to-cyan-400 border-t border-x border-cyan-200"
                                                               >
                                                                 <div className="h-1 w-full bg-white/40 rounded-t-lg" />
                                                               </div>
@@ -5686,7 +5818,7 @@ export function CxoDashboard({
                                                 Computing Exposure Concentration Chart...
                                               </span>
                                             </div>
-                                            <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs h-38 flex items-end justify-around px-4">
+                                            <div className="rounded-xl border border-slate-200/90 bg-surface p-4 shadow-2xs h-38 flex items-end justify-around px-4">
                                               <div className="w-12 bg-slate-200 rounded-t-lg h-24" />
                                               <div className="w-12 bg-slate-200 rounded-t-lg h-32" />
                                               <div className="w-12 bg-slate-200 rounded-t-lg h-20" />
@@ -5710,7 +5842,7 @@ export function CxoDashboard({
                                               msg.structuredAnswer.reportTitle,
                                             )}
                                           </p>
-                                          <div className="border border-slate-200 rounded-xl bg-white divide-y divide-slate-100 overflow-hidden shadow-2xs">
+                                          <div className="border border-slate-200 rounded-xl bg-surface divide-y divide-slate-100 overflow-hidden shadow-2xs">
                                             <div className="px-3.5 py-2.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs sm:text-sm font-bold text-slate-800">
                                               <span>Driver</span>
                                               <span>Value</span>
@@ -5719,13 +5851,13 @@ export function CxoDashboard({
                                               <div
                                                 key={dIdx}
                                                 className={`px-3.5 py-2.5 flex items-center justify-between text-xs sm:text-sm ${
-                                                  dIdx % 2 === 0 ? "bg-white" : "bg-slate-50/70"
+                                                  dIdx % 2 === 0 ? "bg-surface" : "bg-slate-50/70"
                                                 }`}
                                               >
                                                 <span className="font-bold text-slate-900">
                                                   {d.label}
                                                 </span>
-                                                <span className="font-bold text-slate-950 font-['Archivo'] tabular-nums">
+                                                <span className="font-bold text-slate-950 tabular-nums">
                                                   {d.value}
                                                 </span>
                                               </div>
@@ -5742,7 +5874,7 @@ export function CxoDashboard({
                                             </span>
                                           </div>
                                           <div className="h-4 bg-slate-200/60 rounded w-3/4 my-1" />
-                                          <div className="border border-slate-200 rounded-xl bg-white p-3 space-y-2.5 shadow-2xs">
+                                          <div className="border border-slate-200 rounded-xl bg-surface p-3 space-y-2.5 shadow-2xs">
                                             <div className="h-4 bg-slate-200 rounded w-full" />
                                             <div className="h-4 bg-slate-100 rounded w-full" />
                                             <div className="h-4 bg-slate-100 rounded w-full" />
@@ -5847,7 +5979,7 @@ export function CxoDashboard({
                                               Tracing Audit Trail & Lineage Pipeline...
                                             </span>
                                           </div>
-                                          <div className="rounded-xl border border-slate-200/90 bg-white p-4 space-y-2.5 shadow-2xs">
+                                          <div className="rounded-xl border border-slate-200/90 bg-surface p-4 space-y-2.5 shadow-2xs">
                                             <div className="h-4 bg-slate-200 rounded w-4/5" />
                                             <div className="flex items-center justify-between gap-3 pt-1">
                                               <div className="h-10 bg-slate-100 rounded-lg flex-1" />
@@ -5862,7 +5994,7 @@ export function CxoDashboard({
 
                                   {/* Section 7: Separate Card for Suggestions */}
                                   {revealed >= 7 && (
-                                    <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-2xs animate-in fade-in duration-300">
+                                    <div className="rounded-xl border border-slate-200/90 bg-surface p-3 sm:p-4 shadow-2xs animate-in fade-in duration-300">
                                       <div className="px-2.5 pb-2 text-xs font-medium text-slate-500">
                                         Customize report
                                       </div>
@@ -5900,7 +6032,7 @@ export function CxoDashboard({
                                                 {sug.label}
                                               </span>
                                             </span>
-                                            <ArrowRight className="size-4 text-slate-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition shrink-0" />
+                                            <ArrowRight className="size-4 text-slate-500 group-hover:text-blue-700 group-hover:translate-x-0.5 transition shrink-0" />
                                           </button>
                                         ))}
                                       </div>
@@ -5918,7 +6050,7 @@ export function CxoDashboard({
                       <div key={turn.id} className="space-y-4">
                         {turn.query !== "" && (
                           <div className="flex justify-end">
-                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
                               <span><TranslatableText text={turn.query} /></span>
                               <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                 <User className="size-3.5" />
@@ -5931,6 +6063,7 @@ export function CxoDashboard({
                         {turn.chatAnswer !== null && <ChatResponseCard answer={turn.chatAnswer} />}
                         {turn.plan !== null && (
                           <ReportPlanCard
+                            isReportFormatMode={isReportFormatMode}
                             plan={turn.plan}
                             onToggleAgent={() => {}}
                             onToggleSuggested={() => {}}
@@ -5943,7 +6076,7 @@ export function CxoDashboard({
                         )}
                         {(turn.awaitingReport || turn.report !== null) && (
                           <div className="flex justify-end">
-                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
                               <span>{t("reportPlan.continue", { defaultValue: "Continue" })}</span>
                               <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                 <User className="size-3.5" />
@@ -5957,7 +6090,13 @@ export function CxoDashboard({
                           ) : (
                             <ReportSkeleton />
                           ))}
-                        {turn.report !== null && <ReportView report={turn.report} />}
+                        {turn.report !== null && (
+                          <ReportView
+                            report={turn.report}
+                            planAgents={planRoster(turn.plan)}
+                            onSelectAgent={handleOpenAgent}
+                          />
+                        )}
                       </div>
                     ))}
 
@@ -5973,7 +6112,7 @@ export function CxoDashboard({
                         >
                           {/* User Query Bubble */}
                           <div className="flex justify-end">
-                            <div className="max-w-xl rounded-2xl bg-white border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
+                            <div className="max-w-xl rounded-2xl bg-surface border border-slate-200/90 shadow-2xs px-4 py-2.5 text-slate-900 text-sm font-medium flex items-center gap-2.5">
                               <span>{streamingQuery}</span>
                               <div className="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-700">
                                 <User className="size-3.5" />
@@ -5995,7 +6134,7 @@ export function CxoDashboard({
                         <div className="space-y-4">
                           {streamingQuery !== "" && (
                             <div className="flex justify-end">
-                              <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                              <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
                                 <span><TranslatableText text={streamingQuery} /></span>
                                 <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                   <User className="size-3.5" />
@@ -6011,7 +6150,7 @@ export function CxoDashboard({
                         prompt that produced it. */}
                       {reportPlan !== null && streamingQuery !== "" && (
                         <div className="mb-4 flex justify-end">
-                          <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                          <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
                             <span><TranslatableText text={streamingQuery} /></span>
                             <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                               <User className="size-3.5" />
@@ -6022,6 +6161,7 @@ export function CxoDashboard({
 
                       {reportPlan !== null && (
                         <ReportPlanCard
+                          isReportFormatMode={isReportFormatMode}
                           plan={reportPlan}
                           onToggleAgent={handleTogglePlanAgent}
                           onToggleSuggested={handleTogglePlanSuggested}
@@ -6041,7 +6181,7 @@ export function CxoDashboard({
                           className="min-h-[calc(100dvh-6rem)] space-y-4 animate-in fade-in duration-200"
                         >
                           <div className="flex justify-end">
-                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
+                            <div className="flex max-w-xl items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-surface px-4 py-2.5 text-sm font-medium text-slate-900 shadow-2xs">
                               <span>{t("reportPlan.continue", { defaultValue: "Continue" })}</span>
                               <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700">
                                 <User className="size-3.5" />
@@ -6057,7 +6197,13 @@ export function CxoDashboard({
                         </div>
                       )}
 
-                      {report !== null && <ReportView report={report} />}
+                      {report !== null && (
+                        <ReportView
+                          report={report}
+                          planAgents={planRoster(reportPlan)}
+                          onSelectAgent={handleOpenAgent}
+                        />
+                      )}
                     </div>
 
                     <div className="h-4" />
@@ -6068,7 +6214,7 @@ export function CxoDashboard({
                 <div
                   aria-hidden={!showChatChrome}
                   inert={!showChatChrome}
-                  className={`absolute bottom-0 inset-x-0 z-30 pointer-events-none bg-gradient-to-t from-[#def0f5] via-[#def0f5]/90 via-55% to-transparent px-4 pb-4 pt-14 transition-[opacity,transform] duration-200 sm:px-6 ${
+                  className={`absolute bottom-0 inset-x-0 z-30 pointer-events-none bg-gradient-to-t from-canvas-deep via-canvas-deep/90 via-55% to-transparent px-4 pb-4 pt-14 transition-[opacity,transform] duration-200 sm:px-6 ${
                     showChatChrome ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
                   }`}
                 >
@@ -6076,14 +6222,14 @@ export function CxoDashboard({
                       quick answer even when the first turn was a full report. */}
                   <div
                     className={`mx-auto mb-2 flex items-center justify-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${
-                      isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
+                      isSearchFocused || chatQuery.trim() ? "max-w-4xl" : "max-w-3xl"
                     }`}
                   >
                     <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 shadow-xs backdrop-blur">
                       <span
                         onClick={() => setIsReportFormatMode(true)}
                         className={`cursor-pointer text-xs transition-all ${
-                          isReportFormatMode ? "font-semibold text-[#0e7490]" : "text-slate-500"
+                          isReportFormatMode ? "font-semibold text-accent-clay" : "text-slate-500"
                         }`}
                       >
                         Deep Insights
@@ -6099,7 +6245,7 @@ export function CxoDashboard({
                         className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-200 transition-colors"
                       >
                         <span
-                          className={`pointer-events-none mt-px inline-block size-4 transform rounded-full bg-[#0e7490] shadow-sm transition duration-200 ease-in-out ${
+                          className={`pointer-events-none mt-px inline-block size-4 transform rounded-full bg-accent-clay shadow-sm transition duration-200 ease-in-out ${
                             isReportFormatMode ? "translate-x-0.5" : "translate-x-4"
                           }`}
                         />
@@ -6107,7 +6253,7 @@ export function CxoDashboard({
                       <span
                         onClick={() => setIsReportFormatMode(false)}
                         className={`cursor-pointer text-xs transition-all ${
-                          !isReportFormatMode ? "font-semibold text-[#0e7490]" : "text-slate-500"
+                          !isReportFormatMode ? "font-semibold text-accent-clay" : "text-slate-500"
                         }`}
                       >
                         Chat Mode
@@ -6117,7 +6263,7 @@ export function CxoDashboard({
 
                   <div
                     className={`mx-auto flex items-center gap-2 pointer-events-auto transition-all duration-300 ease-out ${
-                      isSearchFocused || chatQuery.trim() ? "max-w-3xl" : "max-w-2xl"
+                      isSearchFocused || chatQuery.trim() ? "max-w-4xl" : "max-w-3xl"
                     }`}
                   >
                     <form
@@ -6131,23 +6277,24 @@ export function CxoDashboard({
                         e.preventDefault();
                         handleAskQuestion();
                       }}
-                      className="flex-1 relative shadow-md hover:shadow-lg rounded-2xl sm:rounded-full bg-white border-2 border-slate-300 hover:border-slate-400 focus-within:border-[#0e7490] focus-within:ring-4 focus-within:ring-[#0e7490]/20 flex items-center px-4 sm:px-5 py-2 gap-3 transition-all ring-1 ring-black/5"
+                      className="flex-1 relative shadow-md hover:shadow-lg rounded-2xl sm:rounded-full bg-surface border-2 border-slate-300 hover:border-slate-400 focus-within:border-accent-clay focus-within:ring-4 focus-within:ring-accent-clay/20 flex items-center px-4 sm:px-5 py-2 gap-3 transition-all ring-1 ring-black/5"
                     >
-                      <Search className="size-5 text-[#0e7490] shrink-0 stroke-[2.2]" />
+                      <Search className="size-5 text-accent-clay shrink-0 stroke-[2.2]" />
                       <input
+                        ref={attachAskInput(composerInputRef)}
                         type="text"
                         value={chatQuery}
                         onFocus={() => setIsSearchFocused(true)}
                         onClick={() => setIsSearchFocused(true)}
                         onChange={(e) => setChatQuery(e.target.value)}
-                        placeholder={t("chatInput.followUp", { defaultValue: "Ask follow-up question or instruct AI..." })}
-                        className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 outline-none font-normal"
+                        placeholder={followUpPlaceholder}
+                        className="flex-1 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-500 outline-none font-normal"
                       />
                       {chatQuery && (
                         <button
                           type="button"
                           onClick={() => setChatQuery("")}
-                          className="text-slate-400 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
+                          className="text-slate-500 hover:text-slate-700 p-1 rounded-full transition cursor-pointer"
                           aria-label="Clear search"
                         >
                           <X className="size-4" />
@@ -6160,7 +6307,7 @@ export function CxoDashboard({
                           className={`size-9 rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${
                             isVoiceActive
                               ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse"
-                              : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-[#0e7490] border border-slate-200/80"
+                              : "bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-accent-clay border border-slate-200/80"
                           }`}
                           title={isVoiceActive ? t("chatInput.listening", { defaultValue: "Listening... Click to stop" }) : t("chatInput.voiceInput", { defaultValue: "Voice input" })}
                           aria-label="Voice input"
@@ -6171,27 +6318,21 @@ export function CxoDashboard({
                       <button
                         type="submit"
                         disabled={!chatQuery.trim() && !isVoiceActive}
-                        className="px-4 sm:px-5 py-2 rounded-xl sm:rounded-full bg-[#0e7490] hover:bg-[#0c627a] disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
+                        className="px-4 sm:px-5 py-2 rounded-xl sm:rounded-full bg-accent-clay hover:bg-accent-clay-strong disabled:opacity-40 disabled:pointer-events-none text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow active:scale-98 shrink-0"
                       >
-                        <span>{t("chatInput.analyze", { defaultValue: "Analyze" })}</span>
+                        <span>
+                          {isReportFormatMode
+                            ? t("chatInput.analyze", { defaultValue: "Analyze" })
+                            : t("chatInput.ask", { defaultValue: "Ask" })}
+                        </span>
                       </button>
                     </form>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleNewSession();
-                      }}
-                      className="size-10 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0e7490] text-slate-600 hover:text-[#0e7490] shadow-md flex items-center justify-center transition cursor-pointer shrink-0"
-                      title={t("chatInput.newQuery", { defaultValue: "New Query / Reset" })}
-                    >
-                      <Plus className="size-4" />
-                    </button>
                   </div>
                 </div>
               </div>
             )
           ) : (
-            <SpecialistsView refreshKey={specialistsRefreshKey} />
+            <SpecialistsView refreshKey={specialistsRefreshKey} initialAgentId={initialAgentId} />
           )}
         </div>
       </div>
@@ -6199,12 +6340,12 @@ export function CxoDashboard({
       {/* FULL SCREEN EVIDENCE VERIFICATION & DATASET VIEW WITH ASK AI ON THE RIGHT */}
       {activeEvidenceDataset && (
         <div
-          className="fixed inset-0 z-50 bg-[#f8fafc] flex flex-col w-screen h-screen overflow-hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-surface-tint flex flex-col w-screen h-screen overflow-hidden animate-in fade-in duration-200"
           role="dialog"
           aria-modal="true"
         >
           {/* TOP GLOBAL BAR */}
-          <header className="h-15 shrink-0 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6 gap-3 z-20">
+          <header className="h-15 shrink-0 bg-ink border-b border-ink-line flex items-center justify-between px-4 sm:px-6 gap-3 z-20">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
@@ -6260,23 +6401,23 @@ export function CxoDashboard({
           {/* FULL SCREEN DATA TABLE VIEW (Ask AI hidden) */}
           <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-slate-50/70 overflow-hidden">
             {/* Table Search, Filter, Grouping & Download Toolbar */}
-            <div className="p-3 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5 bg-white shrink-0">
+            <div className="p-3 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5 bg-surface shrink-0">
               <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
                 {/* Search Input */}
                 <div className="relative min-w-[200px] flex-1 max-w-sm">
-                  <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
                     type="text"
                     value={datasetSearchQuery}
                     onChange={(e) => setDatasetSearchQuery(e.target.value)}
                     placeholder="Search records..."
-                    className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#0e7490] focus:ring-1 focus:ring-[#0e7490] transition"
+                    className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:bg-surface focus:border-accent-clay focus:ring-1 focus:ring-accent-clay transition"
                   />
                   {datasetSearchQuery && (
                     <button
                       type="button"
                       onClick={() => setDatasetSearchQuery("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 p-0.5"
                     >
                       <X className="size-3" />
                     </button>
@@ -6284,8 +6425,8 @@ export function CxoDashboard({
                 </div>
 
                 {/* Filter Selector */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white shadow-2xs">
-                  <Filter className="size-3.5 text-slate-400 shrink-0" />
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-surface shadow-2xs">
+                  <Filter className="size-3.5 text-slate-500 shrink-0" />
                   <select
                     value={datasetFilterCol}
                     onChange={(e) => {
@@ -6324,7 +6465,7 @@ export function CxoDashboard({
                         setDatasetFilterCol("");
                         setDatasetFilterVal("");
                       }}
-                      className="p-0.5 text-slate-400 hover:text-slate-600"
+                      className="p-0.5 text-slate-500 hover:text-slate-600"
                       title="Clear filter"
                     >
                       <X className="size-3" />
@@ -6333,8 +6474,8 @@ export function CxoDashboard({
                 </div>
 
                 {/* Group By Selector */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white shadow-2xs">
-                  <Layers className="size-3.5 text-slate-400 shrink-0" />
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-surface shadow-2xs">
+                  <Layers className="size-3.5 text-slate-500 shrink-0" />
                   <span className="text-sm text-slate-500 font-normal">Group:</span>
                   <select
                     value={datasetGroupBy}
@@ -6359,7 +6500,7 @@ export function CxoDashboard({
                         setDatasetGroupBy("");
                         setCollapsedGroups({});
                       }}
-                      className="p-0.5 text-slate-400 hover:text-slate-600"
+                      className="p-0.5 text-slate-500 hover:text-slate-600"
                       title="Clear grouping"
                     >
                       <X className="size-3" />
@@ -6371,10 +6512,10 @@ export function CxoDashboard({
                 <button
                   type="button"
                   onClick={() => handleExportCsv(activeEvidenceDataset)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-800 hover:text-[#0e7490] transition cursor-pointer shadow-2xs shrink-0"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-800 hover:text-accent-clay transition cursor-pointer shadow-2xs shrink-0"
                   title="Download CSV"
                 >
-                  <Download className="size-3.5 text-[#0e7490]" />
+                  <Download className="size-3.5 text-accent-clay" />
                   <span>Download</span>
                 </button>
               </div>
@@ -6390,7 +6531,7 @@ export function CxoDashboard({
 
             {/* Scrollable Data Table - 14px Font Size */}
             <div className="flex-1 overflow-auto p-3 sm:px-6 sm:py-4">
-              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white">
+              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-surface">
                 <table className="w-full text-left text-[14px] border-collapse">
                   <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs font-bold sticky top-0 uppercase tracking-wider z-10">
                     <tr>
@@ -6423,7 +6564,7 @@ export function CxoDashboard({
                                     <div className="flex items-center gap-2">
                                       <ChevronRight
                                         className={`size-3.5 text-slate-600 transition-transform duration-150 ${
-                                          isCollapsed ? "" : "rotate-90 text-[#0e7490]"
+                                          isCollapsed ? "" : "rotate-90 text-accent-clay"
                                         }`}
                                       />
                                       <span className="text-slate-500 text-[11px] uppercase tracking-wider font-bold">
@@ -6432,11 +6573,11 @@ export function CxoDashboard({
                                       <span className="text-slate-900 font-bold text-[14px]">
                                         {groupKey}
                                       </span>
-                                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-slate-700 border border-slate-200 shadow-2xs">
+                                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-surface text-slate-700 border border-slate-200 shadow-2xs">
                                         {groupRows.length} records
                                       </span>
                                     </div>
-                                    <span className="text-xs text-slate-400 font-normal">
+                                    <span className="text-xs text-slate-500 font-normal">
                                       {isCollapsed ? "Click to expand" : "Click to collapse"}
                                     </span>
                                   </div>
@@ -6448,7 +6589,7 @@ export function CxoDashboard({
                                 groupRows.map((row, rIdx) => (
                                   <tr
                                     key={rIdx}
-                                    className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
+                                    className={`transition-colors ${rIdx % 2 === 0 ? "bg-surface" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
                                   >
                                     {activeEvidenceDataset.columns.map((col, cIdx) => (
                                       <td
@@ -6466,7 +6607,7 @@ export function CxoDashboard({
                       : filteredEvidenceRows.map((row, rIdx) => (
                           <tr
                             key={rIdx}
-                            className={`transition-colors ${rIdx % 2 === 0 ? "bg-white" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
+                            className={`transition-colors ${rIdx % 2 === 0 ? "bg-surface" : "bg-slate-50/85"} hover:bg-cyan-50/60`}
                           >
                             {activeEvidenceDataset.columns.map((col, cIdx) => (
                               <td
@@ -6503,11 +6644,11 @@ export function CxoDashboard({
       {/* ADD NEW CASE MODAL */}
       {isAddNewCaseOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-surface p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="size-8 rounded-lg bg-[#0e7490]/10 text-[#0e7490] flex items-center justify-center font-bold">
+                <div className="size-8 rounded-lg bg-accent-clay/10 text-accent-clay flex items-center justify-center font-bold">
                   <Plus className="size-4.5 stroke-[2.5]" />
                 </div>
                 <div>
@@ -6520,7 +6661,7 @@ export function CxoDashboard({
               <button
                 type="button"
                 onClick={() => setIsAddNewCaseOpen(false)}
-                className="size-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                className="size-8 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
                 title="Close"
               >
                 <X className="size-4" />
@@ -6539,7 +6680,7 @@ export function CxoDashboard({
                   value={newCaseTitle}
                   onChange={(e) => setNewCaseTitle(e.target.value)}
                   placeholder="e.g. Winterwear Clearance & SKU Markdown Strategy"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/20 outline-none text-slate-900 placeholder:text-slate-400"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-accent-clay focus:ring-2 focus:ring-accent-clay/20 outline-none text-slate-900 placeholder:text-slate-500"
                 />
               </div>
 
@@ -6550,7 +6691,7 @@ export function CxoDashboard({
                 <select
                   value={newCaseAgent}
                   onChange={(e) => setNewCaseAgent(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/20 outline-none text-slate-900 bg-white"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-accent-clay focus:ring-2 focus:ring-accent-clay/20 outline-none text-slate-900 bg-surface"
                 >
                   <option value="Inventory Planning & Allocation">
                     Inventory Planning & Allocation
@@ -6579,7 +6720,7 @@ export function CxoDashboard({
                   value={newCaseSummary}
                   onChange={(e) => setNewCaseSummary(e.target.value)}
                   placeholder="Specify problem, affected stores, categories, or expected markdown outcomes..."
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-[#0e7490] focus:ring-2 focus:ring-[#0e7490]/20 outline-none text-slate-900 placeholder:text-slate-400 resize-none"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:border-accent-clay focus:ring-2 focus:ring-accent-clay/20 outline-none text-slate-900 placeholder:text-slate-500 resize-none"
                 />
               </div>
 
@@ -6592,7 +6733,7 @@ export function CxoDashboard({
                     switchView("chat");
                     handleAskQuestion(query);
                   }}
-                  className="text-xs font-semibold text-[#0e7490] hover:underline cursor-pointer flex items-center gap-1"
+                  className="text-xs font-semibold text-accent-clay hover:underline cursor-pointer flex items-center gap-1"
                 >
                   <Sparkles className="size-3.5" />
                   <span>Investigate with AI in Chat</span>
@@ -6608,7 +6749,7 @@ export function CxoDashboard({
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 text-xs font-semibold text-white bg-[#0e7490] hover:bg-[#0c627a] rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                    className="px-5 py-2 text-xs font-semibold text-white bg-accent-clay hover:bg-accent-clay-strong rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
                   >
                     <Plus className="size-3.5 stroke-[2.5]" />
                     <span>Create Case</span>

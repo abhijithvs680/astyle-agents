@@ -808,10 +808,10 @@ function CaseDetailsPage() {
           <article
             key="slide-0"
             id={anchorId}
-            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
+            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
           >
             {/* Left Column: Ambient Pastel Glow & Title */}
-            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -841,7 +841,7 @@ function CaseDetailsPage() {
             </div>
 
             {/* Right Column: Clean Executive Content */}
-            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-white dark:bg-zinc-900 space-y-6">
+            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-surface dark:bg-zinc-900 space-y-6">
               <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
                 <FileText className="size-5 text-brand-blue shrink-0" />
                 <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -882,14 +882,14 @@ function CaseDetailsPage() {
                       </span>
                       <div className="flex flex-wrap items-baseline gap-1">
                         <span
-                          className={`text-base sm:text-lg font-['Archivo'] tabular-nums font-bold ${m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
+                          className={`text-base sm:text-lg tabular-nums font-bold ${m.alert ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"
                             }`}
                         >
                           {mainVal}
                         </span>
                         {changeVal && (
                           <span
-                            className={`text-xs font-['Archivo'] tabular-nums font-medium ${m.alert ? "text-rose-600/80 dark:text-rose-400/80" : "text-slate-500 dark:text-slate-400"
+                            className={`text-xs tabular-nums font-medium ${m.alert ? "text-rose-600/80 dark:text-rose-400/80" : "text-slate-500 dark:text-slate-500"
                               }`}
                           >
                             {changeVal}
@@ -909,10 +909,10 @@ function CaseDetailsPage() {
           <article
             key="slide-1"
             id={anchorId}
-            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
+            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
           >
             {/* Left Column: Ambient Pastel Glow */}
-            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -940,7 +940,7 @@ function CaseDetailsPage() {
             </div>
 
             {/* Right Column: 4 Systemic Insights */}
-            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-white dark:bg-zinc-900 space-y-5">
+            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-surface dark:bg-zinc-900 space-y-5">
               <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
                 <TrendingDown className="size-5 text-brand-blue shrink-0" />
                 <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -984,10 +984,10 @@ function CaseDetailsPage() {
           <article
             key="slide-2"
             id={anchorId}
-            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
+            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
           >
             {/* Left Column: Ambient Pastel Glow */}
-            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1015,7 +1015,7 @@ function CaseDetailsPage() {
             </div>
 
             {/* Right Column: Key Metrics Table */}
-            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-white dark:bg-zinc-900 space-y-5">
+            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-surface dark:bg-zinc-900 space-y-5">
               <div className="flex items-center justify-between pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2.5">
                   <Table2 className="size-5 text-brand-blue shrink-0" />
@@ -1026,7 +1026,7 @@ function CaseDetailsPage() {
                 <span className="text-xs font-medium text-muted-foreground">Variance vs. Target</span>
               </div>
 
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-surface dark:bg-zinc-900 shadow-2xs">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm uppercase tracking-wider">
@@ -1042,15 +1042,15 @@ function CaseDetailsPage() {
                         key={idx}
                         className={`transition-colors ${
                           idx % 2 === 0
-                            ? "bg-white dark:bg-zinc-900"
+                            ? "bg-surface dark:bg-zinc-900"
                             : "bg-slate-50/80 dark:bg-zinc-800/40"
                         } hover:bg-slate-100/70 dark:hover:bg-zinc-800/70`}
                       >
                         <td className="px-3.5 sm:px-4 py-3 text-sm sm:text-base font-medium text-foreground">{row.metric}</td>
-                        <td className="px-3.5 sm:px-4 py-3 font-['Archivo'] tabular-nums text-sm sm:text-base font-bold text-foreground text-right">{row.current}</td>
-                        <td className="px-3.5 sm:px-4 py-3 font-['Archivo'] tabular-nums text-sm sm:text-base text-muted-foreground text-right">{row.target}</td>
+                        <td className="px-3.5 sm:px-4 py-3 tabular-nums text-sm sm:text-base font-bold text-foreground text-right">{row.current}</td>
+                        <td className="px-3.5 sm:px-4 py-3 tabular-nums text-sm sm:text-base text-muted-foreground text-right">{row.target}</td>
                         <td className="px-3.5 sm:px-4 py-3 text-right">
-                          <span className="inline-flex items-center font-['Archivo'] tabular-nums font-medium text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                          <span className="inline-flex items-center tabular-nums font-medium text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
                             {row.variance}
                           </span>
                         </td>
@@ -1072,10 +1072,10 @@ function CaseDetailsPage() {
           <article
             key="slide-3"
             id={anchorId}
-            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
+            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[520px]"
           >
             {/* Left Column: Ambient Pastel Glow */}
-            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="lg:col-span-5 p-7 sm:p-9 lg:p-10 flex flex-col justify-start border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1103,7 +1103,7 @@ function CaseDetailsPage() {
             </div>
 
             {/* Right Column: Interactive Action Items */}
-            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-white dark:bg-zinc-900 space-y-5">
+            <div className="lg:col-span-7 p-7 sm:p-9 lg:p-10 flex flex-col justify-center bg-surface dark:bg-zinc-900 space-y-5">
               <div className="flex items-center justify-between pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2.5">
                   <CheckSquare className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -1138,7 +1138,7 @@ function CaseDetailsPage() {
                           }}
                           className={`mt-1 size-5 rounded-lg border flex items-center justify-center transition shrink-0 cursor-pointer shadow-2xs ${isDone
                             ? "bg-emerald-600 border-emerald-600 text-white"
-                            : "border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800"
+                            : "border-slate-300 bg-surface dark:border-zinc-600 dark:bg-zinc-800"
                             }`}
                           aria-label={`Mark action ${idx + 1} as ${isDone ? "incomplete" : "complete"}`}
                         >
@@ -1179,10 +1179,10 @@ function CaseDetailsPage() {
           <article
             key="slide-4"
             id={anchorId}
-            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col min-h-[520px]"
+            className="rounded-none border border-slate-200/90 dark:border-zinc-800 bg-surface dark:bg-zinc-900 overflow-hidden flex flex-col min-h-[520px]"
           >
             {/* Top Ambient Header Banner (Full Width) */}
-            <div className="p-7 sm:p-9 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-[#092237] dark:via-[#072a1b] dark:to-[#222110]">
+            <div className="p-7 sm:p-9 border-b border-slate-200/80 dark:border-zinc-800 relative overflow-hidden bg-gradient-to-br from-[#dff2fe]/95 via-[#e5faf0]/90 to-[#fefae0]/95 dark:from-ink dark:via-[#072a1b] dark:to-[#222110]">
               <div className="pointer-events-none absolute -top-16 -left-16 size-56 rounded-full bg-sky-300/35 dark:bg-sky-500/20 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 -right-16 size-56 rounded-full bg-emerald-300/30 dark:bg-emerald-500/15 blur-3xl" />
               <div className="pointer-events-none absolute top-1/2 left-1/3 size-40 rounded-full bg-amber-200/25 dark:bg-amber-500/10 blur-2xl" />
@@ -1208,7 +1208,7 @@ function CaseDetailsPage() {
             </div>
 
             {/* Full-Width Telemetry Table Section (Compact) */}
-            <div className="p-4 sm:p-6 bg-white dark:bg-zinc-900 flex-1 space-y-3">
+            <div className="p-4 sm:p-6 bg-surface dark:bg-zinc-900 flex-1 space-y-3">
               <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <Activity className="size-4 text-brand-blue shrink-0" />
@@ -1221,7 +1221,7 @@ function CaseDetailsPage() {
                 </span>
               </div>
 
-              <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+              <div className="overflow-x-auto border border-slate-200 dark:border-zinc-800 bg-surface dark:bg-zinc-900 shadow-2xs">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-slate-700 dark:text-slate-200 font-semibold text-xs uppercase tracking-wider">
@@ -1238,18 +1238,18 @@ function CaseDetailsPage() {
                         key={idx}
                         className={`transition-colors ${
                           idx % 2 === 0
-                            ? "bg-white dark:bg-zinc-900"
+                            ? "bg-surface dark:bg-zinc-900"
                             : "bg-slate-50/80 dark:bg-zinc-800/40"
                         } hover:bg-slate-100/70 dark:hover:bg-zinc-800/70`}
                       >
-                        <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">{row.branchId}</td>
+                        <td className="px-3.5 py-2 tabular-nums text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">{row.branchId}</td>
                         <td className="px-3.5 py-2 text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">{row.categoryItem}</td>
                         <td className="px-3.5 py-2 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
                             {row.issueDetected}
                           </span>
                         </td>
-                        <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-right text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                        <td className="px-3.5 py-2 tabular-nums text-right text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
                           {row.financialImpact}
                         </td>
                         <td className="px-3.5 py-2 text-xs sm:text-sm text-foreground/80">{row.driver}</td>
@@ -1261,7 +1261,7 @@ function CaseDetailsPage() {
                       <td colSpan={3} className="px-3.5 py-2 text-xs uppercase tracking-wider text-muted-foreground">
                         Total Sampled Immediate Financial Exposure
                       </td>
-                      <td className="px-3.5 py-2 font-['Archivo'] tabular-nums text-right text-xs sm:text-sm text-rose-600 dark:text-rose-400 font-bold whitespace-nowrap">
+                      <td className="px-3.5 py-2 tabular-nums text-right text-xs sm:text-sm text-rose-600 dark:text-rose-400 font-bold whitespace-nowrap">
                         {currentTelemetry.totalExposure}
                       </td>
                       <td className="px-3.5 py-2 text-xs text-muted-foreground">
@@ -1283,7 +1283,7 @@ function CaseDetailsPage() {
   return (
     <div className="h-screen bg-surface-tint font-sans text-foreground flex flex-col overflow-hidden">
       {/* Top Primary Header Bar - clean, uncluttered (no buttons on top) */}
-      <header className="sticky top-0 z-40 h-14 shrink-0 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-14 shrink-0 bg-ink border-b border-ink-line flex items-center justify-between px-4 sm:px-6">
         {/* Left Side: Menu button, Back button, and project title */}
         <div className="flex items-center gap-2.5 min-w-0">
           <Link
@@ -1296,7 +1296,7 @@ function CaseDetailsPage() {
             <ArrowLeft className="size-4.5 group-hover:-translate-x-0.5 transition-transform" />
             <span className="text-sm font-semibold text-white">Back</span>
           </Link>
-          <div className="h-4 w-px bg-[#0f354c] shrink-0" />
+          <div className="h-4 w-px bg-ink-line shrink-0" />
           <span
             style={{ fontWeight: 200 }}
             className="text-sm sm:text-base font-extralight font-[200] text-slate-100 tracking-wide truncate max-w-[240px] xs:max-w-[320px] sm:max-w-md md:max-w-xl select-none"
@@ -1328,7 +1328,7 @@ function CaseDetailsPage() {
                   title={`Jump to ${slide.fullTitle}`}
                 >
                   <span
-                    className={`inline-flex items-center justify-center size-4 rounded-full text-[10px] font-['Archivo'] tabular-nums font-bold transition-colors ${isActive
+                    className={`inline-flex items-center justify-center size-4 rounded-full text-[10px] tabular-nums font-bold transition-colors ${isActive
                       ? "bg-blue-600 text-white dark:bg-blue-500"
                       : "bg-slate-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
                       }`}
@@ -1552,7 +1552,7 @@ function CaseDetailsPage() {
                   className={`size-3 text-zinc-500 transition-transform duration-150 ${showIndexDropdown ? "rotate-180" : ""
                     }`}
                 />
-                <span className="text-[10px] font-['Archivo'] tabular-nums px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 ml-0.5">
+                <span className="text-[10px] tabular-nums px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 ml-0.5">
                   {Math.round(scrollProgress)}%
                 </span>
               </button>
@@ -1579,7 +1579,7 @@ function CaseDetailsPage() {
                         className="flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-xs font-medium text-foreground hover:bg-tile hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer text-left group"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-['Archivo'] tabular-nums text-[11px] text-muted-foreground group-hover:text-blue-600 font-bold shrink-0">
+                          <span className="tabular-nums text-[11px] text-muted-foreground group-hover:text-blue-600 font-bold shrink-0">
                             0{idx + 1}
                           </span>
                           <span className="truncate font-semibold">{slide.fullTitle}</span>

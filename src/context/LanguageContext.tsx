@@ -100,14 +100,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
               style={{
                 width: 40,
                 height: 40,
-                border: "3px solid #e2e8f0",
-                borderTopColor: "#0e7490",
+                border: "3px solid var(--border)",
+                borderTopColor: "var(--accent-clay)",
                 borderRadius: "50%",
                 animation: "spin 0.6s linear infinite",
                 margin: "0 auto 12px",
               }}
             />
-            <p style={{ color: "#0e7490", fontSize: 14, fontWeight: 600 }}>
+            <p style={{ color: "var(--accent-clay)", fontSize: 14, fontWeight: 600 }}>
               {t("common.translating", { defaultValue: "Translating..." })}
             </p>
           </div>

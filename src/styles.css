@@ -61,6 +61,7 @@ body {
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -72,9 +73,12 @@ body {
 }
 
 @theme inline {
+  /* Two faces, one rule: Lora carries titles, headings and display-sized text;
+     Geist carries everything else — body, labels, buttons, navigation. */
   --font-sans: "Geist", "Inter", system-ui, sans-serif;
+  --font-serif: "Lora", Georgia, "Times New Roman", serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
-  --font-numeric: "Geist", "Inter", system-ui, sans-serif;
+  --font-numeric: "Lora", Georgia, "Times New Roman", serif;
   --color-surface: var(--surface);
   --color-surface-tint: var(--surface-tint);
   --color-tile: var(--tile);
@@ -85,104 +89,144 @@ body {
   --color-negative: var(--negative);
   --color-chip-active: var(--chip-active);
   --color-chip-active-foreground: var(--chip-active-foreground);
-  --shadow-2xs: 0 1px 0 rgb(28 25 23 / 0.03);
-  --shadow-xs: 0 1px 2px rgb(28 25 23 / 0.05);
-  --shadow-sm: 0 1px 2px rgb(28 25 23 / 0.04), 0 2px 6px -2px rgb(28 25 23 / 0.06);
-  --shadow-md: 0 1px 2px rgb(28 25 23 / 0.04), 0 6px 16px -6px rgb(28 25 23 / 0.1);
-  --shadow-lg: 0 2px 4px rgb(28 25 23 / 0.04), 0 14px 32px -12px rgb(28 25 23 / 0.14);
-  --shadow-xl: 0 4px 8px rgb(28 25 23 / 0.04), 0 24px 48px -16px rgb(28 25 23 / 0.18);
-  --shadow-2xl: 0 8px 16px rgb(28 25 23 / 0.06), 0 36px 72px -24px rgb(28 25 23 / 0.26);
+  /* Deliberately light: the surface steps carry depth, the shadows only
+     lift an element off the page. */
+  --shadow-2xs: 0 1px 0 rgb(54 44 34 / 0.025);
+  --shadow-xs: 0 1px 2px rgb(54 44 34 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(54 44 34 / 0.03), 0 2px 6px -2px rgb(54 44 34 / 0.045);
+  --shadow-md: 0 1px 2px rgb(54 44 34 / 0.03), 0 6px 16px -8px rgb(54 44 34 / 0.07);
+  --shadow-lg: 0 2px 4px rgb(54 44 34 / 0.03), 0 14px 32px -16px rgb(54 44 34 / 0.09);
+  --shadow-xl: 0 4px 8px rgb(54 44 34 / 0.03), 0 24px 48px -22px rgb(54 44 34 / 0.12);
+  --shadow-2xl: 0 8px 16px rgb(54 44 34 / 0.04), 0 36px 72px -32px rgb(54 44 34 / 0.16);
+
+  /* The warm accent, and the three-stop canvas the workspace is painted with.
+     These replace the teal and pale-cyan hex values the components carried
+     inline, so the theme now changes in one place. */
+  --color-accent-clay: var(--accent-clay);
+  --color-accent-clay-strong: var(--accent-clay-strong);
+  --color-canvas: var(--canvas);
+  --color-canvas-mid: var(--canvas-mid);
+  --color-canvas-deep: var(--canvas-deep);
+  --color-ink-line: var(--ink-line);
+  --color-report-canvas: var(--report-canvas);
+  --color-section-badge: var(--section-badge);
 }
 
 /*
  * Premium palette remap. The UI uses Tailwind's built-in slate/zinc/gray and
- * blue/sky scales directly, so they are redefined here: neutrals become a warm
- * stone ramp and blues become a deep-indigo accent ramp.
+ * blue/sky/cyan/indigo scales directly, so they are redefined here: neutrals
+ * become a beige/taupe ramp and every accent becomes one brick-red ramp.
+ * Re-theming a scale here re-themes the call sites that still name a Tailwind
+ * colour, which is why those names were left in place.
  */
 @theme {
-  --color-slate-50: oklch(0.985 0.003 85);
-  --color-slate-100: oklch(0.968 0.004 85);
-  --color-slate-200: oklch(0.925 0.005 80);
-  --color-slate-300: oklch(0.87 0.007 75);
-  --color-slate-400: oklch(0.71 0.01 70);
-  --color-slate-500: oklch(0.555 0.012 70);
-  --color-slate-600: oklch(0.445 0.011 70);
-  --color-slate-700: oklch(0.372 0.01 65);
-  --color-slate-800: oklch(0.27 0.008 60);
-  --color-slate-900: oklch(0.215 0.007 60);
-  --color-slate-950: oklch(0.15 0.005 60);
+  --color-slate-50: oklch(0.989 0.004 84);
+  --color-slate-100: oklch(0.974 0.007 84);
+  --color-slate-200: oklch(0.932 0.011 81);
+  --color-slate-300: oklch(0.876 0.013 79);
+  --color-slate-400: oklch(0.705 0.019 72);
+  --color-slate-500: oklch(0.552 0.018 68);
+  --color-slate-600: oklch(0.443 0.017 64);
+  --color-slate-700: oklch(0.368 0.015 60);
+  --color-slate-800: oklch(0.272 0.013 58);
+  --color-slate-900: oklch(0.218 0.011 56);
+  --color-slate-950: oklch(0.152 0.009 54);
 
-  --color-zinc-50: oklch(0.985 0.003 85);
-  --color-zinc-100: oklch(0.968 0.004 85);
-  --color-zinc-200: oklch(0.925 0.005 80);
-  --color-zinc-300: oklch(0.87 0.007 75);
-  --color-zinc-400: oklch(0.71 0.01 70);
-  --color-zinc-500: oklch(0.555 0.012 70);
-  --color-zinc-600: oklch(0.445 0.011 70);
-  --color-zinc-700: oklch(0.31 0.008 270);
-  --color-zinc-800: oklch(0.25 0.007 270);
-  --color-zinc-900: oklch(0.2 0.006 270);
-  --color-zinc-950: oklch(0.155 0.005 270);
+  --color-zinc-50: oklch(0.989 0.004 84);
+  --color-zinc-100: oklch(0.974 0.007 84);
+  --color-zinc-200: oklch(0.932 0.011 81);
+  --color-zinc-300: oklch(0.876 0.013 79);
+  --color-zinc-400: oklch(0.705 0.019 72);
+  --color-zinc-500: oklch(0.552 0.018 68);
+  --color-zinc-600: oklch(0.443 0.017 64);
+  --color-zinc-700: oklch(0.368 0.015 60);
+  --color-zinc-800: oklch(0.272 0.013 58);
+  --color-zinc-900: oklch(0.218 0.011 56);
+  --color-zinc-950: oklch(0.152 0.009 54);
 
-  --color-gray-50: oklch(0.985 0.003 85);
-  --color-gray-100: oklch(0.968 0.004 85);
-  --color-gray-200: oklch(0.925 0.005 80);
-  --color-gray-300: oklch(0.87 0.007 75);
-  --color-gray-400: oklch(0.71 0.01 70);
-  --color-gray-500: oklch(0.555 0.012 70);
-  --color-gray-600: oklch(0.445 0.011 70);
-  --color-gray-700: oklch(0.372 0.01 65);
-  --color-gray-800: oklch(0.27 0.008 60);
-  --color-gray-900: oklch(0.215 0.007 60);
-  --color-gray-950: oklch(0.15 0.005 60);
+  --color-gray-50: oklch(0.989 0.004 84);
+  --color-gray-100: oklch(0.974 0.007 84);
+  --color-gray-200: oklch(0.932 0.011 81);
+  --color-gray-300: oklch(0.876 0.013 79);
+  --color-gray-400: oklch(0.705 0.019 72);
+  --color-gray-500: oklch(0.552 0.018 68);
+  --color-gray-600: oklch(0.443 0.017 64);
+  --color-gray-700: oklch(0.368 0.015 60);
+  --color-gray-800: oklch(0.272 0.013 58);
+  --color-gray-900: oklch(0.218 0.011 56);
+  --color-gray-950: oklch(0.152 0.009 54);
 
-  --color-blue-50: oklch(0.972 0.012 278);
-  --color-blue-100: oklch(0.942 0.027 278);
-  --color-blue-200: oklch(0.885 0.05 278);
-  --color-blue-300: oklch(0.8 0.085 278);
-  --color-blue-400: oklch(0.69 0.13 278);
-  --color-blue-500: oklch(0.58 0.165 278);
-  --color-blue-600: oklch(0.49 0.17 276);
-  --color-blue-700: oklch(0.425 0.155 276);
-  --color-blue-800: oklch(0.355 0.125 276);
-  --color-blue-900: oklch(0.29 0.095 276);
-  --color-blue-950: oklch(0.21 0.065 276);
+  --color-blue-50: oklch(0.969 0.013 26);
+  --color-blue-100: oklch(0.939 0.03 26);
+  --color-blue-200: oklch(0.888 0.056 26);
+  --color-blue-300: oklch(0.812 0.09 26);
+  --color-blue-400: oklch(0.69 0.13 26);
+  --color-blue-500: oklch(0.606 0.148 26);
+  --color-blue-600: oklch(0.542 0.144 26);
+  --color-blue-700: oklch(0.466 0.125 26);
+  --color-blue-800: oklch(0.392 0.102 26);
+  --color-blue-900: oklch(0.325 0.079 26);
+  --color-blue-950: oklch(0.232 0.052 26);
 
-  --color-sky-50: oklch(0.972 0.012 278);
-  --color-sky-100: oklch(0.942 0.027 278);
-  --color-sky-200: oklch(0.885 0.05 278);
-  --color-sky-300: oklch(0.8 0.085 278);
-  --color-sky-400: oklch(0.69 0.13 278);
-  --color-sky-500: oklch(0.58 0.165 278);
-  --color-sky-600: oklch(0.49 0.17 276);
-  --color-sky-700: oklch(0.425 0.155 276);
-  --color-sky-800: oklch(0.355 0.125 276);
-  --color-sky-900: oklch(0.29 0.095 276);
-  --color-sky-950: oklch(0.21 0.065 276);
+  --color-sky-50: oklch(0.969 0.013 26);
+  --color-sky-100: oklch(0.939 0.03 26);
+  --color-sky-200: oklch(0.888 0.056 26);
+  --color-sky-300: oklch(0.812 0.09 26);
+  --color-sky-400: oklch(0.69 0.13 26);
+  --color-sky-500: oklch(0.606 0.148 26);
+  --color-sky-600: oklch(0.542 0.144 26);
+  --color-sky-700: oklch(0.466 0.125 26);
+  --color-sky-800: oklch(0.392 0.102 26);
+  --color-sky-900: oklch(0.325 0.079 26);
+  --color-sky-950: oklch(0.232 0.052 26);
 
-  --color-cyan-50: oklch(0.972 0.012 278);
-  --color-cyan-100: oklch(0.942 0.027 278);
-  --color-cyan-200: oklch(0.885 0.05 278);
-  --color-cyan-300: oklch(0.8 0.085 278);
-  --color-cyan-400: oklch(0.69 0.13 278);
-  --color-cyan-500: oklch(0.58 0.165 278);
-  --color-cyan-600: oklch(0.49 0.17 276);
-  --color-cyan-700: oklch(0.425 0.155 276);
-  --color-cyan-800: oklch(0.355 0.125 276);
-  --color-cyan-900: oklch(0.29 0.095 276);
-  --color-cyan-950: oklch(0.21 0.065 276);
+  --color-cyan-50: oklch(0.969 0.013 26);
+  --color-cyan-100: oklch(0.939 0.03 26);
+  --color-cyan-200: oklch(0.888 0.056 26);
+  --color-cyan-300: oklch(0.812 0.09 26);
+  --color-cyan-400: oklch(0.69 0.13 26);
+  --color-cyan-500: oklch(0.606 0.148 26);
+  --color-cyan-600: oklch(0.542 0.144 26);
+  --color-cyan-700: oklch(0.466 0.125 26);
+  --color-cyan-800: oklch(0.392 0.102 26);
+  --color-cyan-900: oklch(0.325 0.079 26);
+  --color-cyan-950: oklch(0.232 0.052 26);
 
-  --color-indigo-50: oklch(0.972 0.012 278);
-  --color-indigo-100: oklch(0.942 0.027 278);
-  --color-indigo-200: oklch(0.885 0.05 278);
-  --color-indigo-300: oklch(0.8 0.085 278);
-  --color-indigo-400: oklch(0.69 0.13 278);
-  --color-indigo-500: oklch(0.58 0.165 278);
-  --color-indigo-600: oklch(0.49 0.17 276);
-  --color-indigo-700: oklch(0.425 0.155 276);
-  --color-indigo-800: oklch(0.355 0.125 276);
-  --color-indigo-900: oklch(0.29 0.095 276);
-  --color-indigo-950: oklch(0.21 0.065 276);
+  --color-indigo-50: oklch(0.969 0.013 26);
+  --color-indigo-100: oklch(0.939 0.03 26);
+  --color-indigo-200: oklch(0.888 0.056 26);
+  --color-indigo-300: oklch(0.812 0.09 26);
+  --color-indigo-400: oklch(0.69 0.13 26);
+  --color-indigo-500: oklch(0.606 0.148 26);
+  --color-indigo-600: oklch(0.542 0.144 26);
+  --color-indigo-700: oklch(0.466 0.125 26);
+  --color-indigo-800: oklch(0.392 0.102 26);
+  --color-indigo-900: oklch(0.325 0.079 26);
+  --color-indigo-950: oklch(0.232 0.052 26);
+
+  --color-teal-50: oklch(0.969 0.013 26);
+  --color-teal-100: oklch(0.939 0.03 26);
+  --color-teal-200: oklch(0.888 0.056 26);
+  --color-teal-300: oklch(0.812 0.09 26);
+  --color-teal-400: oklch(0.69 0.13 26);
+  --color-teal-500: oklch(0.606 0.148 26);
+  --color-teal-600: oklch(0.542 0.144 26);
+  --color-teal-700: oklch(0.466 0.125 26);
+  --color-teal-800: oklch(0.392 0.102 26);
+  --color-teal-900: oklch(0.325 0.079 26);
+  --color-teal-950: oklch(0.232 0.052 26);
+
+  --color-purple-50: oklch(0.969 0.013 26);
+  --color-purple-100: oklch(0.939 0.03 26);
+  --color-purple-200: oklch(0.888 0.056 26);
+  --color-purple-300: oklch(0.812 0.09 26);
+  --color-purple-400: oklch(0.69 0.13 26);
+  --color-purple-500: oklch(0.606 0.148 26);
+  --color-purple-600: oklch(0.542 0.144 26);
+  --color-purple-700: oklch(0.466 0.125 26);
+  --color-purple-800: oklch(0.392 0.102 26);
+  --color-purple-900: oklch(0.325 0.079 26);
+  --color-purple-950: oklch(0.232 0.052 26);
 
   /* Softer, more sophisticated status hues */
   --color-emerald-50: oklch(0.975 0.018 165);
@@ -225,52 +269,81 @@ body {
 :root {
   --radius: 0.625rem;
   color-scheme: light;
-  --surface: oklch(1 0 0);
-  --surface-tint: oklch(0.982 0.005 85);
-  --tile: oklch(0.966 0.006 85);
-  --brand-blue: oklch(0.45 0.16 276);
-  /* The app's original header navy (#072333). */
-  --ink: oklch(0.244 0.045 237.7);
-  --ink-foreground: oklch(0.985 0.004 85);
-  --positive: oklch(0.52 0.11 160);
-  --negative: oklch(0.54 0.17 22);
-  --chip-active: oklch(0.94 0.028 278);
-  --chip-active-foreground: oklch(0.38 0.14 276);
-  --background: oklch(0.982 0.005 85);
-  --foreground: oklch(0.2 0.012 270);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.012 270);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.012 270);
-  --primary: oklch(0.2 0.012 270);
-  --primary-foreground: oklch(0.985 0.004 85);
-  --secondary: oklch(0.962 0.006 85);
-  --secondary-foreground: oklch(0.2 0.012 270);
-  --muted: oklch(0.962 0.006 85);
-  --muted-foreground: oklch(0.5 0.012 70);
-  --accent: oklch(0.955 0.008 85);
-  --accent-foreground: oklch(0.2 0.012 270);
-  --destructive: oklch(0.55 0.18 22);
-  --destructive-foreground: oklch(0.985 0.004 85);
-  --border: oklch(0.912 0.007 80);
-  --input: oklch(0.89 0.008 80);
-  --ring: oklch(0.58 0.14 278);
-  --chart-1: oklch(0.45 0.16 276);
-  --chart-2: oklch(0.6 0.1 175);
-  --chart-3: oklch(0.7 0.13 70);
-  --chart-4: oklch(0.6 0.15 22);
-  --chart-5: oklch(0.55 0.02 270);
-  --sidebar: oklch(0.975 0.005 85);
-  --sidebar-foreground: oklch(0.2 0.012 270);
-  --sidebar-primary: oklch(0.2 0.012 270);
-  --sidebar-primary-foreground: oklch(0.985 0.004 85);
-  --sidebar-accent: oklch(0.955 0.008 85);
-  --sidebar-accent-foreground: oklch(0.2 0.012 270);
-  --sidebar-border: oklch(0.912 0.007 80);
-  --sidebar-ring: oklch(0.58 0.14 278);
+
+  /* Surfaces run cream -> beige -> taupe. A card always sits lighter than the
+     page behind it, which is what carries depth now that shadows are light. */
+  --surface: oklch(0.998 0.002 84);
+  --surface-tint: oklch(0.984 0.006 84);
+  --tile: oklch(0.968 0.009 83);
+
+  /* The workspace canvas, replacing the pale-cyan wash. */
+  --canvas: oklch(0.982 0.007 84);
+  --canvas-mid: oklch(0.975 0.009 83);
+  --canvas-deep: oklch(0.967 0.011 82);
+
+  /* The report is a document on a desk: one clear step darker than the
+     page so its white cards read as paper, without going so dark that a
+     long report feels heavy. */
+  --report-canvas: oklch(0.973 0.008 83);
+  /* The capsule that opens each report section: #782D2D. */
+  --section-badge: oklch(0.405 0.106 23);
+
+  --accent-clay: oklch(0.542 0.144 26);
+  --accent-clay-strong: oklch(0.466 0.125 26);
+  --brand-blue: oklch(0.542 0.144 26);
+
+  /* Warm espresso, not navy, so the dark bars belong to the beige system. */
+  --ink: oklch(0.255 0.018 58);
+  --ink-foreground: oklch(0.975 0.008 84);
+  --ink-line: oklch(0.355 0.018 58);
+
+  --positive: oklch(0.5 0.1 158);
+  --negative: oklch(0.575 0.215 14);
+  --chip-active: oklch(0.925 0.038 26);
+  --chip-active-foreground: oklch(0.44 0.115 26);
+
+  --background: oklch(0.985 0.006 84);
+  --foreground: oklch(0.215 0.013 58);
+  --card: oklch(0.998 0.002 84);
+  --card-foreground: oklch(0.215 0.013 58);
+  --popover: oklch(0.998 0.002 84);
+  --popover-foreground: oklch(0.215 0.013 58);
+  --primary: oklch(0.235 0.015 56);
+  --primary-foreground: oklch(0.975 0.008 84);
+  --secondary: oklch(0.968 0.009 83);
+  --secondary-foreground: oklch(0.215 0.013 58);
+  --muted: oklch(0.968 0.009 83);
+  /* Dark enough for body-sized text on both the cream page and a card. */
+  --muted-foreground: oklch(0.472 0.019 64);
+  --accent: oklch(0.958 0.011 82);
+  --accent-foreground: oklch(0.215 0.013 58);
+  --destructive: oklch(0.545 0.175 22);
+  --destructive-foreground: oklch(0.975 0.008 84);
+
+  /* Taupe, kept light: the layout is held by spacing, not by rules. */
+  --border: oklch(0.906 0.011 80);
+  --input: oklch(0.882 0.013 78);
+  --ring: oklch(0.575 0.135 26);
+
+  --chart-1: oklch(0.255 0.012 60);
+  --chart-2: oklch(0.645 0.225 13);
+  --chart-3: oklch(0.755 0.175 58);
+  --chart-4: oklch(0.605 0.19 257);
+  --chart-5: oklch(0.62 0.014 70);
+  --chart-6: oklch(0.542 0.144 26);
+
+  --sidebar: oklch(0.982 0.007 84);
+  --sidebar-foreground: oklch(0.215 0.013 58);
+  --sidebar-primary: oklch(0.235 0.015 56);
+  --sidebar-primary-foreground: oklch(0.975 0.008 84);
+  --sidebar-accent: oklch(0.958 0.011 82);
+  --sidebar-accent-foreground: oklch(0.215 0.013 58);
+  --sidebar-border: oklch(0.906 0.011 80);
+  --sidebar-ring: oklch(0.575 0.135 26);
+
   /* Scrollbar thumb, tuned per theme so the track disappears into the surface. */
-  --scrollbar-thumb: oklch(0.87 0.007 75);
-  --scrollbar-thumb-hover: oklch(0.71 0.01 70);
+  --scrollbar-thumb: oklch(0.882 0.013 78);
+  --scrollbar-thumb-hover: oklch(0.705 0.019 72);
 }
 
 @layer base {
@@ -288,11 +361,21 @@ body {
     text-rendering: optimizeLegibility;
   }
 
-  /* Headings sit in the sans face, tightened so large sizes stay compact. */
+  /* Headings sit in the serif face. Lora is wider and more open than Geist, so
+     it carries less negative tracking and a lighter default weight. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-serif);
+  }
+
   h1,
   h2 {
-    font-weight: 600;
-    letter-spacing: -0.021em;
+    font-weight: 500;
+    letter-spacing: -0.012em;
   }
 
   ::selection {
@@ -307,13 +390,23 @@ body {
 }
 
 /* Premium utilities */
-/* Numeric values: light Geist figures that echo the thin serif headings */
+/* Display figures: Lora lining numerals, sized to sit beside serif headings */
 .font-numeric {
   font-family: var(--font-numeric);
-  font-weight: 300;
+  font-weight: 400;
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum", "lnum";
-  letter-spacing: -0.04em;
+  letter-spacing: -0.01em;
+}
+
+/* Figures inside dense tables and inline runs stay in Geist — the serif is for
+   display sizes, not for columns of small numbers. */
+.font-numeric-compact {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum", "lnum";
+  letter-spacing: -0.01em;
 }
 
 .premium-card {
@@ -323,6 +416,7 @@ body {
 }
 
 .eyebrow {
+  font-family: var(--font-sans);
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.14em;

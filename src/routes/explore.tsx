@@ -161,7 +161,7 @@ function ExplorePage() {
   return (
     <div className="min-h-screen bg-surface-tint font-sans text-foreground">
       {/* Header (Fixed on scroll) */}
-      <header className="sticky top-0 z-40 h-16 bg-[#072333] border-b border-[#0f354c] flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-16 bg-ink border-b border-ink-line flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <Link
             to="/ask-ai"
@@ -373,7 +373,7 @@ function ExplorePage() {
                   value={casePrompt}
                   onChange={(e) => setCasePrompt(e.target.value)}
                   placeholder="e.g. Detect revenue leakage in Cardiology consultations..."
-                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
+                  className="w-full rounded-2xl border border-border/80 bg-surface dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
@@ -386,7 +386,7 @@ function ExplorePage() {
                   value={caseDescription}
                   onChange={(e) => setCaseDescription(e.target.value)}
                   placeholder="Add context on departments, expected metrics, or historical baseline periods..."
-                  className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
+                  className="w-full rounded-2xl border border-border/80 bg-surface dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition resize-none placeholder:text-muted-foreground shadow-2xs"
                 />
               </div>
 
@@ -401,7 +401,7 @@ function ExplorePage() {
                   <select
                     value={caseExpiryDate}
                     onChange={(e) => setCaseExpiryDate(e.target.value)}
-                    className="w-full rounded-2xl border border-border/80 bg-white dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer appearance-none pr-10"
+                    className="w-full rounded-2xl border border-border/80 bg-surface dark:bg-zinc-900 px-4 py-3 text-sm text-foreground outline-none focus:border-foreground focus:ring-1 focus:ring-foreground/20 transition shadow-2xs cursor-pointer appearance-none pr-10"
                   >
                     <option value="Until I stop">Until I stop</option>
                     <option value="10 days">10 days</option>

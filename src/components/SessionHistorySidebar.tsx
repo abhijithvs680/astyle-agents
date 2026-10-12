@@ -92,18 +92,18 @@ export function SessionHistorySidebar({
     <aside
       id="ask-ai-session-history"
       aria-label={t("nav.chatHistory", { defaultValue: "Chat History" })}
-      className="absolute left-14 md:left-auto md:relative h-full w-[260px] sm:w-[280px] max-w-[calc(100vw-3.5rem)] md:max-w-none shrink-0 flex flex-col border-r border-[#0f354c]/30 dark:border-zinc-800 bg-[#f4f9fb] z-20 overflow-hidden select-none"
+      className="absolute left-14 md:left-auto md:relative h-full w-[260px] sm:w-[280px] max-w-[calc(100vw-3.5rem)] md:max-w-none shrink-0 flex flex-col border-r border-ink-line/30 dark:border-zinc-800 bg-surface-tint z-20 overflow-hidden select-none"
     >
       {/* Search stays at the top; session actions live in the main menu. */}
-      <div className="px-3 pt-2.5 pb-2 bg-slate-50/60 border-b border-slate-200/60 shrink-0">
+      <div className="px-3 pt-3 pb-2 bg-slate-50/60 border-b border-slate-200/60 shrink-0">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-500 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("sidebar.searchPlaceholder", { defaultValue: "Search previous sessions..." })}
-            className="w-full h-8 pl-8 pr-2.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0e7490] focus:ring-1 focus:ring-[#0e7490]/20 transition"
+            className="h-9 w-full rounded-lg border border-slate-200 bg-surface pl-8 pr-2.5 text-[13px] text-slate-800 placeholder:text-slate-500 transition focus:border-accent-clay focus:outline-none focus:ring-1 focus:ring-accent-clay/20"
           />
         </div>
       </div>
@@ -111,26 +111,26 @@ export function SessionHistorySidebar({
       {/* Sessions grouped by date. */}
       <div className="subtle-scrollbar flex-1 min-h-0 overflow-y-auto px-2.5 py-2 space-y-4">
         {groupedSessions.length === 0 ? (
-          <div className="text-center py-8 px-4 text-slate-400 space-y-2">
+          <div className="text-center py-8 px-4 text-slate-500 space-y-2">
             <Clock className="size-8 mx-auto text-slate-300" />
-            <p className="text-xs font-medium text-slate-600">
+            <p className="text-[13px] font-medium text-slate-700">
               {searchQuery
                 ? t("sidebar.noMatchingSessions", { defaultValue: "No matching sessions found." })
                 : t("sidebar.noPreviousSessions", { defaultValue: "No previous sessions yet." })}
             </p>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-500">
               {t("sidebar.askQuestion", { defaultValue: "Ask a question on the right to start an analysis." })}
             </p>
           </div>
         ) : (
           groupedSessions.map(({ group, items }) => (
             <div key={group} className="space-y-1.5">
-              <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <div className="flex items-center justify-between px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600">
                 <span className="flex items-center gap-1.5">
-                  <Calendar className="size-3 text-slate-400" />
+                  <Calendar className="size-3.5 text-slate-500" />
                   <span>{groupLabels[group] ?? group}</span>
                 </span>
-                <span className="text-[10px] text-slate-400 font-semibold">{items.length}</span>
+                <span className="text-[11px] font-semibold text-slate-500">{items.length}</span>
               </div>
 
               <div className="space-y-1">
@@ -141,22 +141,22 @@ export function SessionHistorySidebar({
                     <div
                       key={session.id}
                       onClick={() => onSelectSession(session)}
-                      className={`group relative border-b px-2.5 py-2.5 text-left transition-colors cursor-pointer ${
+                      className={`group relative border-b px-3 py-3 text-left transition-colors cursor-pointer ${
                         isActive
-                          ? "bg-white text-[#0e7490]"
+                          ? "bg-surface text-accent-clay"
                           : "bg-transparent text-slate-800 hover:bg-white/70"
                       }`}
                     >
                       {/* Active Left Indicator Bar */}
                       {isActive && (
-                        <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#0e7490]" />
+                        <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-accent-clay" />
                       )}
 
                       <div className="flex items-start justify-between gap-1.5">
                         <h4
-                          className={`text-xs font-semibold leading-snug line-clamp-2 ${
+                          className={`text-[13px] font-semibold leading-snug line-clamp-2 ${
                             isActive
-                              ? "text-[#0e7490]"
+                              ? "text-accent-clay"
                               : "text-slate-800 group-hover:text-slate-900"
                           }`}
                         >
@@ -172,7 +172,7 @@ export function SessionHistorySidebar({
                               setDeleteError(null);
                               setPendingDelete(session);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer shrink-0"
+                            className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer shrink-0"
                             title={t("sidebar.deleteSession", { defaultValue: "Delete this session" })}
                             aria-label={t("sidebar.deleteSession", { defaultValue: "Delete this session" })}
                           >
@@ -181,7 +181,7 @@ export function SessionHistorySidebar({
                         )}
                       </div>
 
-                      <div className="mt-1 text-[10px] text-slate-400">
+                      <div className="mt-1.5 text-xs text-slate-600">
                         <span>{session.timestamp}</span>
                       </div>
                     </div>
@@ -195,7 +195,7 @@ export function SessionHistorySidebar({
 
       {/* 4. FOOTER INFO */}
       <div className="p-2 border-t border-slate-200/80 bg-white/70 text-center shrink-0">
-        <p className="text-[10px] text-slate-400 font-medium">
+        <p className="text-[10px] text-slate-500 font-medium">
           {`${t("sidebar.sessionHistory", { defaultValue: "ASTYLE Session History" })} · ${historySessions.length} ${t("sidebar.sessions", { defaultValue: "Sessions" })}`}
         </p>
       </div>
