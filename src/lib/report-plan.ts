@@ -131,6 +131,22 @@ function strayEnvelopeKeys(envelope: Record<string, unknown>): Array<string> {
 }
 
 /**
+ * Stitch a `response` that was split into stray keys back together.
+ *
+ * Seen in practice: the platform splits `response` on `;`, keeps the first
+ * piece as `response` and emits every later piece as a null-valued key, in
+ * order. The separator itself is lost, so try the likely ones and keep the
+ * first join that parses.
+ */
+function repairSplitResponse(head: string, fragments: Array<string>): unknown {
+  for (const separator of [";", ",", ""]) {
+    const parsed = parsePlanJsonText([head, ...fragments].join(separator));
+    if (parsed !== undefined) return parsed;
+  }
+  return undefined;
+}
+
+/**
  * Distinguishes a payload that was cut off mid-flight from one that is simply
  * malformed. A truncated plan ends inside an unterminated string or with
  * unclosed braces, which points at an output/field limit upstream rather than
@@ -215,8 +231,21 @@ export function parseReportPlanEvent(raw: unknown): ReportPlan | null {
     // known to be a string in the catch block.
     const rawJson = body;
     body = parsePlanJsonText(rawJson);
+    const stray = strayEnvelopeKeys(payload);
+    if (body === undefined && stray.length > 0) {
+      // Object key order follows the wire order, so the fragments line up.
+      body = repairSplitResponse(
+        rawJson,
+        stray.filter((key) => payload[key] === null),
+      );
+      if (body !== undefined) {
+        console.warn("[plan] repaired a response split into stray envelope keys", {
+          sessionId: envelopeSessionId,
+          strayKeyCount: stray.length,
+        });
+      }
+    }
     if (body === undefined) {
-      const stray = strayEnvelopeKeys(payload);
       const truncated = looksTruncated(rawJson);
 
       let detail: string;
