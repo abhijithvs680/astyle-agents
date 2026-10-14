@@ -9,6 +9,7 @@
  * thrown over, because one bad chart should not cost the reader the other
  * eleven.
  */
+import { repairSplitResponse, strayEnvelopeKeys } from "./split-response";
 
 /** Socket event carrying a finished report. */
 export const REPORT_EVENT = "report";
@@ -191,6 +192,15 @@ export type Report = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** `JSON.parse` that reports failure as undefined instead of throwing. */
+function parseJson(json: string): unknown {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
 }
 
 function str(value: unknown): string | undefined {
@@ -749,12 +759,20 @@ export function parseReportEvent(rawEvent: unknown): Report | null {
   let body: unknown = rawEvent["response"];
   if (typeof body === "string") {
     const rawJson = body;
-    try {
-      body = JSON.parse(rawJson);
-    } catch {
+    body = parseJson(rawJson);
+    if (body === undefined) {
+      body = repairSplitResponse(rawEvent, rawJson, parseJson);
+      if (body !== undefined) {
+        console.warn("[report] repaired a response split into stray envelope keys", {
+          sessionId: envelopeSessionId,
+        });
+      }
+    }
+    if (body === undefined) {
       console.error("[report] could not parse response", {
         sessionId: envelopeSessionId,
         length: rawJson.length,
+        strayKeyCount: strayEnvelopeKeys(rawEvent).length,
         tail: rawJson.slice(-80),
       });
 

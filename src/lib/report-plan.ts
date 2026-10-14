@@ -8,6 +8,7 @@
  * usable default rather than throwing into the socket handler.
  */
 import type { AgentPlanItem, SuggestedAgentItem } from "../components/CxoDashboard";
+import { repairSplitResponse, strayEnvelopeKeys } from "./split-response";
 
 /** Socket event name carrying a Deep Insights plan. */
 export const REPORT_PLAN_EVENT = "report_gen_plan";
@@ -99,54 +100,6 @@ function toStatus(raw: unknown): ReportPlan["status"] {
 }
 
 /**
- * Fields the platform's background-workflow envelope is expected to carry.
- * Anything else is a fragment of `response` that leaked out of the string when
- * the envelope was serialised — see `strayEnvelopeKeys`.
- */
-const ENVELOPE_KEYS = new Set([
-  "USER_ID",
-  "Session_ID",
-  "session_id",
-  "response",
-  "conversation_id",
-  "userId",
-  "tag",
-  "jobId",
-  "icon",
-  "type",
-  "data",
-  "web_domain",
-]);
-
-/**
- * Keys that are really fragments of a broken `response` string.
- *
- * When the envelope is built without escaping `response` properly, a bare
- * quote inside it terminates the string early and the remainder is parsed as
- * further object keys (with null values). Their presence means the plan was
- * complete but mangled in transit — a different failure from a size limit.
- */
-function strayEnvelopeKeys(envelope: Record<string, unknown>): Array<string> {
-  return Object.keys(envelope).filter((key) => !ENVELOPE_KEYS.has(key));
-}
-
-/**
- * Stitch a `response` that was split into stray keys back together.
- *
- * Seen in practice: the platform splits `response` on `;`, keeps the first
- * piece as `response` and emits every later piece as a null-valued key, in
- * order. The separator itself is lost, so try the likely ones and keep the
- * first join that parses.
- */
-function repairSplitResponse(head: string, fragments: Array<string>): unknown {
-  for (const separator of [";", ",", ""]) {
-    const parsed = parsePlanJsonText([head, ...fragments].join(separator));
-    if (parsed !== undefined) return parsed;
-  }
-  return undefined;
-}
-
-/**
  * Distinguishes a payload that was cut off mid-flight from one that is simply
  * malformed. A truncated plan ends inside an unterminated string or with
  * unclosed braces, which points at an output/field limit upstream rather than
@@ -233,11 +186,7 @@ export function parseReportPlanEvent(raw: unknown): ReportPlan | null {
     body = parsePlanJsonText(rawJson);
     const stray = strayEnvelopeKeys(payload);
     if (body === undefined && stray.length > 0) {
-      // Object key order follows the wire order, so the fragments line up.
-      body = repairSplitResponse(
-        rawJson,
-        stray.filter((key) => payload[key] === null),
-      );
+      body = repairSplitResponse(payload, rawJson, parsePlanJsonText);
       if (body !== undefined) {
         console.warn("[plan] repaired a response split into stray envelope keys", {
           sessionId: envelopeSessionId,
