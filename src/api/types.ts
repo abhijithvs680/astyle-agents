@@ -140,22 +140,9 @@ export type ContinueReportInput = {
 };
 
 /** One approved suggestion, on its way to becoming a catalog agent. */
-export type CreateAgentsInput = {
-  agents: Array<{
-    /** The suggestion this came from, so the caller can match the result back. */
-    suggestionId: string;
-    title: string;
-    category: string;
-    description: string;
-  }>;
-};
-
-/** An agent that now exists in the catalog, with the id the platform minted. */
-export type CreatedAgent = {
-  id: string;
-  suggestionId: string;
-  name: string;
-  role: string;
+export type CreateAgentInput = {
+  title: string;
+  category: string;
   description: string;
 };
 

@@ -65,6 +65,7 @@ import { ReportView, type ReportAgent } from "./ReportView";
 import { useSocket } from "./SocketProvider";
 import { parseReportEvent, REPORT_EVENT, type Report } from "../lib/report";
 import { CHAT_RESPONSE_EVENT, parseChatResponseEvent, type ChatAnswer } from "../lib/chat-response";
+import { AGENT_CREATED_EVENT, parseAgentCreatedEvent } from "../lib/agent-created";
 import {
   parseReportPlanEvent,
   REPORT_PLAN_EVENT,
@@ -73,7 +74,7 @@ import {
 } from "../lib/report-plan";
 import { startAnalysis } from "../api/analysis";
 import { fetchConversations } from "../api/conversations";
-import { createAgents } from "../api/agents";
+import { dispatchAgentCreation } from "../api/agents";
 import { deleteSession } from "../api/delete-session";
 import { continueReport } from "../api/report";
 import type { ConversationEntry } from "../api/types";
@@ -2851,6 +2852,13 @@ const getInitialPending = (): { pendingCase: ActiveCaseItem | null; shouldLoad: 
 const PENDING_REPORT_SESSION_KEY = "astyle_pending_report_session";
 const PENDING_ANALYSIS_KEY = "astyle_pending_analysis";
 
+/**
+ * How long to wait for an `agent_created` event. Generous on purpose: the
+ * creation workflow is slow, and giving up early would drop an agent the user
+ * approved.
+ */
+const AGENT_CREATION_TIMEOUT_MS = 10 * 60_000;
+
 type PendingAnalysis = {
   sessionId: string;
   mode: AnalysisMode;
@@ -3760,6 +3768,60 @@ export function CxoDashboard({
   }, []);
 
   /**
+   * Create one approved suggestion and resolve with the id the platform minted.
+   *
+   * The HTTP call is fire-and-forget — it often times out while the workflow
+   * carries on — so the outcome is the `agent_created` socket event. Only one
+   * creation is in flight at a time, so the next event is this agent's; the
+   * name is compared only to flag a surprise in the logs. The listener is
+   * attached before dispatching so a fast reply cannot slip past it.
+   */
+  const createAgentOverSocket = useCallback(
+    (suggestion: { name: string; role: string; description?: string | undefined }) =>
+      new Promise<{ agentId: string; agentName: string }>((resolve, reject) => {
+        let settled = false;
+        const finish = (outcome: () => void) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          unsubscribe();
+          outcome();
+        };
+
+        const timer = setTimeout(() => {
+          finish(() => reject(new Error(`"${suggestion.name}" was not created in time.`)));
+        }, AGENT_CREATION_TIMEOUT_MS);
+
+        const unsubscribe = onSocketEvent(AGENT_CREATED_EVENT, (raw) => {
+          const created = parseAgentCreatedEvent(raw);
+          if (created === null) {
+            console.warn("[agents] received an unreadable agent_created event", raw);
+            return;
+          }
+          if (
+            created.agentName !== "" &&
+            created.agentName.toLowerCase() !== suggestion.name.trim().toLowerCase()
+          ) {
+            console.warn("[agents] created agent name differs from the request", {
+              requested: suggestion.name,
+              created: created.agentName,
+            });
+          }
+          finish(() => resolve(created));
+        });
+
+        void dispatchAgentCreation({
+          data: {
+            title: suggestion.name,
+            category: suggestion.role,
+            description: suggestion.description ?? "",
+          },
+        }).catch((error: unknown) => finish(() => reject(error)));
+      }),
+    [onSocketEvent],
+  );
+
+  /**
    * Hand the approved plan back for execution.
    *
    * Only what the user left switched on is sent, with whatever edits they made
@@ -3786,30 +3848,23 @@ export function CxoDashboard({
       // Approved suggestions are not agents yet. Create them first, one call
       // each, and keep the runtime prompt the user edited — the creation
       // endpoint does not take it, but the report does.
-      let newAgents: Array<{ id: string; name: string; role: string; runtimePrompt: string }> = [];
+      const newAgents: Array<{ id: string; name: string; role: string; runtimePrompt: string }> = [];
 
       if (approvedSuggestions.length > 0) {
         setCreatingAgentCount(approvedSuggestions.length);
         setContinueStage("creating-agents");
 
-        const created = await createAgents({
-          data: {
-            agents: approvedSuggestions.map((agent) => ({
-              suggestionId: agent.id,
-              title: agent.name,
-              category: agent.role,
-              description: agent.description ?? "",
-            })),
-          },
-        });
-
-        newAgents = created.map((agent) => ({
-          id: agent.id,
-          name: agent.name,
-          role: agent.role,
-          runtimePrompt:
-            approvedSuggestions.find((s) => s.id === agent.suggestionId)?.runtimePrompt ?? "",
-        }));
+        // One at a time: subscribe, dispatch, and wait for that agent's
+        // `agent_created` event before sending the next request.
+        for (const suggestion of approvedSuggestions) {
+          const created = await createAgentOverSocket(suggestion);
+          newAgents.push({
+            id: created.agentId,
+            name: created.agentName !== "" ? created.agentName : suggestion.name,
+            role: suggestion.role,
+            runtimePrompt: suggestion.runtimePrompt,
+          });
+        }
       }
 
       setContinueStage("starting");
@@ -3837,7 +3892,7 @@ export function CxoDashboard({
       clearReportLoading(reportPlan.sessionId);
       setContinueStage("idle");
     });
-  }, [reportPlan]);
+  }, [reportPlan, createAgentOverSocket]);
 
   const handleTogglePlanAgent = useCallback((agentId: string) => {
     setReportPlan((prev) =>
