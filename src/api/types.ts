@@ -22,7 +22,16 @@ export type CurrentUser = {
 
 export type SessionState =
   | { status: "authenticated"; user: CurrentUser }
-  | { status: "invalid"; reason: InvalidReason };
+  | {
+      status: "invalid";
+      reason: InvalidReason;
+      /**
+       * Where to send the visitor instead of the error page. Set only when the
+       * token is missing or rejected — signing in again fixes those, but not a
+       * misconfigured or unreachable backend.
+       */
+      signInUrl?: string | undefined;
+    };
 
 /** A session row from `getInitialData`, normalised for the UI. */
 export type SessionSummary = {

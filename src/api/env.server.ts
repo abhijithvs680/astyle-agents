@@ -40,6 +40,17 @@ export function getApiBaseUrl(): string {
   return raw;
 }
 
+/**
+ * The platform's sign-in page, where a visitor without a usable token is sent.
+ *
+ * `API_BASE_URL` points at the workflow trigger
+ * (`https://host/workflow.trigger`); sign-in lives beside it at the same base,
+ * so that suffix is dropped before `user.signin` is appended.
+ */
+export function getSignInUrl(): string {
+  return `${getApiBaseUrl().replace(/\/workflow\.trigger$/i, "")}/user.signin`;
+}
+
 /** Password used to seal the session cookie. */
 export function getSessionSecret(): string {
   const secret = requireEnv("SESSION_SECRET");

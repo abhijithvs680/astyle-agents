@@ -2,13 +2,14 @@
  * Landing-page token handshake.
  *
  * The app is opened as `/?token=<token>`. The server validates that token
- * against the backend and, on success, seals it into a session cookie. Anything
- * else lands the visitor on the invalid-configuration page.
+ * against the backend and, on success, seals it into a session cookie. A missing
+ * or rejected token sends the visitor to the platform sign-in page; anything
+ * else lands them on the invalid-configuration page.
  */
 import { createServerFn } from "@tanstack/react-start";
 
 import { isAffirmative, postUnauthenticated } from "./client.server";
-import { ConfigurationError } from "./env.server";
+import { ConfigurationError, getSignInUrl } from "./env.server";
 import { decodeTokenClaims } from "./jwt.server";
 import { clearAppSession, createAppSession, getSessionToken } from "./session.server";
 import type { CurrentUser, SessionState } from "./types";
@@ -44,7 +45,7 @@ export const establishSession = createServerFn({ method: "POST" })
         // a refresh or an in-app navigation doesn't bounce the user out.
         const existing = await getSessionToken();
         return existing === undefined
-          ? { status: "invalid", reason: "missing-token" }
+          ? { status: "invalid", reason: "missing-token", signInUrl: getSignInUrl() }
           : { status: "authenticated", user: userFromToken(existing) };
       }
 
@@ -57,7 +58,7 @@ export const establishSession = createServerFn({ method: "POST" })
 
       if (!isAffirmative(response)) {
         await clearAppSession();
-        return { status: "invalid", reason: "rejected" };
+        return { status: "invalid", reason: "rejected", signInUrl: getSignInUrl() };
       }
 
       await createAppSession(token);

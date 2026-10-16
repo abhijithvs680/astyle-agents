@@ -113,6 +113,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       throw redirect({ href: location.pathname, replace: true });
     }
 
+    // No usable token: send the visitor to the platform to sign in again rather
+    // than showing an error. The dev report preview needs no session, so it is
+    // left alone (see RootComponent).
+    const isDevPreview = import.meta.env.DEV && location.pathname.startsWith("/report-preview");
+    if (auth.status === "invalid" && auth.signInUrl !== undefined && !isDevPreview) {
+      throw redirect({ href: auth.signInUrl, reloadDocument: true });
+    }
+
     if (auth.status !== "authenticated") {
       return { auth, sessions: [] };
     }
