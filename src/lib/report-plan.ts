@@ -41,6 +41,12 @@ function str(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
 }
 
+function toIdentifier(value: unknown): string | undefined {
+  if (typeof value === "string" && value.trim() !== "") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return undefined;
+}
+
 function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
@@ -54,36 +60,55 @@ function id(value: unknown, fallback: string): string {
 
 function toAgent(raw: unknown, index: number): AgentPlanItem | null {
   if (!isRecord(raw)) return null;
-  const name = str(raw["name"]);
+  const name = str(raw["name"] ?? raw["title"] ?? raw["agent_name"] ?? raw["agentName"]);
   if (name === undefined) return null;
 
+  const rawId =
+    raw["id"] ??
+    raw["ID"] ??
+    raw["agent_id"] ??
+    raw["agentId"] ??
+    raw["AgentID"] ??
+    raw["case_agent_id"] ??
+    raw["caseagentid"] ??
+    raw["rowID"] ??
+    raw["rowid"];
+
   return {
-    id: id(raw["id"], `agent-${index}`),
+    id: id(rawId, `agent-${index}`),
     name,
-    role: str(raw["role"]) ?? "",
+    role: str(raw["role"] ?? raw["category"] ?? raw["type"]) ?? "",
     icon: str(raw["icon"]) ?? "🤖",
     // Falls back to an empty string rather than inventing text: the plan card
     // lets the user edit this, and a fabricated instruction would be sent.
-    runtimePrompt: str(raw["runtimePrompt"]) ?? "",
-    isEnabled: bool(raw["isEnabled"], true),
+    runtimePrompt: str(raw["runtimePrompt"] ?? raw["runtime_prompt"] ?? raw["prompt"]) ?? "",
+    isEnabled: bool(raw["isEnabled"] ?? raw["is_enabled"], true),
     ...(raw["isCustom"] === true ? { isCustom: true as const } : {}),
   };
 }
 
 function toSuggested(raw: unknown, index: number): SuggestedAgentItem | null {
   if (!isRecord(raw)) return null;
-  const name = str(raw["name"]);
+  const name = str(raw["name"] ?? raw["title"] ?? raw["agent_name"] ?? raw["agentName"]);
   if (name === undefined) return null;
 
   const rationale = str(raw["rationale"]);
+  const rawId =
+    raw["id"] ??
+    raw["ID"] ??
+    raw["agent_id"] ??
+    raw["agentId"] ??
+    raw["AgentID"] ??
+    raw["suggestion_id"] ??
+    raw["suggestionId"];
 
   return {
-    id: id(raw["id"], `suggested-${index}`),
+    id: id(rawId, `suggested-${index}`),
     name,
-    role: str(raw["role"]) ?? "",
+    role: str(raw["role"] ?? raw["category"] ?? raw["type"]) ?? "",
     icon: str(raw["icon"]) ?? "✨",
-    description: str(raw["description"]) ?? "",
-    runtimePrompt: str(raw["runtimePrompt"]) ?? "",
+    description: str(raw["description"] ?? raw["summary"]) ?? "",
+    runtimePrompt: str(raw["runtimePrompt"] ?? raw["runtime_prompt"] ?? raw["prompt"]) ?? "",
     ...(rationale !== undefined ? { rationale } : {}),
     // Never trust an approval from the wire: the user opts in, locally.
     isApproved: false,
@@ -175,8 +200,18 @@ export function parseReportPlanEvent(raw: unknown): ReportPlan | null {
   // The envelope repeats the id; `Session_ID` is authoritative, `jobId` is the
   // fallback seen on background-workflow events.
   const envelopeSessionId =
-    str(payload["Session_ID"]) ?? str(payload["session_id"]) ?? str(payload["jobId"]);
-  const conversationId = str(payload["conversation_id"]);
+    toIdentifier(payload["Session_ID"]) ??
+    toIdentifier(payload["session_id"]) ??
+    toIdentifier(payload["jobId"]);
+  const conversationId =
+    toIdentifier(payload["conversation_id"]) ??
+    toIdentifier(payload["ConversationID"]) ??
+    toIdentifier(payload["conversationId"]) ??
+    toIdentifier(payload["rowID"]) ??
+    toIdentifier(payload["row_id"]) ??
+    toIdentifier(payload["rowId"]) ??
+    toIdentifier(payload["id"]) ??
+    toIdentifier(payload["ID"]);
 
   let body: unknown = payload["response"];
   if (typeof body === "string") {
@@ -250,8 +285,19 @@ export function toReportPlan(
   conversationId?: string,
 ): ReportPlan | null {
   const plan = isRecord(body) ? body : {};
-  const sessionId = str(plan["sessionId"]) ?? fallbackSessionId;
+  const sessionId = toIdentifier(plan["sessionId"]) ?? fallbackSessionId;
   if (sessionId === undefined) return null;
+
+  const resolvedConversationId =
+    toIdentifier(conversationId) ??
+    toIdentifier(plan["conversationId"]) ??
+    toIdentifier(plan["conversation_id"]) ??
+    toIdentifier(plan["ConversationID"]) ??
+    toIdentifier(plan["rowID"]) ??
+    toIdentifier(plan["row_id"]) ??
+    toIdentifier(plan["rowId"]) ??
+    toIdentifier(plan["id"]) ??
+    toIdentifier(plan["ID"]);
 
   const sessionTitle = str(plan["sessionTitle"]);
   const planSummary = str(plan["planSummary"]);
@@ -261,7 +307,9 @@ export function toReportPlan(
 
   return {
     sessionId,
-    ...(conversationId !== undefined && conversationId !== "" ? { conversationId } : {}),
+    ...(resolvedConversationId !== undefined && resolvedConversationId !== ""
+      ? { conversationId: resolvedConversationId }
+      : {}),
     prompt: str(plan["prompt"]) ?? "",
     ...(sessionTitle !== undefined ? { sessionTitle } : {}),
     planTitle: str(plan["planTitle"]) ?? "Report Generation Plan",
@@ -351,5 +399,7 @@ export function applyApprovedData(
 }
 
 function matchKey(value: unknown): string {
-  return typeof value === "string" ? value.trim().toLowerCase().replace(/\s+/g, " ") : "";
+  if (typeof value === "string") return value.trim().toLowerCase().replace(/\s+/g, " ");
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return "";
 }

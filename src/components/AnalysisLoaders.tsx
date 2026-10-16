@@ -7,7 +7,9 @@
  * not claim a completion percentage or finish the request on a timer.
  */
 import { useEffect, useState } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { TranslatableText } from "./TranslatableText";
 
 function Shimmer({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
   return <div className={`animate-pulse rounded bg-slate-200/80 ${className}`} style={style} />;
@@ -262,14 +264,43 @@ export function ChatSkeleton() {
   );
 }
 
+export type CreatedAgentItem = {
+  title: string;
+  role?: string | undefined;
+  description?: string | undefined;
+  workflowLogId?: number | undefined;
+};
+
+export type TargetAgentItem = {
+  name: string;
+  role?: string | undefined;
+  description?: string | undefined;
+  id?: string | undefined;
+  icon?: string | undefined;
+  runtimePrompt?: string | undefined;
+  rationale?: string | undefined;
+  isApproved?: boolean | undefined;
+};
+
 /**
- * The gap between pressing Continue and the first agent existing.
+ * The wait while agents are being created in the background.
  *
- * Counted, not spun: the user approved a specific number of specialists, and
- * seeing that number come back tells them the right thing is happening.
+ * Shows real-time progress as each agent is created and emitted over the socket.
  */
-export function AgentCreationLoader({ count }: { count: number }) {
+export function AgentCreationLoader({
+  count,
+  createdAgents = [],
+  targetAgents = [],
+}: {
+  count: number;
+  createdAgents?: Array<CreatedAgentItem> | undefined;
+  targetAgents?: Array<TargetAgentItem> | undefined;
+}) {
   const { t } = useLanguage();
+  const totalCount = Math.max(1, count, targetAgents.length);
+  const readyCount = createdAgents.length;
+  const hasRealData = createdAgents.length > 0 || targetAgents.length > 0;
+
   return (
     <div
       className="animate-in fade-in space-y-4 rounded-2xl border border-amber-200/80 bg-amber-50/30 p-5 shadow-2xs duration-300 sm:p-6"
@@ -280,27 +311,98 @@ export function AgentCreationLoader({ count }: { count: number }) {
       <div className="flex items-center gap-2.5">
         <img src="/flower-logo.svg" alt="" className="size-5 animate-spin object-contain" />
         <h3 className="text-base font-bold tracking-tight text-slate-900">
-          {count === 1 ? t("analysisLoaders.creatingAgentSingle", { defaultValue: "Creating 1 new agent" }) : t("analysisLoaders.creatingAgentsPlural", { defaultValue: "Creating {{count}} new agents", count })}
+          {readyCount > 0
+            ? t("analysisLoaders.agentsReady", {
+                defaultValue: "{{ready}} of {{total}} agents ready",
+                ready: readyCount,
+                total: totalCount,
+              })
+            : totalCount === 1
+              ? t("analysisLoaders.creatingAgentSingle", { defaultValue: "Creating 1 new agent" })
+              : t("analysisLoaders.creatingAgentsPlural", {
+                  defaultValue: "Creating {{count}} new agents",
+                  count: totalCount,
+                })}
         </h3>
       </div>
       <p className="text-sm font-normal text-slate-600">
-        {t("analysisLoaders.addingSpecialistsDesc", { defaultValue: "Adding the specialists you approved to your catalog before the report runs." })}
+        {t("analysisLoaders.addingSpecialistsDesc", {
+          defaultValue:
+            "Adding the specialists you approved to your catalog before the report runs.",
+        })}
       </p>
 
       <div className="divide-y divide-amber-200/70 overflow-hidden rounded-xl border border-amber-200 bg-surface">
-        {Array.from({ length: Math.max(1, count) }, (_, row) => (
-          <div key={row} className="flex items-center gap-3 p-3.5">
-            <Shimmer className="size-9 shrink-0 rounded-lg" />
-            <div className="flex-1 space-y-2">
-              <Shimmer className="h-3.5 w-2/5" />
-              <Shimmer className="h-3 w-3/5" />
-            </div>
-          </div>
-        ))}
+        {hasRealData
+          ? Array.from({ length: totalCount }, (_, row) => {
+              const target = targetAgents[row];
+              const created =
+                createdAgents.find(
+                  (c) =>
+                    target?.name && c.title.trim().toLowerCase() === target.name.trim().toLowerCase(),
+                ) ?? createdAgents[row];
+
+              const isDone = created !== undefined;
+              const displayTitle = created?.title ?? target?.name ?? `Specialist Agent ${row + 1}`;
+              const displayRole = created?.role ?? target?.role ?? "";
+
+              return (
+                <div key={row} className="flex items-center justify-between gap-3 p-3.5 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`size-9 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
+                        isDone
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-600 shadow-2xs"
+                          : "bg-amber-50 border-amber-200 text-amber-600"
+                      }`}
+                    >
+                      {isDone ? (
+                        <CheckCircle2 className="size-4.5 stroke-[2.2]" />
+                      ) : (
+                        <Loader2 className="size-4.5 animate-spin text-amber-500" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        <TranslatableText text={displayTitle} />
+                      </p>
+                      {displayRole && (
+                        <p className="text-xs text-slate-500 truncate">
+                          <TranslatableText text={displayRole} />
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold shrink-0 ${
+                      isDone
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-amber-100/90 text-amber-800"
+                    }`}
+                  >
+                    {!isDone && <Loader2 className="size-2.5 animate-spin text-amber-600" />}
+                    {isDone
+                      ? t("analysisLoaders.agentCreatedBadge", { defaultValue: "Created" })
+                      : t("analysisLoaders.agentCreatingBadge", { defaultValue: "Creating…" })}
+                  </span>
+                </div>
+              );
+            })
+          : Array.from({ length: Math.max(1, count) }, (_, row) => (
+              <div key={row} className="flex items-center gap-3 p-3.5">
+                <Shimmer className="size-9 shrink-0 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Shimmer className="h-3.5 w-2/5" />
+                  <Shimmer className="h-3 w-3/5" />
+                </div>
+              </div>
+            ))}
       </div>
     </div>
   );
 }
+
 
 /** A section card in the skeleton, shaped like a real report section. */
 function SkeletonSection({

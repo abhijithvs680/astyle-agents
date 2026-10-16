@@ -1842,23 +1842,33 @@ export function ReportView({
    * agent is still listed rather than silently dropped.
    */
   const agents = useMemo<Array<ReportAgent>>(() => {
-    const ids =
-      planAgents !== undefined && planAgents.length > 0
-        ? planAgents.map((agent) => agent.id)
-        : report.blocks
-            .map((block) => block.agentId)
-            .filter((id): id is string => id !== undefined);
+    const planIds = (planAgents ?? []).map((agent) => agent.id);
+    const blockIds = report.blocks
+      .map((block) => block.agentId)
+      .filter((id): id is string => id !== undefined);
 
-    const seen = new Set<string>();
+    const ids =
+      planIds.length > 0
+        ? Array.from(new Set([...planIds, ...blockIds]))
+        : blockIds;
+
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
     const list: Array<ReportAgent> = [];
     for (const id of ids) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const fromPlan = planAgents?.find((agent) => agent.id === id);
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      const fromPlan =
+        planAgents?.find((agent) => agent.id === id) ??
+        planAgents?.find((agent) => agent.name.trim().toLowerCase() === id.trim().toLowerCase());
       const fromCatalog = directory.get(id);
+      const name = fromCatalog?.title ?? fromPlan?.name ?? id;
+      const normalizedName = name.trim().toLowerCase();
+      if (seenNames.has(normalizedName)) continue;
+      seenNames.add(normalizedName);
       list.push({
         id,
-        name: fromCatalog?.title ?? fromPlan?.name ?? id,
+        name,
         ...optionalRole(fromCatalog?.role ?? fromPlan?.role),
       });
     }

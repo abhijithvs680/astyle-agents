@@ -42,10 +42,11 @@ export const API_ENDPOINTS = {
   /**
    * Creates one specialist agent in the catalog. POST `{ title, category,
    * description }` — one call per agent. Called when the user approves a
-   * suggested agent, before the report runs, and unlike the run endpoints this
-   * one is awaited: its response carries the new agent's id.
+   * suggested agent. Fire-and-forget: creation progress is streamed over the
+   * chat socket as `new_message` events with `type: "agent_stream"`.
    */
   agentCreation: "astylev2agentcreation6ac5f7eda6b6b",
+
 
   /**
    * Runs the report the user approved on the plan card. POST the approved

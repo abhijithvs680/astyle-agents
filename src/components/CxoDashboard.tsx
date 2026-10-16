@@ -71,6 +71,11 @@ import {
   toReportPlan,
   type ReportPlan,
 } from "../lib/report-plan";
+import {
+  parseAgentStreamEvent,
+  AGENT_STREAM_EVENT,
+  type AgentStreamItem,
+} from "../lib/agent-stream";
 import { startAnalysis } from "../api/analysis";
 import { fetchConversations } from "../api/conversations";
 import { createAgents } from "../api/agents";
@@ -94,7 +99,9 @@ type PastTurn = {
   awaitingReport: boolean;
   continueStage: ContinueStage;
   creatingAgentCount: number;
+  createdAgents?: Array<AgentStreamItem>;
 };
+
 
 export interface ActiveCaseItem {
   age: string;
@@ -3182,6 +3189,7 @@ export function CxoDashboard({
     // or its first prompt would continue the old conversation.
     runSessionIdRef.current = null;
     setContinueStage("idle");
+    setCreatingAgentsList([]);
     setReport(null);
     setChatAnswer(null);
     setOpenedSessionId(null);
@@ -3221,13 +3229,18 @@ export function CxoDashboard({
       node.focus();
     };
 
-  /** The enabled agents on a plan, in the shape the report pill wants. */
-  const planRoster = (plan: ReportPlan | null): Array<ReportAgent> | undefined =>
-    plan === null
-      ? undefined
-      : plan.agents
-          .filter((agent) => agent.isEnabled)
-          .map((agent) => ({ id: agent.id, name: agent.name, role: agent.role }));
+  /** The enabled and approved agents on a plan, in the shape the report pill wants. */
+  const planRoster = (plan: ReportPlan | null): Array<ReportAgent> | undefined => {
+    if (plan === null) return undefined;
+    const roster = plan.agents
+      .filter((agent) => agent.isEnabled)
+      .map((agent) => ({ id: agent.id, name: agent.name, role: agent.role }));
+    const existingNames = new Set(roster.map((a) => a.name.trim().toLowerCase()));
+    const approved = plan.suggestedAgents
+      .filter((agent) => agent.isApproved && !existingNames.has(agent.name.trim().toLowerCase()))
+      .map((agent) => ({ id: agent.id, name: agent.name, role: agent.role }));
+    return [...roster, ...approved];
+  };
 
   /** A report's agent pill: open that agent's own conversation. */
   const handleOpenAgent = (agentId: string) => {
@@ -3596,6 +3609,11 @@ export function CxoDashboard({
             ? pastTurnsRef.current.map((turn) => turn.awaitingReport).lastIndexOf(true)
             : -1;
       if (waiting !== -1) {
+        if (agentCreationTimeoutRef.current !== null) {
+          clearTimeout(agentCreationTimeoutRef.current);
+          agentCreationTimeoutRef.current = null;
+        }
+        continueReportTriggeredRef.current = false;
         clearReportLoading(next.sessionId);
         setPastTurns((prev) =>
           prev.map((turn, index) =>
@@ -3605,6 +3623,11 @@ export function CxoDashboard({
         return;
       }
 
+      if (agentCreationTimeoutRef.current !== null) {
+        clearTimeout(agentCreationTimeoutRef.current);
+        agentCreationTimeoutRef.current = null;
+      }
+      continueReportTriggeredRef.current = false;
       setReport(next);
       clearReportLoading(next.sessionId);
       // The report is the answer to the Continue click, so the waiting state
@@ -3621,6 +3644,26 @@ export function CxoDashboard({
   const [continueStage, setContinueStage] = useState<ContinueStage>("idle");
   /** How many specialists the Continue click is creating, for the loader. */
   const [creatingAgentCount, setCreatingAgentCount] = useState(0);
+  /** Agents created in real time via the socket. */
+  const [createdAgentsList, setCreatingAgentsList] = useState<Array<AgentStreamItem>>([]);
+  const createdAgentsListRef = useRef<Array<AgentStreamItem>>([]);
+  createdAgentsListRef.current = createdAgentsList;
+
+  const activePlanRef = useRef<ReportPlan | null>(null);
+  activePlanRef.current = reportPlan;
+
+  const approvedSuggestionsRef = useRef<Array<SuggestedAgentItem>>([]);
+  const agentCreationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const continueReportTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (agentCreationTimeoutRef.current !== null) {
+        clearTimeout(agentCreationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   /** The finished report, once it arrives over the socket. */
   const [report, setReport] = useState<Report | null>(null);
   /** Messages for the session the user opened from the sidebar. */
@@ -3647,6 +3690,7 @@ export function CxoDashboard({
   pendingRunRef.current = pendingRun;
   const sessionHistoryListRef = useRef(sessionHistoryList);
   sessionHistoryListRef.current = sessionHistoryList;
+
 
   const handleConversationScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const top = event.currentTarget.scrollTop;
@@ -3760,84 +3804,190 @@ export function CxoDashboard({
   }, []);
 
   /**
-   * Hand the approved plan back for execution.
-   *
-   * Only what the user left switched on is sent, with whatever edits they made
-   * to the instructions — the plan as displayed, not as originally proposed.
+   * Triggers the report execution with the approved roster and created agents.
    */
-  const handleContinuePlan = useCallback(() => {
-    if (reportPlan === null) return;
+  const triggerContinueReport = useCallback(
+    (streamedAgents: Array<AgentStreamItem> = []) => {
+      const plan = activePlanRef.current ?? reportPlan;
+      if (plan === null) {
+        console.error("[plan] cannot continue: plan is null");
+        return;
+      }
+      if (!plan.conversationId) {
+        console.error("[plan] cannot continue: the plan carries no conversation id", plan);
+        clearReportLoading(plan.sessionId);
+        setContinueStage("idle");
+        return;
+      }
 
-    // The workflow runs one specific stored plan; without its row id there is
-    // nothing to continue.
-    if (reportPlan.conversationId === undefined) {
-      console.error("[plan] cannot continue: the plan carries no conversation id");
-      return;
-    }
+      const conversationId = plan.conversationId;
+      const rosterAgents = plan.agents
+        .filter((a) => a.isEnabled)
+        .map(({ id, name, role, runtimePrompt }) => ({ id, name, role, runtimePrompt }));
+      const approvedSuggestions = approvedSuggestionsRef.current;
 
-    const conversationId = reportPlan.conversationId;
-    markReportLoading(reportPlan.sessionId);
-    const rosterAgents = reportPlan.agents
-      .filter((a) => a.isEnabled)
-      .map(({ id, name, role, runtimePrompt }) => ({ id, name, role, runtimePrompt }));
-    const approvedSuggestions = reportPlan.suggestedAgents.filter((a) => a.isApproved);
+      const newAgents = approvedSuggestions.map((suggestion, index) => {
+        const matched =
+          streamedAgents.find(
+            (a) => a.title.trim().toLowerCase() === suggestion.name.trim().toLowerCase(),
+          ) ?? streamedAgents[index];
+        return {
+          id: matched?.agentId || (matched?.workflowLogId ? String(matched.workflowLogId) : suggestion.id),
+          name: matched?.title || suggestion.name,
+          role: matched?.role || suggestion.role,
+          runtimePrompt: suggestion.runtimePrompt || matched?.prompt || "",
+        };
+      });
 
-    const run = async () => {
-      // Approved suggestions are not agents yet. Create them first, one call
-      // each, and keep the runtime prompt the user edited — the creation
-      // endpoint does not take it, but the report does.
-      let newAgents: Array<{ id: string; name: string; role: string; runtimePrompt: string }> = [];
+      const allAgents = [...rosterAgents, ...newAgents];
+      if (allAgents.length === 0) {
+        console.warn("[plan] no agents selected or approved to continue report");
+        clearReportLoading(plan.sessionId);
+        setContinueStage("idle");
+        return;
+      }
 
-      if (approvedSuggestions.length > 0) {
-        setCreatingAgentCount(approvedSuggestions.length);
-        setContinueStage("creating-agents");
-
-        const created = await createAgents({
-          data: {
-            agents: approvedSuggestions.map((agent) => ({
-              suggestionId: agent.id,
-              title: agent.name,
-              category: agent.role,
-              description: agent.description ?? "",
-            })),
-          },
+      if (newAgents.length > 0) {
+        setReportPlan((prev) => {
+          if (prev === null) return prev;
+          const existingIds = new Set(prev.agents.map((a) => a.id));
+          const existingNames = new Set(prev.agents.map((a) => a.name.trim().toLowerCase()));
+          const additions: Array<AgentPlanItem> = newAgents
+            .filter((na) => !existingIds.has(na.id) && !existingNames.has(na.name.trim().toLowerCase()))
+            .map((na) => ({
+              id: na.id,
+              name: na.name,
+              role: na.role,
+              icon: "✨",
+              runtimePrompt: na.runtimePrompt,
+              isEnabled: true,
+            }));
+          return {
+            ...prev,
+            agents: [...prev.agents, ...additions],
+          };
         });
-
-        newAgents = created.map((agent) => ({
-          id: agent.id,
-          name: agent.name,
-          role: agent.role,
-          runtimePrompt:
-            approvedSuggestions.find((s) => s.id === agent.suggestionId)?.runtimePrompt ?? "",
-        }));
       }
 
       setContinueStage("starting");
 
-      await continueReport({
+      void continueReport({
         data: {
-          sessionId: reportPlan.sessionId,
+          sessionId: plan.sessionId,
           conversationId,
-          prompt: reportPlan.prompt,
-          planTitle: reportPlan.planTitle,
-          planSummary: reportPlan.planSummary,
-          sessionTitle: reportPlan.sessionTitle,
-          customInstructions: reportPlan.customInstructions,
-          // The ones just created join the roster; there is no longer anything
-          // "suggested" about them.
-          agents: [...rosterAgents, ...newAgents],
+          prompt: plan.prompt,
+          planTitle: plan.planTitle,
+          planSummary: plan.planSummary,
+          sessionTitle: plan.sessionTitle,
+          customInstructions: plan.customInstructions,
+          agents: allAgents,
         },
+      }).catch((error: unknown) => {
+        console.error("[plan] could not start the report", error);
+        clearReportLoading(plan.sessionId);
+        setContinueStage("idle");
       });
-    };
+    },
+    [reportPlan, clearReportLoading],
+  );
 
-    // The report itself comes back over the socket, so on success the button
-    // stays disabled rather than flipping back and inviting a second run.
-    void run().catch((error: unknown) => {
-      console.error("[plan] could not start the report", error);
-      clearReportLoading(reportPlan.sessionId);
-      setContinueStage("idle");
+  // Specialists created in the background are streamed over the socket as `new_message` events.
+  useEffect(() => {
+    return onSocketEvent(AGENT_STREAM_EVENT, (raw) => {
+      const agentItem = parseAgentStreamEvent(raw);
+      if (agentItem === null) return;
+
+      console.log("[socket] agent stream event received:", agentItem.title, agentItem);
+
+      setCreatingAgentsList((prev) => {
+        if (
+          prev.some(
+            (item) =>
+              (agentItem.workflowLogId !== undefined && item.workflowLogId === agentItem.workflowLogId) ||
+              item.title.trim().toLowerCase() === agentItem.title.trim().toLowerCase(),
+          )
+        ) {
+          return prev;
+        }
+        const next = [...prev, agentItem];
+
+        const expectedCount = approvedSuggestionsRef.current.length;
+        if (
+          expectedCount > 0 &&
+          next.length >= expectedCount &&
+          !continueReportTriggeredRef.current
+        ) {
+          continueReportTriggeredRef.current = true;
+          if (agentCreationTimeoutRef.current !== null) {
+            clearTimeout(agentCreationTimeoutRef.current);
+            agentCreationTimeoutRef.current = null;
+          }
+          triggerContinueReport(next);
+        }
+
+        return next;
+      });
     });
-  }, [reportPlan]);
+  }, [onSocketEvent, triggerContinueReport]);
+
+  /**
+   * Hand the approved plan back for execution.
+   *
+   * If suggestions were approved, dispatches agent creation in the background
+   * (fire-and-forget: avoids HTTP timeouts). Status updates arrive over the
+   * socket via `new_message` events. Once all approved agents are emitted,
+   * `continueReport` is triggered automatically.
+   */
+  const handleContinuePlan = useCallback(() => {
+    const plan = activePlanRef.current ?? reportPlan;
+    if (plan === null) return;
+
+    // The workflow runs one specific stored plan; without its row id there is
+    // nothing to continue.
+    if (!plan.conversationId) {
+      console.error("[plan] cannot continue: the plan carries no conversation id", plan);
+      return;
+    }
+
+    markReportLoading(plan.sessionId);
+    const approvedSuggestions = plan.suggestedAgents.filter((a) => a.isApproved);
+    approvedSuggestionsRef.current = approvedSuggestions;
+    continueReportTriggeredRef.current = false;
+    setCreatingAgentsList([]);
+
+    if (approvedSuggestions.length > 0) {
+      setCreatingAgentCount(approvedSuggestions.length);
+      setContinueStage("creating-agents");
+
+      if (agentCreationTimeoutRef.current !== null) {
+        clearTimeout(agentCreationTimeoutRef.current);
+      }
+      agentCreationTimeoutRef.current = setTimeout(() => {
+        console.warn("[plan] socket wait timed out for agent creation; continuing report");
+        if (!continueReportTriggeredRef.current) {
+          continueReportTriggeredRef.current = true;
+          triggerContinueReport(createdAgentsListRef.current);
+        }
+      }, 90_000);
+
+      // Fire-and-forget: eliminates HTTP timeout waiting for the response
+      void createAgents({
+        data: {
+          agents: approvedSuggestions.map((agent) => ({
+            suggestionId: agent.id,
+            title: agent.name,
+            category: agent.role,
+            description: agent.description ?? "",
+          })),
+        },
+      }).catch((error: unknown) => {
+        console.error("[plan] could not dispatch agent creation", error);
+      });
+    } else {
+      triggerContinueReport([]);
+    }
+  }, [reportPlan, markReportLoading, triggerContinueReport]);
+
 
   const handleTogglePlanAgent = useCallback((agentId: string) => {
     setReportPlan((prev) =>
@@ -4520,6 +4670,7 @@ export function CxoDashboard({
           awaitingReport: continueStage !== "idle" && report === null,
           continueStage,
           creatingAgentCount,
+          createdAgents: createdAgentsList,
         },
       ]);
     }
@@ -4527,7 +4678,9 @@ export function CxoDashboard({
     setReport(null);
     setChatAnswer(null);
     setContinueStage("idle");
+    setCreatingAgentsList([]);
     setStreamingQuery(q);
+
     const nextPendingRun = { sessionId: runSessionId, mode };
     pendingRunRef.current = nextPendingRun;
     setPendingRun(nextPendingRun);
@@ -6086,10 +6239,15 @@ export function CxoDashboard({
                         )}
                         {turn.awaitingReport &&
                           (turn.continueStage === "creating-agents" ? (
-                            <AgentCreationLoader count={turn.creatingAgentCount} />
+                            <AgentCreationLoader
+                              count={turn.creatingAgentCount}
+                              createdAgents={turn.createdAgents}
+                              targetAgents={turn.plan?.suggestedAgents.filter((a) => a.isApproved)}
+                            />
                           ) : (
                             <ReportSkeleton />
                           ))}
+
                         {turn.report !== null && (
                           <ReportView
                             report={turn.report}
@@ -6190,10 +6348,15 @@ export function CxoDashboard({
                           </div>
 
                           {continueStage === "creating-agents" ? (
-                            <AgentCreationLoader count={creatingAgentCount} />
+                            <AgentCreationLoader
+                              count={creatingAgentCount}
+                              createdAgents={createdAgentsList}
+                              targetAgents={reportPlan?.suggestedAgents.filter((a) => a.isApproved)}
+                            />
                           ) : (
                             <ReportSkeleton />
                           )}
+
                         </div>
                       )}
 

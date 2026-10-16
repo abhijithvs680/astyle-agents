@@ -159,4 +159,7 @@ export type CreatedAgent = {
   description: string;
 };
 
+export type CreateAgentsResult = { accepted: true; dispatchedCount: number };
+
 export type ContinueReportResult = { accepted: true; sessionId: string };
+

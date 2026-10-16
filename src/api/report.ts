@@ -21,7 +21,9 @@ import type { ContinueReportInput, ContinueReportResult } from "./types";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function str(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return "";
 }
 
 function list(value: unknown): Array<Record<string, unknown>> {
@@ -52,10 +54,10 @@ export const continueReport = createServerFn({ method: "POST" })
     }
 
     const agents = list(input?.agents).map((agent) => ({
-      id: str(agent["id"]),
-      name: str(agent["name"]),
-      role: str(agent["role"]),
-      runtime_prompt: str(agent["runtimePrompt"]),
+      id: str(agent["id"] ?? agent["agentId"] ?? agent["agent_id"] ?? agent["AgentID"]),
+      name: str(agent["name"] ?? agent["title"] ?? agent["agent_name"] ?? agent["agentName"]),
+      role: str(agent["role"] ?? agent["category"] ?? agent["type"]),
+      runtime_prompt: str(agent["runtimePrompt"] ?? agent["runtime_prompt"] ?? agent["prompt"]),
     }));
 
     // Nothing would run, and the workflow would have to guess what the user
@@ -83,7 +85,7 @@ export const continueReport = createServerFn({ method: "POST" })
       throw new Error("Session token carries no email claim.");
     }
 
-    await dispatchAuthenticated("continueReport", {
+    const payload = {
       session_id: data.sessionId,
       conversation_id: data.conversationId,
       // The plan already opened this session; this is the turn that executes it.
@@ -101,7 +103,17 @@ export const continueReport = createServerFn({ method: "POST" })
       // cannot run a report as somebody else.
       email: claims.email,
       uid: claims.uid ?? "",
+    };
+
+    console.log("[continueReport] dispatching to astylev26ac5f949993d2 with payload:", {
+      sessionId: payload.session_id,
+      conversationId: payload.conversation_id,
+      prompt: payload.prompt,
+      agentsCount: payload.agents.length,
+      agents: payload.agents,
     });
+
+    await dispatchAuthenticated("continueReport", payload);
 
     return { accepted: true, sessionId: data.sessionId };
   });

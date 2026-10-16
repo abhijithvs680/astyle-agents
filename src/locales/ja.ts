@@ -125,6 +125,9 @@ export const ja = {
     creatingAgentSingle: "1つの新しいエージェントを作成中",
     creatingAgentsPlural: "{{count}}個の新しいエージェントを作成中",
     addingSpecialistsDesc: "レポートを実行する前に、承認したスペシャリストをカタログに追加しています。",
+    agentCreatedBadge: "作成完了",
+    agentCreatingBadge: "作成中…",
+    agentsReady: "{{ready}} / {{total}} エージェント準備完了",
     generatingReport: "レポートを作成中",
     tipLabel: "ヒント",
     tip1: "すぐに答えが必要ですか？チャットモードに切り替えると、より速く直接的な回答が得られます。",
@@ -159,10 +162,13 @@ export const ja = {
     addingApproved: "承認された専門家をカタログに追加中…",
     startingReport: "レポートを開始中…",
     noConversationId: "この計画には会話IDがないため、実行できません。",
+    howAgentsWork:
+      "以下のエージェントが個別に関連データを収集し、その分析結果を1つの回答に統合します。エージェントの担当範囲を変更する場合は、以下の詳細を編集してください。エージェントは入力内容に基づいて動作します。現在の設定のままでよろしければ、操作は不要です。",
     enableAtLeastOne: "少なくとも1つのエージェントを有効にするか、提案を承認してください。",
     continue: "続行",
   },
   reportView: {
+    headlineFigures: "主要数値",
     runCouldNotComplete: "レポートの実行を完了できませんでした",
     executiveSummary: "エグゼクティブサマリー",
     recommendations: "推奨事項",
