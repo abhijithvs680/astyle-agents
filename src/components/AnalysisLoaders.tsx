@@ -7,6 +7,7 @@
  * not claim a completion percentage or finish the request on a timer.
  */
 import { useEffect, useState } from "react";
+import { Check, Clock, X } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
 function Shimmer({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
@@ -262,14 +263,29 @@ export function ChatSkeleton() {
   );
 }
 
+/** Where one approved suggestion is on its way to becoming a catalog agent. */
+export type AgentCreationStatus = "queued" | "creating" | "created" | "failed";
+
+export type CreatingAgent = {
+  /** The suggestion this row stands for. */
+  key: string;
+  name: string;
+  role: string;
+  status: AgentCreationStatus;
+};
+
 /**
- * The gap between pressing Continue and the first agent existing.
+ * The gap between pressing Continue and the report starting.
  *
- * Counted, not spun: the user approved a specific number of specialists, and
- * seeing that number come back tells them the right thing is happening.
+ * One row per specialist the user approved, by name, each moving from queued
+ * to created as its `agent_created` event arrives — so the wait shows exactly
+ * which agents exist yet, not just a count.
  */
-export function AgentCreationLoader({ count }: { count: number }) {
+export function AgentCreationLoader({ agents }: { agents: Array<CreatingAgent> }) {
   const { t } = useLanguage();
+  const count = agents.length;
+  const createdCount = agents.filter((agent) => agent.status === "created").length;
+
   return (
     <div
       className="animate-in fade-in space-y-4 rounded-2xl border border-amber-200/80 bg-amber-50/30 p-5 shadow-2xs duration-300 sm:p-6"
@@ -280,26 +296,104 @@ export function AgentCreationLoader({ count }: { count: number }) {
       <div className="flex items-center gap-2.5">
         <img src="/flower-logo.svg" alt="" className="size-5 animate-spin object-contain" />
         <h3 className="text-base font-bold tracking-tight text-slate-900">
-          {count === 1 ? t("analysisLoaders.creatingAgentSingle", { defaultValue: "Creating 1 new agent" }) : t("analysisLoaders.creatingAgentsPlural", { defaultValue: "Creating {{count}} new agents", count })}
+          {count === 1
+            ? t("analysisLoaders.creatingAgentSingle", { defaultValue: "Creating 1 new agent" })
+            : t("analysisLoaders.creatingAgentsPlural", {
+                defaultValue: "Creating {{count}} new agents",
+                count,
+              })}
         </h3>
+        <span className="ml-auto shrink-0 text-xs font-medium tabular-nums text-slate-500">
+          {createdCount}/{count}
+        </span>
       </div>
       <p className="text-sm font-normal text-slate-600">
-        {t("analysisLoaders.addingSpecialistsDesc", { defaultValue: "Adding the specialists you approved to your catalog before the report runs." })}
+        {t("analysisLoaders.addingSpecialistsDesc", {
+          defaultValue: "Adding the specialists you approved to your catalog before the report runs.",
+        })}
       </p>
 
       <div className="divide-y divide-amber-200/70 overflow-hidden rounded-xl border border-amber-200 bg-surface">
-        {Array.from({ length: Math.max(1, count) }, (_, row) => (
-          <div key={row} className="flex items-center gap-3 p-3.5">
-            <Shimmer className="size-9 shrink-0 rounded-lg" />
-            <div className="flex-1 space-y-2">
-              <Shimmer className="h-3.5 w-2/5" />
-              <Shimmer className="h-3 w-3/5" />
+        {agents.map((agent) => (
+          <div key={agent.key} className="flex items-center gap-3 p-3.5">
+            <AgentCreationIcon status={agent.status} />
+            <div className="min-w-0 flex-1">
+              <p
+                className={`truncate text-sm font-semibold ${
+                  agent.status === "queued" ? "text-slate-500" : "text-slate-900"
+                }`}
+              >
+                {agent.name}
+              </p>
+              {agent.role !== "" && <p className="truncate text-xs text-slate-500">{agent.role}</p>}
             </div>
+            <AgentCreationBadge status={agent.status} />
           </div>
         ))}
       </div>
     </div>
   );
+}
+
+function AgentCreationIcon({ status }: { status: AgentCreationStatus }) {
+  const base = "flex size-9 shrink-0 items-center justify-center rounded-lg";
+  switch (status) {
+    case "created":
+      return (
+        <div className={`${base} bg-emerald-50 text-emerald-600`}>
+          <Check className="size-4" />
+        </div>
+      );
+    case "failed":
+      return (
+        <div className={`${base} bg-red-50 text-red-600`}>
+          <X className="size-4" />
+        </div>
+      );
+    case "creating":
+      return (
+        <div className={`${base} bg-amber-50`}>
+          <img src="/flower-logo.svg" alt="" className="size-4 animate-spin object-contain" />
+        </div>
+      );
+    case "queued":
+      return (
+        <div className={`${base} bg-slate-100 text-slate-400`}>
+          <Clock className="size-4" />
+        </div>
+      );
+  }
+}
+
+function AgentCreationBadge({ status }: { status: AgentCreationStatus }) {
+  const { t } = useLanguage();
+  const base = "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium";
+  switch (status) {
+    case "created":
+      return (
+        <span className={`${base} bg-emerald-50 text-emerald-700`}>
+          {t("analysisLoaders.agentCreated", { defaultValue: "Created" })}
+        </span>
+      );
+    case "failed":
+      return (
+        <span className={`${base} bg-red-50 text-red-700`}>
+          {t("analysisLoaders.agentFailed", { defaultValue: "Failed" })}
+        </span>
+      );
+    case "creating":
+      return (
+        <span className={`${base} bg-amber-100 text-amber-800`}>
+          {t("analysisLoaders.agentCreating", { defaultValue: "Creating…" })}
+        </span>
+      );
+    case "queued":
+      return (
+        <span className={`${base} bg-slate-100 text-slate-500`}>
+          {t("analysisLoaders.agentQueued", { defaultValue: "Queued" })}
+        </span>
+      );
+  }
 }
 
 /** A section card in the skeleton, shaped like a real report section. */

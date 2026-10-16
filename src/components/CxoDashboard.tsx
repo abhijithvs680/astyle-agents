@@ -63,6 +63,7 @@ import { SpecialistsView } from "./SpecialistsView";
 import { ReportPlanCard, type ContinueStage } from "./ReportPlanCard";
 import { ReportView, type ReportAgent } from "./ReportView";
 import { useSocket } from "./SocketProvider";
+import type { CreatingAgent } from "./AnalysisLoaders";
 import { parseReportEvent, REPORT_EVENT, type Report } from "../lib/report";
 import { CHAT_RESPONSE_EVENT, parseChatResponseEvent, type ChatAnswer } from "../lib/chat-response";
 import { AGENT_CREATED_EVENT, parseAgentCreatedEvent } from "../lib/agent-created";
@@ -94,7 +95,7 @@ type PastTurn = {
   awaitingChat: boolean;
   awaitingReport: boolean;
   continueStage: ContinueStage;
-  creatingAgentCount: number;
+  creatingAgents: Array<CreatingAgent>;
 };
 
 export interface ActiveCaseItem {
@@ -3628,7 +3629,7 @@ export function CxoDashboard({
    */
   const [continueStage, setContinueStage] = useState<ContinueStage>("idle");
   /** How many specialists the Continue click is creating, for the loader. */
-  const [creatingAgentCount, setCreatingAgentCount] = useState(0);
+  const [creatingAgents, setCreatingAgents] = useState<Array<CreatingAgent>>([]);
   /** The finished report, once it arrives over the socket. */
   const [report, setReport] = useState<Report | null>(null);
   /** Messages for the session the user opened from the sidebar. */
@@ -3851,16 +3852,38 @@ export function CxoDashboard({
       const newAgents: Array<{ id: string; name: string; role: string; runtimePrompt: string }> = [];
 
       if (approvedSuggestions.length > 0) {
-        setCreatingAgentCount(approvedSuggestions.length);
+        const setStatus = (key: string, patch: Partial<CreatingAgent>) =>
+          setCreatingAgents((prev) =>
+            prev.map((agent) => (agent.key === key ? { ...agent, ...patch } : agent)),
+          );
+
+        setCreatingAgents(
+          approvedSuggestions.map((suggestion) => ({
+            key: suggestion.id,
+            name: suggestion.name,
+            role: suggestion.role,
+            status: "queued",
+          })),
+        );
         setContinueStage("creating-agents");
 
         // One at a time: subscribe, dispatch, and wait for that agent's
-        // `agent_created` event before sending the next request.
+        // `agent_created` event before sending the next request. Each row in
+        // the loader follows along.
         for (const suggestion of approvedSuggestions) {
-          const created = await createAgentOverSocket(suggestion);
+          setStatus(suggestion.id, { status: "creating" });
+          let created;
+          try {
+            created = await createAgentOverSocket(suggestion);
+          } catch (error) {
+            setStatus(suggestion.id, { status: "failed" });
+            throw error;
+          }
+          const name = created.agentName !== "" ? created.agentName : suggestion.name;
+          setStatus(suggestion.id, { status: "created", name });
           newAgents.push({
             id: created.agentId,
-            name: created.agentName !== "" ? created.agentName : suggestion.name,
+            name,
             role: suggestion.role,
             runtimePrompt: suggestion.runtimePrompt,
           });
@@ -4574,7 +4597,7 @@ export function CxoDashboard({
           awaitingChat: isGeminiLoading && pendingRun?.mode === "chat",
           awaitingReport: continueStage !== "idle" && report === null,
           continueStage,
-          creatingAgentCount,
+          creatingAgents,
         },
       ]);
     }
@@ -6141,7 +6164,7 @@ export function CxoDashboard({
                         )}
                         {turn.awaitingReport &&
                           (turn.continueStage === "creating-agents" ? (
-                            <AgentCreationLoader count={turn.creatingAgentCount} />
+                            <AgentCreationLoader agents={turn.creatingAgents} />
                           ) : (
                             <ReportSkeleton />
                           ))}
@@ -6245,7 +6268,7 @@ export function CxoDashboard({
                           </div>
 
                           {continueStage === "creating-agents" ? (
-                            <AgentCreationLoader count={creatingAgentCount} />
+                            <AgentCreationLoader agents={creatingAgents} />
                           ) : (
                             <ReportSkeleton />
                           )}
